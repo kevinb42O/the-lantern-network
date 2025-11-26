@@ -25,11 +25,14 @@ export function CreateFlare({ userLocation, onSubmit, onCancel }: CreateFlarePro
   const [category, setCategory] = useState<Flare['category']>('Other')
   const [description, setDescription] = useState('')
   const [useGPS, setUseGPS] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!description.trim()) return
+
+    setIsSubmitting(true)
 
     onSubmit({
       category,
@@ -37,12 +40,14 @@ export function CreateFlare({ userLocation, onSubmit, onCancel }: CreateFlarePro
       location: useGPS ? userLocation : { lat: 0, lng: 0 },
       acceptedBy: undefined
     })
+
+    setTimeout(() => setIsSubmitting(false), 500)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-3">
-        <Label>Category</Label>
+        <Label className="text-base font-semibold">What kind of help do you need?</Label>
         <div className="grid grid-cols-2 gap-3">
           {categories.map((cat) => {
             const Icon = categoryIcons[cat]
@@ -54,14 +59,21 @@ export function CreateFlare({ userLocation, onSubmit, onCancel }: CreateFlarePro
                 className={`
                   p-4 rounded-lg border-2 transition-all
                   flex flex-col items-center gap-2
+                  hover:scale-105 active:scale-95
                   ${category === cat 
-                    ? 'border-primary bg-primary/10' 
+                    ? 'border-primary bg-primary/10 shadow-lg' 
                     : 'border-border hover:border-primary/50'
                   }
                 `}
               >
-                <Icon size={32} weight={category === cat ? 'duotone' : 'regular'} />
-                <span className="text-sm font-medium">{cat}</span>
+                <Icon 
+                  size={32} 
+                  weight={category === cat ? 'duotone' : 'regular'}
+                  className={category === cat ? 'text-primary' : 'text-muted-foreground'}
+                />
+                <span className={`text-sm font-medium ${category === cat ? 'text-primary' : ''}`}>
+                  {cat}
+                </span>
               </button>
             )
           })}
@@ -69,26 +81,31 @@ export function CreateFlare({ userLocation, onSubmit, onCancel }: CreateFlarePro
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="description">What do you need help with?</Label>
+        <Label htmlFor="description" className="text-base font-semibold">
+          Describe what you need
+        </Label>
         <Textarea
           id="description"
-          placeholder="Describe what you need..."
+          placeholder="Example: I need help fixing my bike chain, or I'm looking for someone to share a meal with..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          rows={4}
+          rows={5}
           maxLength={500}
           required
+          className="resize-none"
         />
         <p className="text-xs text-muted-foreground text-right">
-          {description.length}/500
+          {description.length}/500 characters
         </p>
       </div>
 
-      <div className="flex items-center justify-between p-4 rounded-lg bg-card">
+      <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
         <div className="space-y-1">
-          <Label htmlFor="gps-toggle">Use GPS Location</Label>
+          <Label htmlFor="gps-toggle" className="text-sm font-medium">
+            Share my location
+          </Label>
           <p className="text-xs text-muted-foreground">
-            Help neighbors find you
+            Helps neighbors find you nearby
           </p>
         </div>
         <Switch
@@ -98,21 +115,22 @@ export function CreateFlare({ userLocation, onSubmit, onCancel }: CreateFlarePro
         />
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 pt-2">
         <Button
           type="button"
           variant="outline"
           className="flex-1"
           onClick={onCancel}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
         <Button
           type="submit"
           className="flex-1"
-          disabled={!description.trim()}
+          disabled={!description.trim() || isSubmitting}
         >
-          Post Flare
+          {isSubmitting ? 'Posting...' : 'Post Flare'}
         </Button>
       </div>
     </form>

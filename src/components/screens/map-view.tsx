@@ -93,19 +93,24 @@ export function MapView({ user, flares, onCreateFlare, onAcceptFlare }: MapViewP
 
       <div className="flex-1 overflow-hidden">
         {view === 'map' ? (
-          <div className="relative h-full bg-card/50">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center space-y-4 p-6">
-                <MapTrifold size={64} className="mx-auto text-muted-foreground" />
+          <div className="relative h-full bg-gradient-to-b from-card/50 to-muted/30">
+            <div className="absolute inset-0 flex items-center justify-center p-6">
+              <div className="text-center space-y-4 max-w-md">
+                <div className="inline-flex p-6 rounded-full bg-primary/10 mb-2">
+                  <MapTrifold size={64} className="text-primary" weight="duotone" />
+                </div>
                 <div>
-                  <p className="text-lg font-medium text-foreground mb-2">
+                  <h3 className="text-xl font-semibold text-foreground mb-2">
                     {sortedFlares.length > 0 
-                      ? `${sortedFlares.length} active flares nearby`
-                      : 'No active flares nearby'
+                      ? `${sortedFlares.length} ${sortedFlares.length === 1 ? 'flare' : 'flares'} nearby`
+                      : 'Your neighborhood is quiet'
                     }
-                  </p>
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    Switch to list view to see details
+                    {sortedFlares.length > 0
+                      ? 'Switch to list view to see details and help out'
+                      : 'Be the first to post a flare and get help from your neighbors'
+                    }
                   </p>
                 </div>
               </div>
@@ -115,12 +120,15 @@ export function MapView({ user, flares, onCreateFlare, onAcceptFlare }: MapViewP
           <ScrollArea className="h-full">
             <div className="p-4 space-y-3">
               {sortedFlares.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">
-                    Your neighborhood is quiet right now
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Be the first to post a flare!
+                <div className="text-center py-16">
+                  <div className="inline-flex p-6 rounded-full bg-muted/50 mb-4">
+                    <ListBullets size={64} className="text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    No active flares
+                  </h3>
+                  <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
+                    Your neighborhood is quiet right now. Be the first to ask for help!
                   </p>
                 </div>
               ) : (
@@ -139,28 +147,31 @@ export function MapView({ user, flares, onCreateFlare, onAcceptFlare }: MapViewP
         )}
       </div>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border bg-card/50">
         <Button
-          className="w-full gap-2"
+          className="w-full gap-2 h-12"
           size="lg"
           onClick={() => setShowCreateDialog(true)}
         >
-          <Plus size={20} />
-          Create Flare
+          <Plus size={24} weight="bold" />
+          <span className="text-base font-semibold">Create Flare</span>
         </Button>
+        <p className="text-xs text-center text-muted-foreground mt-2">
+          Ask your neighbors for help
+        </p>
       </div>
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create a Flare</DialogTitle>
+            <DialogTitle className="text-2xl">Create a Flare</DialogTitle>
           </DialogHeader>
           <CreateFlare
             userLocation={userLocation}
             onSubmit={(flare) => {
               onCreateFlare(flare)
               setShowCreateDialog(false)
-              toast.success('Flare posted!')
+              toast.success('Flare posted to your neighborhood!')
             }}
             onCancel={() => setShowCreateDialog(false)}
           />
