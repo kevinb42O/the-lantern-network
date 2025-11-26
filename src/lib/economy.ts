@@ -1,0 +1,77 @@
+import type { User, LanternTransaction } from './types'
+
+export const HOARD_LIMIT = 10
+export const INITIAL_LANTERNS = 3
+export const ELDER_HELP_THRESHOLD = 20
+export const ELDER_DAYS_THRESHOLD = 30
+export const ELDER_MIN_REPUTATION = 5
+
+export function canReceiveLantern(user: User): boolean {
+  return user.lanternBalance < HOARD_LIMIT
+}
+
+export function checkElderStatus(
+  user: User,
+  completedHelps: number,
+  accountAgeDays: number
+): boolean {
+  if (user.isElder) return true
+  
+  const meetsHelpThreshold = completedHelps >= ELDER_HELP_THRESHOLD
+  const meetsTimeThreshold = 
+    accountAgeDays >= ELDER_DAYS_THRESHOLD && 
+    user.reputation >= ELDER_MIN_REPUTATION
+  
+  return meetsHelpThreshold || meetsTimeThreshold
+}
+
+export function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+function toRad(degrees: number): number {
+  return degrees * (Math.PI / 180)
+}
+
+export function formatDistance(km: number): string {
+  if (km < 1) {
+    return `${Math.round(km * 1000)}m away`
+  }
+  return `${km.toFixed(1)}km away`
+}
+
+export function generateInviteCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let code = ''
+  for (let i = 0; i < 8; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)]
+    if (i === 3) code += '-'
+  }
+  return code
+}
+
+export function mintUBI(): LanternTransaction[] {
+  return Array(INITIAL_LANTERNS).fill(null).map((_, i) => ({
+    id: `${Date.now()}-${i}`,
+    from: 'system',
+    to: 'current-user',
+    amount: 1,
+    reason: 'Welcome to the neighborhood',
+    timestamp: Date.now()
+  }))
+}
