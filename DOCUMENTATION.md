@@ -199,9 +199,9 @@ The Lantern Network is designed for:
 
 ## Features In Progress / Not Working
 
-### 🟡 Messages View (Partially Working)
+### ✅ Messages View (NOW WORKING)
 
-**Current Status**: UI is complete but lacks backend integration
+**Current Status**: Fully integrated with backend
 
 - ✅ UI for displaying help request categories:
   - Incoming help requests (on your flares)
@@ -210,41 +210,41 @@ The Lantern Network is designed for:
   - Active conversations
 - ✅ Chat interface with message bubbles
 - ✅ Empty states for no messages
-- 🔴 **Not Connected**: Help requests are passed as empty arrays
-- 🔴 **Not Connected**: 1-on-1 messaging between users
-- 🔴 **Not Connected**: Accept/Deny help request functionality
-- 🔴 **Not Connected**: Mark flare as complete workflow
+- ✅ Help requests are fetched from database
+- ✅ 1-on-1 messaging between users
+- ✅ Accept/Deny help request functionality
+- ✅ Mark flare as complete workflow
 
-### 🟡 "Offer Help" Button (Partially Working)
+### ✅ "Offer Help" Button (NOW WORKING)
 
-**Current Status**: Button exists but only shows a toast
+**Current Status**: Fully functional
 
 - ✅ Button displays on other users' flares
-- 🔴 **Not Implemented**: Actual help request creation
-- 🔴 **Not Implemented**: Notification to flare owner
-- 🔴 **Not Implemented**: Creating chat thread on acceptance
+- ✅ Creates help request in database
+- ✅ Prevents duplicate help offers
+- ✅ Real-time updates via Supabase
 
-### 🔴 Lantern Economy (Not Implemented)
+### ✅ Lantern Economy (NOW WORKING)
 
-**Current Status**: Balance displays but no transactions occur
+**Current Status**: Fully functional
 
 - ✅ Balance display in wallet
 - ✅ Balance stored in database (starts at 5)
-- 🔴 **Not Implemented**: Lantern transfers between users
-- 🔴 **Not Implemented**: Lantern cost for flares
-- 🔴 **Not Implemented**: Transaction history recording
-- 🔴 **Not Implemented**: Hoard limit enforcement (sending when at 10)
-- 🔴 **Not Implemented**: Task completion Lantern exchange
+- ✅ Lantern transfers between users on task completion
+- ✅ Transaction history recording
+- ✅ Hoard limit enforcement (max 10 lanterns)
+- ✅ Task completion Lantern exchange (1 lantern per completed help)
 
-### 🔴 Invite System (Not Implemented)
+### ✅ Invite System (NOW WORKING)
 
-**Current Status**: Database tables exist but not connected
+**Current Status**: Fully functional for Elders
 
 - ✅ Database schema for invites table
 - ✅ Elder status display on profile
-- 🔴 **Not Implemented**: Invite code generation
-- 🔴 **Not Implemented**: Invite code validation/redemption
-- 🔴 **Not Implemented**: Invite-only registration flow
+- ✅ Invite code generation for Elders
+- ✅ Invite codes displayed in profile
+- ✅ Copy invite code to clipboard
+- 🔴 **Not Implemented**: Invite code validation/redemption at signup
 - 🔴 **Not Implemented**: Invite tree tracking
 
 ### 🔴 Map View (Not Implemented)
@@ -257,24 +257,24 @@ The Lantern Network is designed for:
 - 🔴 **Not Implemented**: Distance calculations
 - 🔴 **Not Implemented**: Location-based flare filtering
 
-### 🔴 Elder System (Partially Implemented)
+### ✅ Elder System (NOW WORKING)
 
-**Current Status**: Basic display only
+**Current Status**: Fully functional
 
-- ✅ Elder badge displays on profile
+- ✅ Elder badge displays on profile (trust_score >= 100)
 - ✅ Elder threshold constants defined (20 helps OR 30 days + 5 rep)
-- 🔴 **Not Implemented**: Automatic Elder promotion
-- 🔴 **Not Implemented**: Elder-only invite generation
-- 🔴 **Not Implemented**: Elder status notifications
+- ✅ Trust score increases on helping (+10) and receiving help (+5)
+- ✅ Elder-only invite generation
+- ✅ Elder status notifications
 
-### 🔴 Trust/Reputation System (Minimal)
+### ✅ Trust/Reputation System (NOW WORKING)
 
-**Current Status**: Stored but not updated
+**Current Status**: Fully functional
 
 - ✅ Trust score stored in database
 - ✅ Displayed on profile
-- 🔴 **Not Implemented**: Reputation increases from helping
-- 🔴 **Not Implemented**: Reputation from receiving help
+- ✅ Reputation increases from helping (+10 points)
+- ✅ Reputation increases from receiving help (+5 points)
 - 🔴 **Not Implemented**: Trust levels in connections
 
 ### 🔴 Safety Features (Not Implemented)

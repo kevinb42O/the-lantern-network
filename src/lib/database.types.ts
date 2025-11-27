@@ -20,6 +20,7 @@ export type Database = {
           trust_score: number;
           lantern_balance: number;
           location: Json | null;
+          is_admin: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -33,6 +34,7 @@ export type Database = {
           trust_score?: number;
           lantern_balance?: number;
           location?: Json | null;
+          is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -46,6 +48,7 @@ export type Database = {
           trust_score?: number;
           lantern_balance?: number;
           location?: Json | null;
+          is_admin?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -114,6 +117,7 @@ export type Database = {
           flare_id: string;
           user_id: string;
           status: string;
+          message: string | null;
           joined_at: string;
         };
         Insert: {
@@ -121,6 +125,7 @@ export type Database = {
           flare_id: string;
           user_id: string;
           status?: string;
+          message?: string | null;
           joined_at?: string;
         };
         Update: {
@@ -128,6 +133,7 @@ export type Database = {
           flare_id?: string;
           user_id?: string;
           status?: string;
+          message?: string | null;
           joined_at?: string;
         };
         Relationships: [];
