@@ -1,10 +1,19 @@
 import type { User, LanternTransaction } from './types'
 
+// Lantern economy constants
 export const HOARD_LIMIT = 10
 export const INITIAL_LANTERNS = 3
+export const LANTERN_TRANSFER_AMOUNT = 1
+
+// Elder/reputation constants
 export const ELDER_HELP_THRESHOLD = 20
 export const ELDER_DAYS_THRESHOLD = 30
 export const ELDER_MIN_REPUTATION = 5
+export const ELDER_TRUST_THRESHOLD = 100
+
+// Reputation gains
+export const REPUTATION_GAIN_HELPER = 10
+export const REPUTATION_GAIN_OWNER = 5
 
 export function canReceiveLantern(user: User): boolean {
   return user.lanternBalance < HOARD_LIMIT

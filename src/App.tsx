@@ -14,7 +14,15 @@ import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode } from '@/lib/types'
-import { generateInviteCode, ELDER_HELP_THRESHOLD } from '@/lib/economy'
+import { 
+  generateInviteCode, 
+  ELDER_HELP_THRESHOLD, 
+  ELDER_TRUST_THRESHOLD,
+  HOARD_LIMIT,
+  LANTERN_TRANSFER_AMOUNT,
+  REPUTATION_GAIN_HELPER,
+  REPUTATION_GAIN_OWNER
+} from '@/lib/economy'
 
 // Admin configuration
 const ADMIN_EMAILS = [
@@ -324,7 +332,7 @@ function App() {
     if (!authUser || !profile) return
 
     // Check if user has enough lanterns
-    if (profile.lantern_balance < 1) {
+    if (profile.lantern_balance < LANTERN_TRANSFER_AMOUNT) {
       toast.error('Not enough lanterns to complete this task')
       return
     }
@@ -348,8 +356,8 @@ function App() {
       await supabase
         .from('profiles')
         .update({ 
-          lantern_balance: profile.lantern_balance - 1,
-          trust_score: (profile.trust_score || 0) + 5 // Increase reputation for getting help
+          lantern_balance: profile.lantern_balance - LANTERN_TRANSFER_AMOUNT,
+          trust_score: (profile.trust_score || 0) + REPUTATION_GAIN_OWNER
         })
         .eq('user_id', authUser.id)
 
@@ -360,13 +368,13 @@ function App() {
         .eq('user_id', helperId)
         .single()
 
-      // 3. Add to helper (max 10)
-      const newBalance = Math.min((helperProfile?.lantern_balance || 0) + 1, 10)
+      // 3. Add to helper (max hoard limit)
+      const newBalance = Math.min((helperProfile?.lantern_balance || 0) + LANTERN_TRANSFER_AMOUNT, HOARD_LIMIT)
       await supabase
         .from('profiles')
         .update({ 
           lantern_balance: newBalance,
-          trust_score: (helperProfile?.trust_score || 0) + 10 // Increase reputation for helping
+          trust_score: (helperProfile?.trust_score || 0) + REPUTATION_GAIN_HELPER
         })
         .eq('user_id', helperId)
 
@@ -375,20 +383,20 @@ function App() {
         {
           user_id: authUser.id,
           type: 'transfer_out',
-          amount: -1,
+          amount: -LANTERN_TRANSFER_AMOUNT,
           description: 'Sent as thanks for help',
           flare_id: flareId
         },
         {
           user_id: helperId,
           type: 'transfer_in',
-          amount: 1,
+          amount: LANTERN_TRANSFER_AMOUNT,
           description: 'Received for helping',
           flare_id: flareId
         }
       ])
 
-      toast.success('🏮 Task completed! 1 Lantern sent as thanks!')
+      toast.success(`🏮 Task completed! ${LANTERN_TRANSFER_AMOUNT} Lantern sent as thanks!`)
       
       // Refresh data
       fetchFlares()
@@ -512,8 +520,8 @@ function App() {
         .single()
 
       // If they've reached elder threshold, their trust_score should be high enough
-      // The Elder badge is shown when trust_score >= 100
-      if ((userProfile?.trust_score || 0) >= 100) {
+      // The Elder badge is shown when trust_score >= ELDER_TRUST_THRESHOLD
+      if ((userProfile?.trust_score || 0) >= ELDER_TRUST_THRESHOLD) {
         toast.success('🌟 Congratulations! You\'ve earned Elder status!')
       }
     }
@@ -812,7 +820,7 @@ function App() {
     lanternBalance: profile.lantern_balance,
     reputation: profile.trust_score,
     createdAt: new Date(profile.created_at).getTime(),
-    isElder: profile.trust_score >= 100,
+    isElder: profile.trust_score >= ELDER_TRUST_THRESHOLD,
     location: profile.location as { lat: number; lng: number } | undefined,
     isAdmin
   }
