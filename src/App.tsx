@@ -251,6 +251,18 @@ function App() {
   const handleSendMessage = async (content: string) => {
     if (!authUser || !profile) return
 
+    // Optimistic update - add message immediately to UI
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      userId: authUser.id,
+      username: profile.display_name,
+      content,
+      timestamp: Date.now(),
+      type: 'campfire' as const
+    }
+    setMessages(prev => [...prev, tempMessage])
+
+    // Send to server
     const { error } = await supabase.from('messages').insert({
       sender_id: authUser.id,
       receiver_id: authUser.id,
@@ -260,6 +272,11 @@ function App() {
 
     if (error) {
       console.error('Error sending message:', error)
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(m => m.id !== tempMessage.id))
+    } else {
+      // Refetch to get the real message with proper ID
+      fetchMessages()
     }
   }
 
