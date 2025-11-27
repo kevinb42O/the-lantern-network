@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChatCircle, Check, X, PaperPlaneRight, Fire, Coins, ArrowLeft, Clock, CheckCircle, Hourglass, XCircle } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -18,6 +18,7 @@ interface MessagesViewProps {
   onDenyHelp: (helpRequestId: string) => void
   onSendMessage: (helpRequestId: string, content: string) => void
   onCompleteFlare: (flareId: string, helperId: string) => void
+  onMarkAsRead?: () => void
 }
 
 export function MessagesView({ 
@@ -28,10 +29,18 @@ export function MessagesView({
   onAcceptHelp,
   onDenyHelp,
   onSendMessage,
-  onCompleteFlare
+  onCompleteFlare,
+  onMarkAsRead
 }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<HelpRequest | null>(null)
   const [chatInput, setChatInput] = useState('')
+
+  // Mark messages as read when component mounts
+  useEffect(() => {
+    if (onMarkAsRead) {
+      onMarkAsRead()
+    }
+  }, [onMarkAsRead])
 
   // Get help requests where user is involved (either as helper or flare owner)
   const myHelpRequests = helpRequests.filter(

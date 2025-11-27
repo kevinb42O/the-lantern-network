@@ -39,7 +39,7 @@ interface FlaresViewProps {
     category: string
     location: { lat: number; lng: number } | null
   }) => Promise<void>
-  onJoinFlare: (flareId: string) => Promise<void>
+  onJoinFlare: (flareId: string, message: string) => Promise<void>
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -66,6 +66,12 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare }: FlaresV
   const [description, setDescription] = useState('')
   const [useLocation, setUseLocation] = useState(true)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+
+  // Help offer modal state
+  const [showHelpModal, setShowHelpModal] = useState(false)
+  const [helpFlare, setHelpFlare] = useState<FlareData | null>(null)
+  const [helpMessage, setHelpMessage] = useState('')
+  const [sendingHelp, setSendingHelp] = useState(false)
 
   // Get user location when creating flare
   const handleOpenCreate = () => {
@@ -95,6 +101,26 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare }: FlaresV
       setCategory('Other')
     } finally {
       setCreating(false)
+    }
+  }
+
+  const handleOpenHelpModal = (flare: FlareData) => {
+    setHelpFlare(flare)
+    setHelpMessage('')
+    setShowHelpModal(true)
+  }
+
+  const handleSendHelpOffer = async () => {
+    if (!helpFlare || !helpMessage.trim()) return
+    
+    setSendingHelp(true)
+    try {
+      await onJoinFlare(helpFlare.id, helpMessage.trim())
+      setShowHelpModal(false)
+      setHelpFlare(null)
+      setHelpMessage('')
+    } finally {
+      setSendingHelp(false)
     }
   }
 
@@ -202,7 +228,7 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare }: FlaresV
                         <Button 
                           size="sm" 
                           variant="secondary"
-                          onClick={() => onJoinFlare(flare.id)}
+                          onClick={() => handleOpenHelpModal(flare)}
                         >
                           Offer Help
                         </Button>
@@ -220,6 +246,67 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare }: FlaresV
           )}
         </div>
       </div>
+
+      {/* Help Offer Modal */}
+      <Dialog open={showHelpModal} onOpenChange={setShowHelpModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Offer Help</DialogTitle>
+          </DialogHeader>
+          
+          {helpFlare && (
+            <div className="space-y-4 py-4">
+              {/* Flare Summary */}
+              <div className="p-3 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline" className={categoryColors[helpFlare.category] || categoryColors.Other}>
+                    {helpFlare.category}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">by {helpFlare.creator_name}</span>
+                </div>
+                <p className="text-sm text-foreground">{helpFlare.title}</p>
+              </div>
+
+              {/* Message Input */}
+              <div className="space-y-2">
+                <Label htmlFor="help-message" className="text-sm font-medium">
+                  Your message <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="help-message"
+                  placeholder="Introduce yourself and explain how you can help..."
+                  value={helpMessage}
+                  onChange={(e) => setHelpMessage(e.target.value)}
+                  rows={4}
+                  maxLength={300}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {helpMessage.length}/300
+                </p>
+              </div>
+
+              {/* Submit */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setShowHelpModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleSendHelpOffer}
+                  disabled={!helpMessage.trim() || sendingHelp}
+                >
+                  {sendingHelp ? 'Sending...' : 'Send Offer'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create Flare Modal */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
