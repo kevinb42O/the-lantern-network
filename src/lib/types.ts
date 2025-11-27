@@ -7,6 +7,7 @@ export interface User {
   reputation: number
   createdAt: number
   isElder: boolean
+  isAdmin?: boolean
   invitedBy?: string
   location?: {
     lat: number

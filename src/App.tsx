@@ -15,6 +15,11 @@ import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import type { Message } from '@/lib/types'
 
+// Admin configuration - add your email here
+const ADMIN_EMAILS = [
+  'kevin@example.com', // Replace with your actual email
+]
+
 type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile'
 
 // Flare data from Supabase
@@ -295,6 +300,9 @@ function App() {
     return <ProfileSetup />
   }
 
+  // Check if current user is admin
+  const isAdmin = ADMIN_EMAILS.includes(authUser.email || '')
+
   // User data for views
   const userData = {
     id: authUser.id,
@@ -304,7 +312,8 @@ function App() {
     reputation: profile.trust_score,
     createdAt: new Date(profile.created_at).getTime(),
     isElder: profile.trust_score >= 100,
-    location: profile.location as { lat: number; lng: number } | undefined
+    location: profile.location as { lat: number; lng: number } | undefined,
+    isAdmin
   }
 
   return (
@@ -323,6 +332,7 @@ function App() {
             user={userData}
             messages={messages}
             onSendMessage={handleSendMessage}
+            adminUserIds={isAdmin ? [authUser.id] : []}
           />
         )}
         {currentView === 'wallet' && (

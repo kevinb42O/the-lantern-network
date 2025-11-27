@@ -8,9 +8,10 @@ interface CampfireViewProps {
   user: User
   messages: Message[]
   onSendMessage: (content: string) => void
+  adminUserIds?: string[]
 }
 
-export function CampfireView({ user, messages, onSendMessage }: CampfireViewProps) {
+export function CampfireView({ user, messages, onSendMessage, adminUserIds = [] }: CampfireViewProps) {
   const [inputValue, setInputValue] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -68,6 +69,7 @@ export function CampfireView({ user, messages, onSendMessage }: CampfireViewProp
               key={message.id}
               message={message}
               isCurrentUser={message.userId === user.id}
+              isAdmin={adminUserIds.includes(message.userId)}
             />
           ))}
         </div>
@@ -108,9 +110,10 @@ export function CampfireView({ user, messages, onSendMessage }: CampfireViewProp
 interface MessageBubbleProps {
   message: Message
   isCurrentUser: boolean
+  isAdmin?: boolean
 }
 
-function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
+function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbleProps) {
   const messageAge = Date.now() - message.timestamp
   const hoursOld = messageAge / (1000 * 60 * 60)
   const opacity = Math.max(0.3, 1 - (hoursOld / 24) * 0.7)
@@ -122,22 +125,40 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
     return `${Math.floor(seconds / 3600)}h ago`
   }
 
+  // Admin display name
+  const displayName = isAdmin 
+    ? (isCurrentUser ? '👑 ADMIN' : `👑 ADMIN`)
+    : (isCurrentUser ? 'You' : message.username)
+
   return (
     <div
       className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''}`}
       style={{ opacity }}
     >
-      <Avatar className="h-10 w-10 flex-shrink-0">
-        <AvatarFallback className="text-sm bg-primary/20 text-primary font-semibold">
-          {message.username.slice(0, 2).toUpperCase()}
+      <Avatar className={`flex-shrink-0 ${isAdmin ? 'h-12 w-12 ring-2 ring-amber-400 ring-offset-2 ring-offset-background' : 'h-10 w-10'}`}>
+        <AvatarFallback className={`font-semibold ${
+          isAdmin 
+            ? 'text-base bg-gradient-to-br from-amber-400 to-orange-500 text-white' 
+            : 'text-sm bg-primary/20 text-primary'
+        }`}>
+          {isAdmin ? '👑' : message.username.slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       
       <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''}`}>
         <div className={`flex items-baseline gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
-          <span className="text-sm font-semibold text-foreground">
-            {isCurrentUser ? 'You' : message.username}
+          <span className={`font-bold ${
+            isAdmin 
+              ? 'text-base bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm' 
+              : 'text-sm text-foreground'
+          }`}>
+            {displayName}
           </span>
+          {isAdmin && (
+            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
+              ADMIN
+            </span>
+          )}
           <span className="text-xs text-muted-foreground">
             {timeAgo()}
           </span>
@@ -145,13 +166,15 @@ function MessageBubble({ message, isCurrentUser }: MessageBubbleProps) {
         <div
           className={`
             inline-block p-3 rounded-2xl
-            ${isCurrentUser 
-              ? 'bg-primary text-primary-foreground rounded-br-md' 
-              : 'bg-card text-card-foreground border border-border rounded-bl-md'
+            ${isAdmin
+              ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-2 border-amber-400/50 text-foreground rounded-br-md shadow-lg shadow-amber-500/10'
+              : isCurrentUser 
+                ? 'bg-primary text-primary-foreground rounded-br-md' 
+                : 'bg-card text-card-foreground border border-border rounded-bl-md'
             }
           `}
         >
-          <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+          <p className={`whitespace-pre-wrap break-words leading-relaxed ${isAdmin ? 'text-base' : 'text-sm'}`}>
             {message.content}
           </p>
         </div>
