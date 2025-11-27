@@ -21,6 +21,9 @@ export type Database = {
           lantern_balance: number;
           location: Json | null;
           is_admin: boolean;
+          is_moderator: boolean;
+          badges: string[];
+          completed_flares_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -35,6 +38,9 @@ export type Database = {
           lantern_balance?: number;
           location?: Json | null;
           is_admin?: boolean;
+          is_moderator?: boolean;
+          badges?: string[];
+          completed_flares_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -49,6 +55,9 @@ export type Database = {
           lantern_balance?: number;
           location?: Json | null;
           is_admin?: boolean;
+          is_moderator?: boolean;
+          badges?: string[];
+          completed_flares_count?: number;
           created_at?: string;
           updated_at?: string;
         };

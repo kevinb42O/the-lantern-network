@@ -15,6 +15,111 @@ export const ELDER_TRUST_THRESHOLD = 100
 export const REPUTATION_GAIN_HELPER = 10
 export const REPUTATION_GAIN_OWNER = 5
 
+// Badge system - based on completed flares count
+export interface BadgeInfo {
+  id: string
+  name: string
+  emoji: string
+  description: string
+  minFlares: number
+  color: string
+  bgColor: string
+  borderColor: string
+}
+
+// Badge definitions - each tier shows trustworthiness based on completed flares
+export const BADGES: BadgeInfo[] = [
+  {
+    id: 'newcomer',
+    name: 'Newcomer',
+    emoji: '🌱',
+    description: 'Just starting their journey',
+    minFlares: 0,
+    color: 'text-gray-400',
+    bgColor: 'bg-gray-500/10',
+    borderColor: 'border-gray-500/30'
+  },
+  {
+    id: 'helper',
+    name: 'Helper',
+    emoji: '🤝',
+    description: 'Has helped neighbors a few times',
+    minFlares: 3,
+    color: 'text-green-400',
+    bgColor: 'bg-green-500/10',
+    borderColor: 'border-green-500/30'
+  },
+  {
+    id: 'trusted',
+    name: 'Trusted Neighbor',
+    emoji: '⭐',
+    description: 'A reliable member of the community',
+    minFlares: 10,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/10',
+    borderColor: 'border-blue-500/30'
+  },
+  {
+    id: 'guardian',
+    name: 'Guardian',
+    emoji: '🛡️',
+    description: 'Protector of the neighborhood',
+    minFlares: 25,
+    color: 'text-purple-400',
+    bgColor: 'bg-purple-500/10',
+    borderColor: 'border-purple-500/30'
+  },
+  {
+    id: 'champion',
+    name: 'Community Champion',
+    emoji: '🏆',
+    description: 'An exceptional helper',
+    minFlares: 50,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/30'
+  },
+  {
+    id: 'legend',
+    name: 'Legend',
+    emoji: '👑',
+    description: 'A true pillar of the community',
+    minFlares: 100,
+    color: 'text-rose-400',
+    bgColor: 'bg-gradient-to-r from-rose-500/10 to-amber-500/10',
+    borderColor: 'border-rose-500/30'
+  }
+]
+
+// Get badge based on completed flares count
+export function getBadgeForFlareCount(completedFlares: number): BadgeInfo {
+  // Return the highest badge the user qualifies for
+  for (let i = BADGES.length - 1; i >= 0; i--) {
+    if (completedFlares >= BADGES[i].minFlares) {
+      return BADGES[i]
+    }
+  }
+  return BADGES[0]
+}
+
+// Get all badges a user has earned
+export function getEarnedBadges(completedFlares: number): BadgeInfo[] {
+  return BADGES.filter(badge => completedFlares >= badge.minFlares)
+}
+
+// Get next badge info for progress display
+export function getNextBadge(completedFlares: number): { badge: BadgeInfo; flaresNeeded: number } | null {
+  for (const badge of BADGES) {
+    if (completedFlares < badge.minFlares) {
+      return {
+        badge,
+        flaresNeeded: badge.minFlares - completedFlares
+      }
+    }
+  }
+  return null // User has all badges
+}
+
 export function canReceiveLantern(user: User): boolean {
   return user.lanternBalance < HOARD_LIMIT
 }

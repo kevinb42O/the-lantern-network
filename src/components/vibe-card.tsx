@@ -1,18 +1,23 @@
-import { Star, Sparkle, HandHeart, Clock } from '@phosphor-icons/react'
+import { Star, Sparkle, HandHeart, Clock, ShieldCheck } from '@phosphor-icons/react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import type { User } from '@/lib/types'
+import { getBadgeForFlareCount } from '@/lib/economy'
 
 interface VibeCardProps {
   user: User
   helpCount?: number
+  isModerator?: boolean
 }
 
-export function VibeCard({ user, helpCount = 0 }: VibeCardProps) {
+export function VibeCard({ user, helpCount = 0, isModerator = false }: VibeCardProps) {
   // Calculate member duration
   const memberSince = user.createdAt ? new Date(user.createdAt) : new Date()
   const daysSinceJoined = Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))
+
+  // Get trust badge based on completed flares
+  const trustBadge = getBadgeForFlareCount(helpCount)
 
   return (
     <Card className="overflow-hidden bg-gradient-to-br from-card via-card to-card/80 border-border/50">
@@ -34,33 +39,37 @@ export function VibeCard({ user, helpCount = 0 }: VibeCardProps) {
                 {user.username.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            {user.isElder && (
-              <div className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg ring-2 ring-card">
-                <Sparkle size={14} weight="fill" className="text-white" />
-              </div>
-            )}
+            {/* Trust badge icon */}
+            <div className={`absolute -bottom-1 -right-1 p-1.5 rounded-full ${trustBadge.bgColor} shadow-lg ring-2 ring-card`}>
+              <span className="text-sm">{trustBadge.emoji}</span>
+            </div>
           </div>
           
           <div className="flex-1 pb-1">
-            <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <h2 className="text-xl font-bold text-foreground flex items-center gap-2 flex-wrap">
               {user.username}
               {user.isAdmin && (
-                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
+                  <Sparkle size={10} weight="fill" />
                   Admin
                 </Badge>
               )}
+              {isModerator && !user.isAdmin && (
+                <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs gap-1">
+                  <ShieldCheck size={10} weight="fill" />
+                  Mod
+                </Badge>
+              )}
             </h2>
-            {user.isElder ? (
-              <p className="text-sm font-medium text-amber-400 flex items-center gap-1">
-                <Sparkle size={14} weight="fill" />
-                Elder Member
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Clock size={14} />
-                {daysSinceJoined === 0 ? 'Joined today' : `Member for ${daysSinceJoined} day${daysSinceJoined !== 1 ? 's' : ''}`}
-              </p>
-            )}
+            {/* Trust badge name */}
+            <p className={`text-sm font-medium ${trustBadge.color} flex items-center gap-1`}>
+              <span>{trustBadge.emoji}</span>
+              {trustBadge.name}
+            </p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              <Clock size={12} />
+              {daysSinceJoined === 0 ? 'Joined today' : `Member for ${daysSinceJoined} day${daysSinceJoined !== 1 ? 's' : ''}`}
+            </p>
           </div>
         </div>
 

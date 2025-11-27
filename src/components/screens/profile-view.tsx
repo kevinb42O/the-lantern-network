@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy } from '@phosphor-icons/react'
+import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy, Medal } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
+import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { VibeCard } from '@/components/vibe-card'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
+import { getBadgeForFlareCount, getNextBadge, getEarnedBadges } from '@/lib/economy'
 
 // Check if Supabase is configured
 const isSupabaseConfigured = 
@@ -28,12 +30,13 @@ export function ProfileView({
   helpCount, 
   inviteCodes,
   onGenerateInvite,
-  onDeleteAccount 
+  onDeleteAccount
 }: ProfileViewProps) {
   const { signOut } = useAuth();
   const [showInvites, setShowInvites] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showBadges, setShowBadges] = useState(false)
 
   const availableInvites = inviteCodes.filter(code => !code.usedBy)
 
@@ -48,6 +51,11 @@ export function ProfileView({
       toast.success('See you soon! 👋');
     }
   };
+  
+  // Get badge info
+  const currentBadge = getBadgeForFlareCount(helpCount)
+  const nextBadge = getNextBadge(helpCount)
+  const earnedBadges = getEarnedBadges(helpCount)
 
   // Calculate member duration
   const memberSince = user.createdAt ? new Date(user.createdAt) : new Date()
@@ -83,7 +91,41 @@ export function ProfileView({
       <ScrollArea className="flex-1">
         <div className="p-5 space-y-5 max-w-lg mx-auto">
           {/* Vibe Card */}
-          <VibeCard user={user} helpCount={helpCount} />
+          <VibeCard user={user} helpCount={helpCount} isModerator={user.isModerator} />
+
+          {/* Badge Progress Card */}
+          <Card className={`p-5 ${currentBadge.bgColor} border ${currentBadge.borderColor}`}>
+            <div className="flex items-center gap-4 mb-3">
+              <span className="text-3xl">{currentBadge.emoji}</span>
+              <div className="flex-1">
+                <h3 className={`font-semibold ${currentBadge.color}`}>{currentBadge.name}</h3>
+                <p className="text-sm text-muted-foreground">{currentBadge.description}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBadges(true)}
+                className="rounded-xl gap-1"
+              >
+                <Medal size={14} />
+                View All
+              </Button>
+            </div>
+            {nextBadge && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Progress to {nextBadge.badge.name}</span>
+                  <span className={nextBadge.badge.color}>
+                    {helpCount}/{nextBadge.badge.minFlares} helps
+                  </span>
+                </div>
+                <Progress 
+                  value={(helpCount / nextBadge.badge.minFlares) * 100} 
+                  className="h-2"
+                />
+              </div>
+            )}
+          </Card>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-3">
@@ -282,6 +324,62 @@ export function ProfileView({
             >
               Delete Forever
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Badges Dialog */}
+      <Dialog open={showBadges} onOpenChange={setShowBadges}>
+        <DialogContent className="rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Medal size={24} weight="duotone" className="text-primary" />
+              Your Badges
+            </DialogTitle>
+            <DialogDescription>
+              Earn badges by helping neighbors in the community
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
+            {earnedBadges.map((badge) => (
+              <Card 
+                key={badge.id} 
+                className={`p-4 ${badge.bgColor} border ${badge.borderColor}`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{badge.emoji}</span>
+                  <div className="flex-1">
+                    <h4 className={`font-semibold ${badge.color}`}>{badge.name}</h4>
+                    <p className="text-xs text-muted-foreground">{badge.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Unlocked at {badge.minFlares} completed helps
+                    </p>
+                  </div>
+                  {badge.id === currentBadge.id && (
+                    <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">
+                      Current
+                    </span>
+                  )}
+                </div>
+              </Card>
+            ))}
+            {nextBadge && (
+              <Card className="p-4 bg-muted/30 border-dashed border-border">
+                <div className="flex items-center gap-3 opacity-60">
+                  <span className="text-2xl grayscale">{nextBadge.badge.emoji}</span>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-muted-foreground">{nextBadge.badge.name}</h4>
+                    <p className="text-xs text-muted-foreground">{nextBadge.badge.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {nextBadge.flaresNeeded} more helps to unlock
+                    </p>
+                  </div>
+                  <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">
+                    Next
+                  </span>
+                </div>
+              </Card>
+            )}
           </div>
         </DialogContent>
       </Dialog>

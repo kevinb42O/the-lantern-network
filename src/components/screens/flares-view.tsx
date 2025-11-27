@@ -41,6 +41,7 @@ interface FlaresViewProps {
     location: { lat: number; lng: number } | null
   }) => Promise<void>
   onJoinFlare: (flareId: string, message: string) => Promise<void>
+  onUserClick?: (userId: string) => void
 }
 
 const categoryConfig: Record<string, { icon: React.ElementType; color: string; bgColor: string; emoji: string }> = {
@@ -72,7 +73,7 @@ const categoryConfig: Record<string, { icon: React.ElementType; color: string; b
 
 const categories = ['Mechanical', 'Food', 'Talk', 'Other']
 
-export function FlaresView({ user, flares, onCreateFlare, onJoinFlare }: FlaresViewProps) {
+export function FlaresView({ user, flares, onCreateFlare, onJoinFlare, onUserClick }: FlaresViewProps) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
   const [category, setCategory] = useState('Other')
@@ -214,17 +215,27 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare }: FlaresV
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-11 w-11 ring-2 ring-primary/20">
-                          <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground font-semibold">
-                            {(flare.creator_name || 'A').slice(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <button
+                          onClick={() => onUserClick?.(flare.creator_id)}
+                          className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
+                          aria-label={`View ${flare.creator_name || 'user'}'s profile`}
+                        >
+                          <Avatar className="h-11 w-11 ring-2 ring-primary/20 cursor-pointer">
+                            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground font-semibold">
+                              {(flare.creator_name || 'A').slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </button>
                         <div className="space-y-0.5">
                           <CardTitle className="text-base leading-snug">{flare.title}</CardTitle>
                           <CardDescription className="text-xs flex items-center gap-1.5">
-                            <span className="font-medium text-foreground/70">
+                            <button
+                              onClick={() => onUserClick?.(flare.creator_id)}
+                              className="font-medium text-foreground/70 hover:text-primary transition-colors cursor-pointer"
+                              aria-label={`View ${flare.creator_name || 'user'}'s profile`}
+                            >
                               {flare.creator_name || 'Anonymous'}
-                            </span>
+                            </button>
                             <span className="text-muted-foreground">•</span>
                             <Clock size={12} className="text-muted-foreground" />
                             <span>{timeAgo(flare.created_at)}</span>
