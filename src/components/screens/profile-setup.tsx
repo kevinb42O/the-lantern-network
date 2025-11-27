@@ -56,87 +56,44 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
     try {
       console.log('Creating profile for user:', user.id);
       
-      // Small delay to ensure auth is fully propagated
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Check if profile already exists
-      const { data: existingProfile, error: checkError } = await supabase
+      // Try to create the profile using upsert (insert or update)
+      const { data: newProfile, error: upsertError } = await supabase
         .from('profiles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid error when not found
-
-      console.log('Existing profile check:', existingProfile, checkError);
-
-      if (checkError) {
-        console.error('Check error:', checkError);
-        // Don't throw, try to create anyway
-      }
-
-      if (existingProfile) {
-        // Profile exists - update it instead
-        console.log('Updating existing profile...');
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            display_name: displayName.trim(),
-            bio: bio.trim() || null,
-            vibe_tags: vibeTags,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('user_id', user.id);
-
-        if (updateError) {
-          console.error('Update error:', updateError);
-          throw updateError;
-        }
-        console.log('Profile updated successfully');
-      } else {
-        // Create new profile
-        console.log('Creating new profile...');
-        const { data: newProfile, error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: user.id,
-            display_name: displayName.trim(),
-            bio: bio.trim() || null,
-            vibe_tags: vibeTags,
-            trust_score: 0,
-            lantern_balance: INITIAL_LANTERNS,
-            location: null,
-          })
-          .select()
-          .single();
-
-        if (profileError) {
-          console.error('Insert error:', profileError);
-          throw profileError;
-        }
-        console.log('Profile created successfully:', newProfile);
-
-        // Record initial lantern transaction (only for new profiles)
-        console.log('Recording welcome bonus...');
-        const { error: txError } = await supabase.from('transactions').insert({
+        .upsert({
           user_id: user.id,
-          type: 'welcome_bonus',
-          amount: INITIAL_LANTERNS,
-          description: 'Welcome to The Lantern Network!',
-        });
-        
-        if (txError) {
-          console.error('Transaction error (non-fatal):', txError);
-        }
-      }
+          display_name: displayName.trim(),
+          bio: bio.trim() || null,
+          vibe_tags: vibeTags,
+          trust_score: 0,
+          lantern_balance: INITIAL_LANTERNS,
+          location: null,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
+        .single();
 
-      // Refresh the profile in context
-      console.log('Refreshing profile...');
-      await refreshProfile();
-      console.log('Profile refreshed, done!');
+      if (upsertError) {
+        console.error('Upsert error:', upsertError);
+        throw upsertError;
+      }
       
-      // Force a small delay then reload to ensure state is fresh
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      console.log('Profile created/updated:', newProfile);
+
+      // Record initial lantern transaction
+      await supabase.from('transactions').insert({
+        user_id: user.id,
+        type: 'welcome_bonus',
+        amount: INITIAL_LANTERNS,
+        description: 'Welcome to The Lantern Network!',
+      }).then(({ error }) => {
+        if (error) console.log('Transaction already exists or error:', error);
+      });
+
+      // Force page reload to get fresh state
+      console.log('Reloading page...');
+      window.location.reload();
       
     } catch (err: any) {
       console.error('Profile setup error:', err);

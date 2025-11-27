@@ -36,19 +36,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     console.log('Fetching profile for user:', userId);
     
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching profile:', error);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return null;
+      }
+
+      console.log('Profile fetched:', data);
+      setProfile(data);
+      return data;
+    } catch (err) {
+      console.error('Profile fetch exception:', err);
+      return null;
     }
-
-    console.log('Profile fetched:', data);
-    setProfile(data);
-    return data;
   };
 
   // Initialize auth state - only if Supabase is configured
@@ -59,32 +65,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let isMounted = true;
-    let timeoutCleared = false;
 
-    // Timeout fallback - if auth takes too long, stop loading
-    // Increased to 10 seconds for slower connections
-    const timeout = setTimeout(() => {
-      if (isMounted && !timeoutCleared) {
-        console.warn('Auth timeout - stopping loading state');
-        setLoading(false);
-      }
-    }, 10000);
-
-    const clearTimeoutOnce = () => {
-      if (!timeoutCleared) {
-        timeoutCleared = true;
-        clearTimeout(timeout);
-      }
-    };
-
-    // Get initial session
+    // Get initial session - no timeout, just let it complete
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Getting session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error);
+        }
         
         if (!isMounted) return;
         
-        clearTimeoutOnce();
+        console.log('Session:', session ? 'exists' : 'none');
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -98,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.error('Error getting session:', err);
         if (isMounted) {
-          clearTimeoutOnce();
           setLoading(false);
         }
       }
@@ -130,7 +123,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       isMounted = false;
-      clearTimeoutOnce();
       subscription.unsubscribe();
     };
   }, []);
