@@ -83,6 +83,14 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
   const currentBadge = getBadgeForFlareCount(completedFlares)
   const earnedBadges = getEarnedBadges(completedFlares)
   const nextBadge = getNextBadge(completedFlares)
+  
+  // Get custom badges assigned by admin (these are additive to earned badges)
+  const customBadges = profile?.badges 
+    ? BADGES.filter(b => profile.badges.includes(b.id))
+    : []
+  
+  // Total badge count combines earned badges (from helping) and custom badges (from admin)
+  const totalBadgeCount = earnedBadges.length + customBadges.length
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -193,7 +201,7 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Shield size={14} weight="duotone" className="text-amber-400" />
                   </div>
-                  <p className="text-xl font-bold text-foreground">{earnedBadges.length}</p>
+                  <p className="text-xl font-bold text-foreground">{totalBadgeCount}</p>
                   <p className="text-xs text-muted-foreground">Badges</p>
                 </div>
               </div>
@@ -209,6 +217,26 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${badge.bgColor} ${badge.color} border ${badge.borderColor}`}
                         title={badge.description}
                       >
+                        <span>{badge.emoji}</span>
+                        <span>{badge.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Custom Badges (assigned by admin) */}
+              {customBadges.length > 0 && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-foreground mb-2">Special Badges</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {customBadges.map((badge) => (
+                      <div
+                        key={`custom-${badge.id}`}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${badge.bgColor} ${badge.color} border-2 ${badge.borderColor} shadow-sm`}
+                        title={`Special: ${badge.description}`}
+                      >
+                        <span>✨</span>
                         <span>{badge.emoji}</span>
                         <span>{badge.name}</span>
                       </div>

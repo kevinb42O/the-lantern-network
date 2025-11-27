@@ -9,6 +9,16 @@ const isSupabaseConfigured =
   import.meta.env.VITE_SUPABASE_ANON_KEY &&
   !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
 
+/**
+ * Admin emails - users with these emails will have is_admin set to true in their profile.
+ * This enables RLS policies that require admin status for certain operations.
+ * Note: This list should match the ADMIN_EMAILS in App.tsx for consistent behavior.
+ * For production, consider moving to environment variables or a secure database table.
+ */
+const ADMIN_EMAILS = [
+  'kevinb42O@hotmail.com',
+];
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -30,8 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured); // Only loading if Supabase is configured
 
-  // Fetch user profile with timeout
-  const fetchProfile = async (userId: string): Promise<Profile | null> => {
+  // Fetch user profile with timeout and sync admin status
+  const fetchProfile = async (userId: string, userEmail?: string): Promise<Profile | null> => {
     if (!isSupabaseConfigured) return null;
     
     console.log('Fetching profile for user:', userId);
@@ -57,11 +67,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
       // Race between fetch and timeout
-      const profile = await Promise.race([fetchPromise, timeoutPromise]);
+      const fetchedProfile = await Promise.race([fetchPromise, timeoutPromise]);
       
-      console.log('Profile fetched:', profile ? 'found' : 'not found');
-      setProfile(profile);
-      return profile;
+      console.log('Profile fetched:', fetchedProfile ? 'found' : 'not found');
+      
+      // Sync admin status if user email matches an admin email
+      if (fetchedProfile && userEmail) {
+        const isAdminEmail = ADMIN_EMAILS.some(email => 
+          email.toLowerCase() === userEmail.toLowerCase()
+        );
+        
+        // If user is an admin by email but profile doesn't have is_admin set
+        if (isAdminEmail && !fetchedProfile.is_admin) {
+          console.log('Syncing admin status for:', userEmail);
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ is_admin: true })
+            .eq('user_id', userId);
+          
+          if (!updateError) {
+            fetchedProfile.is_admin = true;
+          } else {
+            console.error('Error syncing admin status:', updateError);
+          }
+        }
+      }
+      
+      setProfile(fetchedProfile);
+      return fetchedProfile;
     } catch (err) {
       console.error('Profile fetch error:', err);
       // On timeout, set profile to null and continue - user will see profile setup
@@ -96,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          await fetchProfile(session.user.id, session.user.email);
         }
         
         if (isMounted) {
@@ -124,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await fetchProfile(session.user.id);
+        await fetchProfile(session.user.id, session.user.email);
       } else {
         setProfile(null);
       }
@@ -179,7 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', user.id);
 
     if (!error) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, user.email);
     }
 
     return { error: error ? new Error(error.message) : null };
@@ -187,7 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, user.email);
     }
   };
 
