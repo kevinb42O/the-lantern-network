@@ -12,7 +12,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient<Database>(
   supabaseUrl || 'https://placeholder.supabase.co',
-  supabaseAnonKey || 'placeholder-key'
+  supabaseAnonKey || 'placeholder-key',
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+    // Disable realtime for now to avoid connection issues
+    realtime: {
+      params: {
+        eventsPerSecond: 2,
+      },
+    },
+  }
 );
 
 export default supabase;

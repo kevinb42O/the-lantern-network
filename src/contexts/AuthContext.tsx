@@ -30,31 +30,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(isSupabaseConfigured); // Only loading if Supabase is configured
 
-  // Fetch user profile
+  // Fetch user profile with timeout
   const fetchProfile = async (userId: string): Promise<Profile | null> => {
     if (!isSupabaseConfigured) return null;
     
     console.log('Fetching profile for user:', userId);
     
     try {
-      // Use limit(1) instead of maybeSingle for better compatibility
-      const { data, error } = await supabase
+      // Create a timeout promise
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000);
+      });
+
+      // Create the fetch promise
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .limit(1);
+        .limit(1)
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('Error fetching profile:', error);
+            return null;
+          }
+          return data && data.length > 0 ? data[0] : null;
+        });
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        return null;
-      }
-
-      const profile = data && data.length > 0 ? data[0] : null;
+      // Race between fetch and timeout
+      const profile = await Promise.race([fetchPromise, timeoutPromise]);
+      
       console.log('Profile fetched:', profile ? 'found' : 'not found');
       setProfile(profile);
       return profile;
     } catch (err) {
-      console.error('Profile fetch exception:', err);
+      console.error('Profile fetch error:', err);
+      // On timeout, set profile to null and continue - user will see profile setup
+      setProfile(null);
       return null;
     }
   };
