@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import type { User } from '@/lib/types'
 
 // Flare from Supabase
@@ -111,7 +112,12 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare }: FlaresV
   }
 
   const handleSendHelpOffer = async () => {
-    if (!helpFlare || !helpMessage.trim()) return
+    if (!helpFlare) return
+    
+    if (!helpMessage.trim()) {
+      toast.error('Please write a message to introduce yourself')
+      return
+    }
     
     setSendingHelp(true)
     try {

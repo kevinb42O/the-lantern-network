@@ -220,10 +220,12 @@ function App() {
 
     if (messageError) {
       console.error('Error sending notification message:', messageError)
-      // Don't fail the whole operation, the help request was created
+      // Help request was created, but notification message failed
+      toast.warning('Help offer sent, but notification may be delayed')
+    } else {
+      toast.success('Help offer sent! Waiting for response...')
     }
-
-    toast.success('Help offer sent! Waiting for response...')
+    
     fetchHelpRequests()
   }
 
@@ -619,14 +621,28 @@ function App() {
       .subscribe()
 
     // Subscribe to messages for unread count updates
+    // Only listen for new messages where user is the receiver
     const messagesChannel = supabase
       .channel('messages-unread')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
-          table: 'messages'
+          table: 'messages',
+          filter: `receiver_id=eq.${authUser.id}`
+        },
+        () => {
+          fetchUnreadCount()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${authUser.id}`
         },
         () => {
           fetchUnreadCount()
