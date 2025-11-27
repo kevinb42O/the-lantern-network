@@ -189,6 +189,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
       <button
         onClick={() => onUserClick?.(message.userId)}
         className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
+        aria-label={`View ${message.username}'s profile`}
       >
         <Avatar className={`flex-shrink-0 h-10 w-10 cursor-pointer ${getRingStyle()}`}>
           <AvatarFallback className={`text-sm font-semibold ${getAvatarBgStyle()}`}>
@@ -202,6 +203,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
           <button
             onClick={() => onUserClick?.(message.userId)}
             className={`text-sm font-semibold hover:underline cursor-pointer ${getNameStyle()}`}
+            aria-label={`View ${message.username}'s profile`}
           >
             {displayName}
           </button>

@@ -159,19 +159,12 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
         updated_at: new Date().toISOString()
       }
 
-      // If adding credits
+      // If adding credits, update balance and record transaction
       if (creditsToAdd > 0) {
         updates.lantern_balance = selectedUser.lantern_balance + creditsToAdd
-
-        // Also record the transaction
-        await supabase.from('transactions').insert({
-          user_id: selectedUser.user_id,
-          type: 'bonus',
-          amount: creditsToAdd,
-          description: 'Admin bonus credits'
-        })
       }
 
+      // Update profile first
       const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -181,6 +174,22 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
         console.error('Error updating user:', error)
         toast.error('Failed to update user')
         return
+      }
+
+      // Record the transaction after successful profile update
+      if (creditsToAdd > 0) {
+        const { error: txError } = await supabase.from('transactions').insert({
+          user_id: selectedUser.user_id,
+          type: 'bonus',
+          amount: creditsToAdd,
+          description: 'Admin bonus credits'
+        })
+
+        if (txError) {
+          console.error('Error recording transaction:', txError)
+          // Transaction record failed but credits were added - this is non-critical
+          toast.warning('Credits added but transaction log failed')
+        }
       }
 
       toast.success(`Updated ${selectedUser.display_name}!`)

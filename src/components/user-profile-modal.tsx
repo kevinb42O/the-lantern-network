@@ -60,7 +60,7 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
       // Fetch completed help count
       const { count } = await supabase
         .from('flare_participants')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', id)
         .eq('status', 'completed')
 

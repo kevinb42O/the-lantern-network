@@ -23,7 +23,6 @@ interface ProfileViewProps {
   inviteCodes: InviteCode[]
   onGenerateInvite: () => void
   onDeleteAccount: () => void
-  isModerator?: boolean
 }
 
 export function ProfileView({ 
@@ -31,8 +30,7 @@ export function ProfileView({
   helpCount, 
   inviteCodes,
   onGenerateInvite,
-  onDeleteAccount,
-  isModerator = false
+  onDeleteAccount
 }: ProfileViewProps) {
   const { signOut } = useAuth();
   const [showInvites, setShowInvites] = useState(false)
@@ -93,7 +91,7 @@ export function ProfileView({
       <ScrollArea className="flex-1">
         <div className="p-5 space-y-5 max-w-lg mx-auto">
           {/* Vibe Card */}
-          <VibeCard user={user} helpCount={helpCount} isModerator={isModerator} />
+          <VibeCard user={user} helpCount={helpCount} isModerator={user.isModerator} />
 
           {/* Badge Progress Card */}
           <Card className={`p-5 ${currentBadge.bgColor} border ${currentBadge.borderColor}`}>

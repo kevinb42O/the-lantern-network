@@ -955,6 +955,9 @@ function App() {
     email.toLowerCase() === (authUser.email || '').toLowerCase()
   )
 
+  // Check if current user is moderator
+  const isModerator = (profile as Record<string, unknown>).is_moderator === true
+
   // User data for views
   const userData = {
     id: authUser.id,
@@ -965,7 +968,8 @@ function App() {
     createdAt: new Date(profile.created_at).getTime(),
     isElder: profile.trust_score >= ELDER_TRUST_THRESHOLD,
     location: profile.location as { lat: number; lng: number } | undefined,
-    isAdmin
+    isAdmin,
+    isModerator
   }
 
   return (

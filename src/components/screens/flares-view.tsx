@@ -218,6 +218,7 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare, onUserCli
                         <button
                           onClick={() => onUserClick?.(flare.creator_id)}
                           className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
+                          aria-label={`View ${flare.creator_name || 'user'}'s profile`}
                         >
                           <Avatar className="h-11 w-11 ring-2 ring-primary/20 cursor-pointer">
                             <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground font-semibold">
@@ -231,6 +232,7 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare, onUserCli
                             <button
                               onClick={() => onUserClick?.(flare.creator_id)}
                               className="font-medium text-foreground/70 hover:text-primary transition-colors cursor-pointer"
+                              aria-label={`View ${flare.creator_name || 'user'}'s profile`}
                             >
                               {flare.creator_name || 'Anonymous'}
                             </button>

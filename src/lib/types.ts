@@ -8,6 +8,7 @@ export interface User {
   createdAt: number
   isElder: boolean
   isAdmin?: boolean
+  isModerator?: boolean
   invitedBy?: string
   location?: {
     lat: number
