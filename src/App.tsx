@@ -15,9 +15,9 @@ import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import type { Message } from '@/lib/types'
 
-// Admin configuration - add your email here
+// Admin configuration
 const ADMIN_EMAILS = [
-  'kevin@example.com', // Replace with your actual email
+  'kevinb42O@hotmail.com',
 ]
 
 type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile'
