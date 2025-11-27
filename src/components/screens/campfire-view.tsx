@@ -125,10 +125,8 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbl
     return `${Math.floor(seconds / 3600)}h ago`
   }
 
-  // Admin display name
-  const displayName = isAdmin 
-    ? (isCurrentUser ? '👑 ADMIN' : `👑 ADMIN`)
-    : (isCurrentUser ? 'You' : message.username)
+  // Display name - show real username, mark as admin if applicable
+  const displayName = isCurrentUser ? 'You' : message.username
 
   return (
     <div
@@ -155,8 +153,8 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbl
             {displayName}
           </span>
           {isAdmin && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
-              ADMIN
+            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium animate-pulse">
+              👑 ADMIN
             </span>
           )}
           <span className="text-xs text-muted-foreground">

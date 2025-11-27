@@ -150,8 +150,8 @@ function App() {
     }
   }, [authUser])
 
-  // Cache for profile names
-  const [profileCache, setProfileCache] = useState<Record<string, string>>({})
+  // Track admin user IDs
+  const [adminUserIds, setAdminUserIds] = useState<string[]>([])
 
   // Fetch campfire messages with sender names
   const fetchMessages = async () => {
@@ -167,31 +167,26 @@ function App() {
         return
       }
 
-      // Get sender IDs we don't have cached
-      const unknownSenderIds = [...new Set(messagesData.map(m => m.sender_id))]
-        .filter(id => !profileCache[id])
+      // Get all unique sender IDs
+      const senderIds = [...new Set(messagesData.map(m => m.sender_id))]
       
-      // Only fetch profiles we don't have
-      if (unknownSenderIds.length > 0) {
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('user_id, display_name')
-          .in('user_id', unknownSenderIds)
-        
-        if (profilesData) {
-          const newCache = { ...profileCache }
-          profilesData.forEach(p => {
-            newCache[p.user_id] = p.display_name
-          })
-          setProfileCache(newCache)
-        }
-      }
+      // Fetch all profiles for these senders
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', senderIds)
+      
+      // Create a map of user_id to display_name
+      const profileMap: Record<string, string> = {}
+      profilesData?.forEach(p => {
+        profileMap[p.user_id] = p.display_name
+      })
 
-      // Format messages with usernames from cache
+      // Format messages with usernames
       const formattedMessages: Message[] = messagesData.map(m => ({
         id: m.id,
         userId: m.sender_id,
-        username: profileCache[m.sender_id] || 'Anonymous',
+        username: profileMap[m.sender_id] || 'Anonymous',
         content: m.content,
         timestamp: new Date(m.created_at).getTime(),
         type: 'campfire' as const
@@ -334,7 +329,7 @@ function App() {
             user={userData}
             messages={messages}
             onSendMessage={handleSendMessage}
-            adminUserIds={isAdmin ? [authUser.id] : []}
+            adminUserIds={isAdmin ? [...adminUserIds, authUser.id] : adminUserIds}
           />
         )}
         {currentView === 'wallet' && (
