@@ -54,15 +54,20 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
     setError(null);
 
     try {
+      console.log('Creating profile for user:', user.id);
+      
       // Check if profile already exists
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
         .select('user_id')
         .eq('user_id', user.id)
         .single();
 
+      console.log('Existing profile check:', existingProfile, checkError);
+
       if (existingProfile) {
         // Profile exists - update it instead
+        console.log('Updating existing profile...');
         const { error: updateError } = await supabase
           .from('profiles')
           .update({
@@ -73,9 +78,14 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
           })
           .eq('user_id', user.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Update error:', updateError);
+          throw updateError;
+        }
+        console.log('Profile updated successfully');
       } else {
         // Create new profile
+        console.log('Creating new profile...');
         const { error: profileError } = await supabase.from('profiles').insert({
           user_id: user.id,
           display_name: displayName.trim(),
@@ -86,26 +96,37 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
           location: null,
         });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Insert error:', profileError);
+          throw profileError;
+        }
+        console.log('Profile created successfully');
 
         // Record initial lantern transaction (only for new profiles)
-        await supabase.from('transactions').insert({
+        console.log('Recording welcome bonus...');
+        const { error: txError } = await supabase.from('transactions').insert({
           user_id: user.id,
           type: 'welcome_bonus',
           amount: INITIAL_LANTERNS,
           description: 'Welcome to The Lantern Network!',
         });
+        
+        if (txError) {
+          console.error('Transaction error (non-fatal):', txError);
+        }
       }
 
       // Refresh the profile in context
+      console.log('Refreshing profile...');
       await refreshProfile();
+      console.log('Profile refreshed, calling onComplete');
       
       if (onComplete) {
         onComplete();
       }
     } catch (err: any) {
+      console.error('Profile setup error:', err);
       setError(err.message || 'Failed to create profile');
-    } finally {
       setLoading(false);
     }
   };

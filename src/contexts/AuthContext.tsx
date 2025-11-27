@@ -31,8 +31,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(isSupabaseConfigured); // Only loading if Supabase is configured
 
   // Fetch user profile
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
     if (!isSupabaseConfigured) return null;
+    
+    console.log('Fetching profile for user:', userId);
     
     const { data, error } = await supabase
       .from('profiles')
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error fetching profile:', error);
     }
 
+    console.log('Profile fetched:', data);
     setProfile(data);
     return data;
   };
