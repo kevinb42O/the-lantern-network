@@ -11,31 +11,56 @@ import { MessagesView } from '@/components/screens/messages-view'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import type { Message as DBMessage } from '@/lib/database.types'
+import type { Message } from '@/lib/types'
 
 type MainView = 'campfire' | 'wallet' | 'messages' | 'profile'
 
 function App() {
-  const { user: authUser, profile, loading: authLoading, signOut, updateProfile, refreshProfile } = useAuth()
+  const { user: authUser, profile, loading: authLoading, signOut } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
   const [currentView, setCurrentView] = useState<MainView>('campfire')
   
   // Messages state with real-time sync
-  const [messages, setMessages] = useState<DBMessage[]>([])
-  const [loadingMessages, setLoadingMessages] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([])
 
-  // Fetch campfire messages
+  // Fetch campfire messages with sender names
   const fetchMessages = async () => {
-    const { data, error } = await supabase
+    // First get messages
+    const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
       .select('*')
-      .is('flare_id', null) // Campfire messages have no flare_id
+      .is('flare_id', null)
       .order('created_at', { ascending: true })
       .limit(100)
     
-    if (!error && data) {
-      setMessages(data)
-    }
+    if (messagesError || !messagesData) return
+
+    // Get unique sender IDs
+    const senderIds = [...new Set(messagesData.map(m => m.sender_id))]
+    
+    // Fetch profiles for those senders
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('user_id, display_name')
+      .in('user_id', senderIds)
+    
+    // Create a map of user_id to display_name
+    const profileMap: Record<string, string> = {}
+    profilesData?.forEach(p => {
+      profileMap[p.user_id] = p.display_name
+    })
+
+    // Format messages with usernames
+    const formattedMessages: Message[] = messagesData.map(m => ({
+      id: m.id,
+      userId: m.sender_id,
+      username: profileMap[m.sender_id] || 'Anonymous',
+      content: m.content,
+      timestamp: new Date(m.created_at).getTime(),
+      type: 'campfire' as const
+    }))
+    
+    setMessages(formattedMessages)
   }
 
   // Subscribe to real-time messages
@@ -52,11 +77,11 @@ function App() {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
-          filter: 'flare_id=is.null'
+          table: 'messages'
         },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new as DBMessage])
+        () => {
+          // Refetch to get the profile name
+          fetchMessages()
         }
       )
       .subscribe()
@@ -70,12 +95,16 @@ function App() {
   const handleSendMessage = async (content: string) => {
     if (!authUser || !profile) return
 
-    await supabase.from('messages').insert({
+    const { error } = await supabase.from('messages').insert({
       sender_id: authUser.id,
-      receiver_id: authUser.id, // For campfire, sender = receiver (broadcast)
+      receiver_id: authUser.id,
       content,
       flare_id: null
     })
+
+    if (error) {
+      console.error('Error sending message:', error)
+    }
   }
 
   // Handle sign out
@@ -108,16 +137,6 @@ function App() {
     return <ProfileSetup />
   }
 
-  // Convert messages to the format expected by CampfireView
-  const campfireMessages = messages.map(m => ({
-    id: m.id,
-    userId: m.sender_id,
-    username: profile.display_name, // We'll need to fetch sender names
-    content: m.content,
-    timestamp: new Date(m.created_at).getTime(),
-    type: 'campfire' as const
-  }))
-
   // User data for views
   const userData = {
     id: authUser.id,
@@ -136,7 +155,7 @@ function App() {
         {currentView === 'campfire' && (
           <CampfireView
             user={userData}
-            messages={campfireMessages}
+            messages={messages}
             onSendMessage={handleSendMessage}
           />
         )}

@@ -5,82 +5,6 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { Message, User } from '@/lib/types'
 import { toast } from 'sonner'
 
-// Fake conversation messages to simulate an active neighborhood chat
-const FAKE_MESSAGES: Message[] = [
-  {
-    id: 'fake-1',
-    userId: 'user-maria',
-    username: 'Maria_Gardens',
-    content: 'Hey everyone! Just made some fresh lemonade. Anyone want to stop by? 🍋',
-    timestamp: Date.now() - 3 * 60 * 60 * 1000, // 3 hours ago
-    type: 'campfire'
-  },
-  {
-    id: 'fake-2',
-    userId: 'user-james',
-    username: 'James_Oak',
-    content: 'Count me in! I\'ll bring those cookies I mentioned yesterday',
-    timestamp: Date.now() - 2.5 * 60 * 60 * 1000,
-    type: 'campfire'
-  },
-  {
-    id: 'fake-3',
-    userId: 'user-elena',
-    username: 'Elena_River',
-    content: 'Has anyone seen a gray tabby cat around Maple Street? My neighbor\'s cat Whiskers got out this morning 🐱',
-    timestamp: Date.now() - 2 * 60 * 60 * 1000,
-    type: 'campfire'
-  },
-  {
-    id: 'fake-4',
-    userId: 'user-david',
-    username: 'David_Hill',
-    content: 'I saw a cat near the community garden about an hour ago! Will keep an eye out',
-    timestamp: Date.now() - 1.5 * 60 * 60 * 1000,
-    type: 'campfire'
-  },
-  {
-    id: 'fake-5',
-    userId: 'user-maria',
-    username: 'Maria_Gardens',
-    content: 'Oh no! I\'ll check my backyard too. Whiskers loves to hide in bushes',
-    timestamp: Date.now() - 1.2 * 60 * 60 * 1000,
-    type: 'campfire'
-  },
-  {
-    id: 'fake-6',
-    userId: 'user-sofia',
-    username: 'Sofia_Sunset',
-    content: 'Quick reminder: community clean-up is this Saturday at 9am! ✨ We still need volunteers',
-    timestamp: Date.now() - 45 * 60 * 1000, // 45 min ago
-    type: 'campfire'
-  },
-  {
-    id: 'fake-7',
-    userId: 'user-james',
-    username: 'James_Oak',
-    content: 'I\'m in for Saturday. Can bring extra gloves and trash bags',
-    timestamp: Date.now() - 30 * 60 * 1000,
-    type: 'campfire'
-  },
-  {
-    id: 'fake-8',
-    userId: 'user-elena',
-    username: 'Elena_River',
-    content: 'UPDATE: Whiskers is home safe! Found him sleeping under David\'s porch 😂 Thanks everyone!',
-    timestamp: Date.now() - 15 * 60 * 1000,
-    type: 'campfire'
-  },
-  {
-    id: 'fake-9',
-    userId: 'user-david',
-    username: 'David_Hill',
-    content: 'Glad he\'s safe! That cat is always on adventures lol',
-    timestamp: Date.now() - 5 * 60 * 1000,
-    type: 'campfire'
-  }
-]
-
 interface CampfireViewProps {
   user: User
   messages: Message[]
@@ -92,10 +16,7 @@ export function CampfireView({ user, messages, onSendMessage }: CampfireViewProp
   const scrollRef = useRef<HTMLDivElement>(null)
   const [messageCount, setMessageCount] = useState(0)
 
-  // Combine fake messages with real messages
-  const allMessages = [...FAKE_MESSAGES, ...messages]
-  
-  const campfireMessages = allMessages
+  const campfireMessages = messages
     .filter(m => m.type === 'campfire')
     .sort((a, b) => a.timestamp - b.timestamp)
 
