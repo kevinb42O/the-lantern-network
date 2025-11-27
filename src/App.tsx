@@ -147,15 +147,18 @@ function App() {
 
   // Fetch campfire messages with sender names
   const fetchMessages = async () => {
-    // First get messages
+    // First get messages - no limit, get all campfire messages
     const { data: messagesData, error: messagesError } = await supabase
       .from('messages')
       .select('*')
       .is('flare_id', null)
       .order('created_at', { ascending: true })
-      .limit(100)
     
-    if (messagesError || !messagesData) return
+    if (messagesError) {
+      console.error('Error fetching messages:', messagesError)
+      return
+    }
+    if (!messagesData) return
 
     // Get unique sender IDs
     const senderIds = [...new Set(messagesData.map(m => m.sender_id))]

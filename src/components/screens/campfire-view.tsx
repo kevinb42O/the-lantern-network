@@ -3,7 +3,6 @@ import { Fire, PaperPlaneRight } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { Message, User } from '@/lib/types'
-import { toast } from 'sonner'
 
 interface CampfireViewProps {
   user: User
@@ -14,7 +13,6 @@ interface CampfireViewProps {
 export function CampfireView({ user, messages, onSendMessage }: CampfireViewProps) {
   const [inputValue, setInputValue] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
-  const [messageCount, setMessageCount] = useState(0)
 
   const campfireMessages = messages
     .filter(m => m.type === 'campfire')
@@ -27,27 +25,11 @@ export function CampfireView({ user, messages, onSendMessage }: CampfireViewProp
     }
   }, [campfireMessages.length])
 
-  // Count only the user's real messages (not fake ones) in the last 24 hours
-  useEffect(() => {
-    const twentyFourHours = 24 * 60 * 60 * 1000
-    const recentUserMessages = messages.filter(
-      m => m.type === 'campfire' && m.userId === user.id && Date.now() - m.timestamp < twentyFourHours
-    )
-    setMessageCount(recentUserMessages.length)
-  }, [messages, user.id])
-
   const handleSend = () => {
     if (!inputValue.trim()) return
 
-    if (messageCount >= 20) {
-      toast.error('Message limit reached. Please try again later.')
-      return
-    }
-
     onSendMessage(inputValue.trim())
     setInputValue('')
-    setMessageCount(prev => prev + 1)
-    toast.success('Message sent to the campfire')
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -106,7 +88,7 @@ export function CampfireView({ user, messages, onSendMessage }: CampfireViewProp
             />
             <Button
               onClick={handleSend}
-              disabled={!inputValue.trim() || messageCount >= 20}
+              disabled={!inputValue.trim()}
               size="icon"
               className="shrink-0 h-10 w-10"
             >
@@ -115,9 +97,7 @@ export function CampfireView({ user, messages, onSendMessage }: CampfireViewProp
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Press Enter to send</span>
-            <span className={messageCount >= 20 ? 'text-destructive font-medium' : ''}>
-              {messageCount}/20 messages today
-            </span>
+            <span>{campfireMessages.length} messages</span>
           </div>
         </div>
       </div>
