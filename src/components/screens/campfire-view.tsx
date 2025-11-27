@@ -133,28 +133,24 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbl
       className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''}`}
       style={{ opacity }}
     >
-      <Avatar className={`flex-shrink-0 ${isAdmin ? 'h-12 w-12 ring-2 ring-amber-400 ring-offset-2 ring-offset-background' : 'h-10 w-10'}`}>
-        <AvatarFallback className={`font-semibold ${
+      <Avatar className={`flex-shrink-0 h-10 w-10 ${isAdmin ? 'ring-2 ring-amber-400' : ''}`}>
+        <AvatarFallback className={`text-sm font-semibold ${
           isAdmin 
-            ? 'text-base bg-gradient-to-br from-amber-400 to-orange-500 text-white' 
-            : 'text-sm bg-primary/20 text-primary'
+            ? 'bg-amber-500 text-white' 
+            : 'bg-primary/20 text-primary'
         }`}>
-          {isAdmin ? '👑' : message.username.slice(0, 2).toUpperCase()}
+          {message.username.slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       
       <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''}`}>
         <div className={`flex items-baseline gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
-          <span className={`font-bold ${
-            isAdmin 
-              ? 'text-base bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 bg-clip-text text-transparent drop-shadow-sm' 
-              : 'text-sm text-foreground'
-          }`}>
+          <span className={`text-sm font-semibold ${isAdmin ? 'text-amber-400' : 'text-foreground'}`}>
             {displayName}
           </span>
           {isAdmin && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium animate-pulse">
-              👑 ADMIN
+            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
+              ADMIN
             </span>
           )}
           <span className="text-xs text-muted-foreground">
@@ -163,16 +159,15 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbl
         </div>
         <div
           className={`
-            inline-block p-3 rounded-2xl
-            ${isAdmin
-              ? 'bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-2 border-amber-400/50 text-foreground rounded-br-md shadow-lg shadow-amber-500/10'
-              : isCurrentUser 
-                ? 'bg-primary text-primary-foreground rounded-br-md' 
-                : 'bg-card text-card-foreground border border-border rounded-bl-md'
+            inline-block p-3 rounded-2xl text-sm
+            ${isCurrentUser 
+              ? 'bg-primary text-primary-foreground rounded-br-md' 
+              : 'bg-card text-card-foreground border border-border rounded-bl-md'
             }
+            ${isAdmin && !isCurrentUser ? 'border-amber-400/50' : ''}
           `}
         >
-          <p className={`whitespace-pre-wrap break-words leading-relaxed ${isAdmin ? 'text-base' : 'text-sm'}`}>
+          <p className="whitespace-pre-wrap break-words leading-relaxed">
             {message.content}
           </p>
         </div>
