@@ -300,8 +300,10 @@ function App() {
     return <ProfileSetup />
   }
 
-  // Check if current user is admin
-  const isAdmin = ADMIN_EMAILS.includes(authUser.email || '')
+  // Check if current user is admin (case-insensitive)
+  const isAdmin = ADMIN_EMAILS.some(email => 
+    email.toLowerCase() === (authUser.email || '').toLowerCase()
+  )
 
   // User data for views
   const userData = {
