@@ -150,8 +150,21 @@ function App() {
     }
   }, [authUser])
 
-  // Track admin user IDs
+  // Track admin user IDs - fetch once on load
   const [adminUserIds, setAdminUserIds] = useState<string[]>([])
+  
+  // Fetch admin user IDs on mount
+  useEffect(() => {
+    const fetchAdminIds = async () => {
+      // Get user IDs for admin emails from auth.users via profiles
+      // Since we can't query auth.users directly, we check if current user is admin
+      // and store their ID. For other admins, we'd need is_admin in profiles table.
+      if (authUser && ADMIN_EMAILS.some(e => e.toLowerCase() === (authUser.email || '').toLowerCase())) {
+        setAdminUserIds(prev => prev.includes(authUser.id) ? prev : [...prev, authUser.id])
+      }
+    }
+    fetchAdminIds()
+  }, [authUser])
 
   // Fetch campfire messages with sender names
   const fetchMessages = async () => {
@@ -170,17 +183,29 @@ function App() {
       // Get all unique sender IDs
       const senderIds = [...new Set(messagesData.map(m => m.sender_id))]
       
-      // Fetch all profiles for these senders
+      // Fetch all profiles for these senders, including is_admin flag
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('user_id, display_name')
+        .select('user_id, display_name, is_admin')
         .in('user_id', senderIds)
       
-      // Create a map of user_id to display_name
+      // Create a map of user_id to display_name and collect admin IDs
       const profileMap: Record<string, string> = {}
+      const fetchedAdminIds: string[] = []
       profilesData?.forEach(p => {
         profileMap[p.user_id] = p.display_name
+        if (p.is_admin) {
+          fetchedAdminIds.push(p.user_id)
+        }
       })
+      
+      // Update admin user IDs
+      if (fetchedAdminIds.length > 0) {
+        setAdminUserIds(prev => {
+          const combined = [...new Set([...prev, ...fetchedAdminIds])]
+          return combined
+        })
+      }
 
       // Format messages with usernames
       const formattedMessages: Message[] = messagesData.map(m => ({
