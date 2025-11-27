@@ -9,7 +9,12 @@ const isSupabaseConfigured =
   import.meta.env.VITE_SUPABASE_ANON_KEY &&
   !import.meta.env.VITE_SUPABASE_URL.includes('placeholder');
 
-// Admin emails - users with these emails will have is_admin set to true in their profile
+/**
+ * Admin emails - users with these emails will have is_admin set to true in their profile.
+ * This enables RLS policies that require admin status for certain operations.
+ * Note: This list should match the ADMIN_EMAILS in App.tsx for consistent behavior.
+ * For production, consider moving to environment variables or a secure database table.
+ */
 const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ];
