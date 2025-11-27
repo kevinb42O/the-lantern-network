@@ -56,14 +56,22 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
     try {
       console.log('Creating profile for user:', user.id);
       
+      // Small delay to ensure auth is fully propagated
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Check if profile already exists
       const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
         .select('user_id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid error when not found
 
       console.log('Existing profile check:', existingProfile, checkError);
+
+      if (checkError) {
+        console.error('Check error:', checkError);
+        // Don't throw, try to create anyway
+      }
 
       if (existingProfile) {
         // Profile exists - update it instead
@@ -86,21 +94,25 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
       } else {
         // Create new profile
         console.log('Creating new profile...');
-        const { error: profileError } = await supabase.from('profiles').insert({
-          user_id: user.id,
-          display_name: displayName.trim(),
-          bio: bio.trim() || null,
-          vibe_tags: vibeTags,
-          trust_score: 0,
-          lantern_balance: INITIAL_LANTERNS,
-          location: null,
-        });
+        const { data: newProfile, error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            display_name: displayName.trim(),
+            bio: bio.trim() || null,
+            vibe_tags: vibeTags,
+            trust_score: 0,
+            lantern_balance: INITIAL_LANTERNS,
+            location: null,
+          })
+          .select()
+          .single();
 
         if (profileError) {
           console.error('Insert error:', profileError);
           throw profileError;
         }
-        console.log('Profile created successfully');
+        console.log('Profile created successfully:', newProfile);
 
         // Record initial lantern transaction (only for new profiles)
         console.log('Recording welcome bonus...');
@@ -119,11 +131,13 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
       // Refresh the profile in context
       console.log('Refreshing profile...');
       await refreshProfile();
-      console.log('Profile refreshed, calling onComplete');
+      console.log('Profile refreshed, done!');
       
-      if (onComplete) {
-        onComplete();
-      }
+      // Force a small delay then reload to ensure state is fresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
     } catch (err: any) {
       console.error('Profile setup error:', err);
       setError(err.message || 'Failed to create profile');
