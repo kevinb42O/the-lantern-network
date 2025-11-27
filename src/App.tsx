@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { House, Fire, Wallet, UserCircle, ChatCircleDots } from '@phosphor-icons/react'
+import { Flame, Fire, Wallet, UserCircle, ChatCircleDots } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 import { SplashScreen } from '@/components/screens/splash-screen'
 import { AuthScreen } from '@/components/screens/auth-screen'
 import { ProfileSetup } from '@/components/screens/profile-setup'
+import { FlaresView } from '@/components/screens/flares-view'
 import { CampfireView } from '@/components/screens/campfire-view'
 import { WalletView } from '@/components/screens/wallet-view'
 import { ProfileView } from '@/components/screens/profile-view'
@@ -13,15 +15,135 @@ import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import type { Message } from '@/lib/types'
 
-type MainView = 'campfire' | 'wallet' | 'messages' | 'profile'
+type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile'
+
+// Flare data from Supabase
+interface FlareData {
+  id: string
+  creator_id: string
+  title: string
+  description: string
+  category: string
+  vibe_tags: string[]
+  location: { lat: number; lng: number } | null
+  radius_miles: number
+  max_participants: number | null
+  current_participants: number
+  lantern_cost: number
+  starts_at: string
+  ends_at: string | null
+  status: string
+  created_at: string
+  creator_name?: string
+}
 
 function App() {
   const { user: authUser, profile, loading: authLoading, signOut } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
-  const [currentView, setCurrentView] = useState<MainView>('campfire')
+  const [currentView, setCurrentView] = useState<MainView>('flares')
   
   // Messages state with real-time sync
   const [messages, setMessages] = useState<Message[]>([])
+  
+  // Flares state
+  const [flares, setFlares] = useState<FlareData[]>([])
+
+  // Fetch flares with creator names
+  const fetchFlares = async () => {
+    const { data: flaresData, error } = await supabase
+      .from('flares')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    
+    if (error || !flaresData) return
+
+    // Get unique creator IDs
+    const creatorIds = [...new Set(flaresData.map(f => f.creator_id))]
+    
+    // Fetch profiles for creators
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('user_id, display_name')
+      .in('user_id', creatorIds)
+    
+    // Create a map of user_id to display_name
+    const profileMap: Record<string, string> = {}
+    profilesData?.forEach(p => {
+      profileMap[p.user_id] = p.display_name
+    })
+
+    // Add creator names to flares
+    const flaresWithNames: FlareData[] = flaresData.map(f => ({
+      ...f,
+      location: f.location as { lat: number; lng: number } | null,
+      creator_name: profileMap[f.creator_id] || 'Anonymous'
+    }))
+    
+    setFlares(flaresWithNames)
+  }
+
+  // Create a new flare
+  const handleCreateFlare = async (flareData: {
+    title: string
+    description: string
+    category: string
+    location: { lat: number; lng: number } | null
+  }) => {
+    if (!authUser) return
+
+    const { error } = await supabase.from('flares').insert({
+      creator_id: authUser.id,
+      title: flareData.title,
+      description: flareData.description,
+      category: flareData.category,
+      location: flareData.location,
+      starts_at: new Date().toISOString(),
+      status: 'active'
+    })
+
+    if (error) {
+      console.error('Error creating flare:', error)
+      toast.error('Failed to create flare')
+    } else {
+      toast.success('Flare posted!')
+      fetchFlares()
+    }
+  }
+
+  // Join/offer help on a flare
+  const handleJoinFlare = async (flareId: string) => {
+    if (!authUser) return
+    
+    // For now, just show a toast - we can expand this later
+    toast.success('Help offer sent!')
+  }
+
+  // Subscribe to real-time flares
+  useEffect(() => {
+    if (!authUser) return
+
+    fetchFlares()
+
+    const channel = supabase
+      .channel('flares-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'flares'
+        },
+        () => {
+          fetchFlares()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [authUser])
 
   // Fetch campfire messages with sender names
   const fetchMessages = async () => {
@@ -152,6 +274,14 @@ function App() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <div className="flex-1 overflow-hidden">
+        {currentView === 'flares' && (
+          <FlaresView
+            user={userData}
+            flares={flares}
+            onCreateFlare={handleCreateFlare}
+            onJoinFlare={handleJoinFlare}
+          />
+        )}
         {currentView === 'campfire' && (
           <CampfireView
             user={userData}
@@ -187,6 +317,12 @@ function App() {
 
       <nav className="border-t border-border bg-card safe-area-bottom">
         <div className="flex items-center justify-around p-2">
+          <NavButton
+            icon={Flame}
+            label="Flares"
+            active={currentView === 'flares'}
+            onClick={() => setCurrentView('flares')}
+          />
           <NavButton
             icon={Fire}
             label="Campfire"
