@@ -90,6 +90,24 @@ function App() {
   // Help count for profile
   const [helpCount, setHelpCount] = useState(0)
 
+  // Unread message count for badge
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  // Fetch unread message count
+  const fetchUnreadCount = async () => {
+    if (!authUser) return
+
+    const { count, error } = await supabase
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('receiver_id', authUser.id)
+      .eq('read', false)
+
+    if (!error && count !== null) {
+      setUnreadCount(count)
+    }
+  }
+
   // Fetch flares with creator names
   const fetchFlares = async () => {
     const { data: flaresData, error } = await supabase
@@ -154,7 +172,7 @@ function App() {
   }
 
   // Join/offer help on a flare - NOW FULLY IMPLEMENTED
-  const handleJoinFlare = async (flareId: string) => {
+  const handleJoinFlare = async (flareId: string, message: string) => {
     if (!authUser || !profile) return
     
     // Find the flare to get owner info
@@ -181,16 +199,34 @@ function App() {
     const { error } = await supabase.from('flare_participants').insert({
       flare_id: flareId,
       user_id: authUser.id,
-      status: 'pending'
+      status: 'pending',
+      message: message
     })
 
     if (error) {
       console.error('Error offering help:', error)
       toast.error('Failed to send help offer')
+      return
+    }
+
+    // Also send a message to the flare owner so they get a notification
+    const { error: messageError } = await supabase.from('messages').insert({
+      sender_id: authUser.id,
+      receiver_id: flare.creator_id,
+      content: message,
+      flare_id: flareId,
+      read: false
+    })
+
+    if (messageError) {
+      console.error('Error sending notification message:', messageError)
+      // Help request was created, but notification message failed
+      toast.warning('Help offer sent, but notification may be delayed')
     } else {
       toast.success('Help offer sent! Waiting for response...')
-      fetchHelpRequests()
     }
+    
+    fetchHelpRequests()
   }
 
   // Fetch help requests (for messages view)
@@ -254,7 +290,7 @@ function App() {
           helperUsername: profileMap[p.user_id] || 'Anonymous',
           flareOwnerId: flare?.creator_id || '',
           flareOwnerUsername: profileMap[flare?.creator_id || ''] || 'Anonymous',
-          message: '',
+          message: p.message || '',
           status: p.status as 'pending' | 'accepted' | 'denied',
           createdAt: new Date(p.joined_at).getTime()
         }
@@ -412,6 +448,20 @@ function App() {
     }
   }
 
+  // Mark all messages as read for the current user
+  const handleMarkAsRead = async () => {
+    if (!authUser) return
+
+    await supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('receiver_id', authUser.id)
+      .eq('read', false)
+
+    // Update the local unread count
+    setUnreadCount(0)
+  }
+
   // Fetch transactions
   const fetchTransactions = async () => {
     if (!authUser) return
@@ -536,6 +586,7 @@ function App() {
     fetchTransactions()
     fetchHelpCount()
     fetchInviteCodes()
+    fetchUnreadCount()
 
     const channel = supabase
       .channel('flares-changes')
@@ -569,9 +620,40 @@ function App() {
       )
       .subscribe()
 
+    // Subscribe to messages for unread count updates
+    // Only listen for new messages where user is the receiver
+    const messagesChannel = supabase
+      .channel('messages-unread')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${authUser.id}`
+        },
+        () => {
+          fetchUnreadCount()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${authUser.id}`
+        },
+        () => {
+          fetchUnreadCount()
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(channel)
       supabase.removeChannel(participantsChannel)
+      supabase.removeChannel(messagesChannel)
     }
   }, [authUser])
 
@@ -866,6 +948,7 @@ function App() {
             onDenyHelp={handleDenyHelp}
             onSendMessage={handleSendChatMessage}
             onCompleteFlare={handleCompleteFlare}
+            onMarkAsRead={handleMarkAsRead}
           />
         )}
         {currentView === 'profile' && (
@@ -904,6 +987,7 @@ function App() {
             label="Messages"
             active={currentView === 'messages'}
             onClick={() => setCurrentView('messages')}
+            badge={unreadCount}
           />
           <NavButton
             icon={UserCircle}
@@ -924,20 +1008,28 @@ interface NavButtonProps {
   label: string
   active: boolean
   onClick: () => void
+  badge?: number
 }
 
-function NavButton({ icon: Icon, label, active, onClick }: NavButtonProps) {
+function NavButton({ icon: Icon, label, active, onClick, badge }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
-        'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors',
+        'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative',
         active
           ? 'text-primary bg-primary/10'
           : 'text-muted-foreground hover:text-foreground'
       )}
     >
-      <Icon size={24} weight={active ? 'fill' : 'regular'} />
+      <div className="relative">
+        <Icon size={24} weight={active ? 'fill' : 'regular'} />
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-red-500 text-white rounded-full">
+            {badge > 99 ? '99+' : badge}
+          </span>
+        )}
+      </div>
       <span className="text-xs font-medium">{label}</span>
     </button>
   )
