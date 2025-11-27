@@ -35,16 +35,18 @@ export function WalletView({ user, transactions }: WalletViewProps) {
   }, {} as Record<string, LanternTransaction[]>)
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-full bg-background">
       <div className="p-4 border-b border-border">
-        <h1 className="text-2xl font-semibold text-foreground mb-4">
-          Lantern Wallet
-        </h1>
-        <LanternBalance balance={user.lanternBalance} />
+        <div className="max-w-lg mx-auto">
+          <h1 className="text-xl font-semibold text-foreground mb-4">
+            Wallet
+          </h1>
+          <LanternBalance balance={user.lanternBalance} />
+        </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-4">
+        <div className="p-4 max-w-lg mx-auto">
           <div className="mb-4">
             <h2 className="text-lg font-medium text-foreground mb-3">
               Transaction History

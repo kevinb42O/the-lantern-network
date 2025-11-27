@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Coins, ArrowRight } from '@phosphor-icons/react'
+import { ArrowRight } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -37,13 +37,13 @@ export function InviteVerification({ onVerified }: InviteVerificationProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-6">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f1729] px-6">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center text-center space-y-4">
-          <Coins 
-            size={64} 
-            weight="duotone" 
-            className="text-primary lantern-glow" 
+          <img 
+            src="/lantern-logo.png" 
+            alt="Lantern Logo" 
+            className="w-40 h-40 object-contain"
           />
           <div>
             <h1 className="text-3xl font-semibold text-foreground mb-2">

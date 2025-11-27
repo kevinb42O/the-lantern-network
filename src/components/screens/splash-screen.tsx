@@ -1,4 +1,3 @@
-import { Coins } from '@phosphor-icons/react'
 import { motion } from 'framer-motion'
 
 interface SplashScreenProps {
@@ -8,7 +7,7 @@ interface SplashScreenProps {
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   return (
     <motion.div
-      className="min-h-screen flex flex-col items-center justify-center bg-background px-6"
+      className="min-h-screen flex flex-col items-center justify-center bg-[#0f1729] px-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -20,16 +19,17 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.6 }}
+        className="mb-6"
       >
-        <Coins 
-          size={80} 
-          weight="duotone" 
-          className="text-primary lantern-glow mb-8" 
+        <img 
+          src="/lantern-logo.png" 
+          alt="Lantern Logo" 
+          className="w-48 h-48 object-contain"
         />
       </motion.div>
       
       <motion.h1
-        className="text-4xl font-bold text-foreground text-center mb-4"
+        className="text-5xl font-bold text-foreground text-center mb-4"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.6 }}

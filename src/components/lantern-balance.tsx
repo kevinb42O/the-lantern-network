@@ -21,7 +21,7 @@ export function LanternBalance({
   return (
     <div 
       className={cn(
-        "flex flex-col gap-2 p-4 rounded-lg bg-card border border-border",
+        "flex flex-col gap-2 p-3 rounded-lg bg-card border border-border",
         onClick && "cursor-pointer hover:border-primary/50 transition-colors",
         className
       )}
@@ -34,16 +34,16 @@ export function LanternBalance({
               "text-primary",
               isAtLimit ? "lantern-glow" : ""
             )} 
-            size={24} 
+            size={20} 
             weight="duotone"
           />
-          <span className="text-2xl font-semibold text-foreground">
+          <span className="text-xl font-semibold text-foreground">
             {balance}
           </span>
-          <span className="text-sm text-muted-foreground">/ {max}</span>
+          <span className="text-xs text-muted-foreground">/ {max}</span>
         </div>
         {isAtLimit && (
-          <span className="text-xs font-medium text-accent px-2 py-1 rounded-full bg-accent/10">
+          <span className="text-xs font-medium text-accent px-2 py-0.5 rounded-full bg-accent/10">
             At Limit
           </span>
         )}
@@ -51,13 +51,13 @@ export function LanternBalance({
       
       <Progress 
         value={percentage} 
-        className="h-2"
+        className="h-1.5"
       />
       
       <p className="text-xs text-muted-foreground">
         {isAtLimit 
-          ? "You're at your hoard limit. Consider helping or gifting!" 
-          : `${max - balance} more lanterns until hoard limit`
+          ? "At hoard limit - help or gift!" 
+          : `${max - balance} until hoard limit`
         }
       </p>
     </div>

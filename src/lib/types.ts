@@ -12,6 +12,7 @@ export interface User {
     lat: number
     lng: number
   }
+  lastSeenMessagesAt?: number
 }
 
 export interface LanternTransaction {
@@ -63,4 +64,29 @@ export interface Chat {
   participants: string[]
   createdAt: number
   lastActivity: number
+}
+
+export interface HelpRequest {
+  id: string
+  flareId: string
+  helperId: string
+  helperUsername: string
+  flareOwnerId: string
+  flareOwnerUsername: string
+  message: string
+  status: 'pending' | 'accepted' | 'denied'
+  createdAt: number
+  respondedAt?: number
+  helperNotifiedAt?: number
+  ownerNotifiedAt?: number
+}
+
+export interface Notification {
+  id: string
+  userId: string
+  type: 'help_request' | 'help_accepted' | 'help_denied' | 'task_completed'
+  relatedId: string // flareId or helpRequestId
+  message: string
+  read: boolean
+  createdAt: number
 }
