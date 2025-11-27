@@ -58,31 +58,62 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    let isMounted = true;
+    let timeoutCleared = false;
+
     // Timeout fallback - if auth takes too long, stop loading
+    // Increased to 10 seconds for slower connections
     const timeout = setTimeout(() => {
-      console.warn('Auth timeout - stopping loading state');
-      setLoading(false);
-    }, 5000);
+      if (isMounted && !timeoutCleared) {
+        console.warn('Auth timeout - stopping loading state');
+        setLoading(false);
+      }
+    }, 10000);
+
+    const clearTimeoutOnce = () => {
+      if (!timeoutCleared) {
+        timeoutCleared = true;
+        clearTimeout(timeout);
+      }
+    };
 
     // Get initial session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      clearTimeout(timeout);
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchProfile(session.user.id);
+    const initAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        clearTimeoutOnce();
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchProfile(session.user.id);
+        }
+        
+        if (isMounted) {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error getting session:', err);
+        if (isMounted) {
+          clearTimeoutOnce();
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    }).catch((err) => {
-      clearTimeout(timeout);
-      console.error('Error getting session:', err);
-      setLoading(false);
-    });
+    };
+
+    initAuth();
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
+      
+      if (!isMounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -92,10 +123,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(null);
       }
 
-      setLoading(false);
+      if (isMounted) {
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      clearTimeoutOnce();
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string) => {
