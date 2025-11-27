@@ -9,42 +9,53 @@
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Better focus styles */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 :root {
   /* Cozy Professional - Deep charcoal with warm amber accents */
-  --background: oklch(0.13 0.005 260);
-  --foreground: oklch(0.92 0.01 70);
+  --background: oklch(0.12 0.008 260);
+  --foreground: oklch(0.93 0.015 65);
   
-  --card: oklch(0.17 0.005 260);
-  --card-foreground: oklch(0.92 0.01 70);
+  --card: oklch(0.16 0.008 260);
+  --card-foreground: oklch(0.93 0.015 65);
   
-  --popover: oklch(0.19 0.005 260);
-  --popover-foreground: oklch(0.92 0.01 70);
+  --popover: oklch(0.18 0.008 260);
+  --popover-foreground: oklch(0.93 0.015 65);
   
-  --primary: oklch(0.72 0.12 65);
-  --primary-foreground: oklch(0.13 0.005 260);
+  --primary: oklch(0.74 0.14 60);
+  --primary-foreground: oklch(0.12 0.008 260);
   
-  --secondary: oklch(0.20 0.005 260);
-  --secondary-foreground: oklch(0.88 0.01 70);
+  --secondary: oklch(0.20 0.008 260);
+  --secondary-foreground: oklch(0.90 0.015 65);
   
-  --muted: oklch(0.22 0.005 260);
-  --muted-foreground: oklch(0.58 0.01 70);
+  --muted: oklch(0.22 0.006 260);
+  --muted-foreground: oklch(0.62 0.02 60);
   
-  --accent: oklch(0.78 0.10 60);
-  --accent-foreground: oklch(0.13 0.005 260);
+  --accent: oklch(0.80 0.12 55);
+  --accent-foreground: oklch(0.12 0.008 260);
   
-  --destructive: oklch(0.55 0.18 25);
-  --destructive-foreground: oklch(0.95 0 0);
+  --destructive: oklch(0.58 0.20 25);
+  --destructive-foreground: oklch(0.97 0 0);
   
-  --success: oklch(0.60 0.10 145);
-  --success-foreground: oklch(0.95 0 0);
+  --success: oklch(0.65 0.14 145);
+  --success-foreground: oklch(0.97 0 0);
   
-  --border: oklch(0.26 0.005 260);
-  --input: oklch(0.24 0.005 260);
-  --ring: oklch(0.72 0.12 65);
+  --border: oklch(0.28 0.012 260);
+  --input: oklch(0.22 0.008 260);
+  --ring: oklch(0.74 0.14 60);
   
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 }
 
 @theme {
@@ -78,29 +89,173 @@
   --radius-full: 9999px;
 }
 
+/* Animation keyframes */
 @keyframes lantern-glow {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
+  0%, 100% { 
+    opacity: 0.75; 
+    filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.4));
+  }
+  50% { 
+    opacity: 1; 
+    filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.6));
+  }
 }
 
 @keyframes flare-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.05); opacity: 1; }
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 0.9; 
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+  }
+  50% { 
+    transform: scale(1.02); 
+    opacity: 1; 
+    box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+  }
 }
 
 @keyframes float-away {
   0% { transform: translateY(0) scale(1); opacity: 1; }
-  100% { transform: translateY(-30px) scale(0.8); opacity: 0; }
+  100% { transform: translateY(-40px) scale(0.7); opacity: 0; }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in {
+  0% { opacity: 0; transform: translateX(-10px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes glow-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0); }
+}
+
+/* Animation classes */
 .lantern-glow {
   animation: lantern-glow 3s ease-in-out infinite;
 }
 
 .flare-pulse {
-  animation: flare-pulse 2s ease-in-out infinite;
+  animation: flare-pulse 2.5s ease-in-out infinite;
 }
 
 .float-away {
   animation: float-away 0.6s ease-out forwards;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg, 
+    transparent 0%, 
+    rgba(251, 191, 36, 0.1) 50%, 
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+.slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+.bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.glow-ring {
+  animation: glow-ring 2s ease-in-out infinite;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+/* Button effects */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+  background-size: 200% 200%;
+  animation: shimmer 3s infinite;
+}
+
+/* Safe area insets for mobile */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(22, 28, 45, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, oklch(0.80 0.14 55), oklch(0.70 0.16 70));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Warm border glow */
+.warm-glow {
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.15), 
+              0 0 40px rgba(251, 191, 36, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }

@@ -1,9 +1,6 @@
-import { useState } from 'react'
-import { ArrowUp, ArrowDown, Coins } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
+import { ArrowUp, ArrowDown, Lamp, Sparkle, HandCoins } from '@phosphor-icons/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { LanternBalance } from '@/components/lantern-balance'
 import type { User, LanternTransaction } from '@/lib/types'
 
@@ -24,7 +21,7 @@ export function WalletView({ user, transactions }: WalletViewProps) {
     if (days === 0) return 'Today'
     if (days === 1) return 'Yesterday'
     if (days < 7) return `${days} days ago`
-    return date.toLocaleDateString()
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 
   const groupedTransactions = sortedTransactions.reduce((groups, tx) => {
@@ -34,54 +31,93 @@ export function WalletView({ user, transactions }: WalletViewProps) {
     return groups
   }, {} as Record<string, LanternTransaction[]>)
 
+  // Calculate stats
+  const totalReceived = transactions.filter(tx => tx.to === user.id || tx.to === 'current-user').reduce((sum, tx) => sum + tx.amount, 0)
+  const totalSent = transactions.filter(tx => tx.from === user.id && tx.from !== 'system').reduce((sum, tx) => sum + tx.amount, 0)
+
   return (
     <div className="flex flex-col h-full bg-background">
-      <div className="p-4 border-b border-border">
-        <div className="max-w-lg mx-auto">
-          <h1 className="text-xl font-semibold text-foreground mb-4">
-            Wallet
-          </h1>
+      {/* Header with Balance */}
+      <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
+        <div className="max-w-lg mx-auto space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-primary/15">
+              <Lamp size={24} weight="duotone" className="text-primary lantern-glow" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Lantern Wallet</h1>
+              <p className="text-sm text-muted-foreground">Your community currency</p>
+            </div>
+          </div>
+          
           <LanternBalance balance={user.lanternBalance} />
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-4 rounded-xl bg-success/10 border border-success/20">
+              <div className="flex items-center gap-2 mb-1">
+                <ArrowDown size={16} className="text-success" />
+                <span className="text-xs font-medium text-success uppercase tracking-wide">Received</span>
+              </div>
+              <p className="text-2xl font-bold text-success">{totalReceived}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+              <div className="flex items-center gap-2 mb-1">
+                <ArrowUp size={16} className="text-primary" />
+                <span className="text-xs font-medium text-primary uppercase tracking-wide">Given</span>
+              </div>
+              <p className="text-2xl font-bold text-primary">{totalSent}</p>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Transactions */}
       <ScrollArea className="flex-1">
-        <div className="p-4 max-w-lg mx-auto">
-          <div className="mb-4">
-            <h2 className="text-lg font-medium text-foreground mb-3">
+        <div className="p-5 max-w-lg mx-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">
               Transaction History
             </h2>
-            {transactions.length === 0 ? (
-              <Card className="p-8 text-center">
-                <Coins size={48} className="mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">
-                  No transactions yet
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Help neighbors to earn Lanterns
-                </p>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                {Object.entries(groupedTransactions).map(([date, txs]) => (
-                  <div key={date}>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                      {date}
-                    </h3>
-                    <div className="space-y-2">
-                      {txs.map((tx) => (
-                        <TransactionItem
-                          key={tx.id}
-                          transaction={tx}
-                          currentUserId={user.id}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
+              {transactions.length} total
+            </span>
           </div>
+          
+          {transactions.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 mb-6">
+                <HandCoins size={48} weight="duotone" className="text-primary bounce-subtle" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No transactions yet
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                Help a neighbor to earn your first Lantern, or receive one as a welcome gift!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {Object.entries(groupedTransactions).map(([date, txs], groupIndex) => (
+                <div key={date} className="fade-in-up" style={{ animationDelay: `${groupIndex * 0.1}s` }}>
+                  <h3 className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide flex items-center gap-2">
+                    <span className="w-8 h-px bg-border" />
+                    {date}
+                    <span className="flex-1 h-px bg-border" />
+                  </h3>
+                  <div className="space-y-2">
+                    {txs.map((tx) => (
+                      <TransactionItem
+                        key={tx.id}
+                        transaction={tx}
+                        currentUserId={user.id}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>
@@ -98,39 +134,45 @@ function TransactionItem({ transaction, currentUserId }: TransactionItemProps) {
   const isSystem = transaction.from === 'system'
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-3">
+    <Card className="p-4 card-hover border-border/50 bg-card/80">
+      <div className="flex items-center gap-4">
         <div className={`
-          p-2 rounded-full
+          p-3 rounded-xl transition-all
           ${isReceived 
-            ? 'bg-success/10 text-success' 
-            : 'bg-destructive/10 text-destructive'
+            ? 'bg-success/15 text-success' 
+            : 'bg-primary/15 text-primary'
           }
         `}>
           {isReceived ? (
-            <ArrowDown size={20} weight="bold" />
+            <ArrowDown size={22} weight="bold" />
           ) : (
-            <ArrowUp size={20} weight="bold" />
+            <ArrowUp size={22} weight="bold" />
           )}
         </div>
         
-        <div className="flex-1">
-          <p className="text-sm font-medium text-foreground">
-            {isReceived ? 'Received' : 'Sent'} {transaction.amount} Lantern{transaction.amount !== 1 ? 's' : ''}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium text-foreground flex items-center gap-2">
+            {isReceived ? 'Received' : 'Sent'} {transaction.amount} 🏮
+            {isSystem && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                <Sparkle size={10} weight="fill" />
+                Gift
+              </span>
+            )}
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground truncate">
             {transaction.reason}
           </p>
           {!isSystem && (
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground/70 mt-1">
               {isReceived ? `From ${transaction.from}` : `To ${transaction.to}`}
             </p>
           )}
         </div>
         
         <div className={`
-          text-lg font-semibold
-          ${isReceived ? 'text-success' : 'text-destructive'}
+          text-xl font-bold tabular-nums
+          ${isReceived ? 'text-success' : 'text-primary'}
         `}>
           {isReceived ? '+' : '-'}{transaction.amount}
         </div>

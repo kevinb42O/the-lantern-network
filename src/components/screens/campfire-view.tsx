@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Fire, PaperPlaneRight } from '@phosphor-icons/react'
+import { Fire, PaperPlaneRight, Sparkle } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { Message, User } from '@/lib/types'
@@ -42,64 +42,90 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [] 
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <div className="p-4 border-b border-border bg-card/30">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-full bg-primary/10">
-            <Fire size={28} weight="duotone" className="text-primary lantern-glow" />
+      {/* Header with campfire ambiance */}
+      <div className="p-5 border-b border-border bg-gradient-to-b from-orange-950/30 via-card/80 to-transparent">
+        <div className="flex items-center gap-4 max-w-2xl mx-auto">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-xl animate-pulse" />
+            <div className="relative p-3 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/20">
+              <Fire size={28} weight="duotone" className="text-orange-400 lantern-glow" />
+            </div>
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               The Campfire
+              <span className="text-orange-400">🔥</span>
             </h1>
             <p className="text-sm text-muted-foreground">
-              {campfireMessages.length} {campfireMessages.length === 1 ? 'message' : 'messages'} • Messages fade after 24h
+              Gather with your neighbors • Messages fade after 24h
             </p>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs text-muted-foreground">Live</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20">
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <span className="text-xs font-medium text-success">Live</span>
           </div>
         </div>
       </div>
 
+      {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
         <div className="space-y-4 max-w-2xl mx-auto pb-4">
-          {campfireMessages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isCurrentUser={message.userId === user.id}
-              isAdmin={adminUserIds.includes(message.userId)}
-            />
-          ))}
+          {campfireMessages.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/10 mb-6">
+                <Fire size={48} weight="duotone" className="text-orange-400 bounce-subtle" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                The campfire is quiet
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                Be the first to share something with the neighborhood!
+              </p>
+            </div>
+          ) : (
+            campfireMessages.map((message, index) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isCurrentUser={message.userId === user.id}
+                isAdmin={adminUserIds.includes(message.userId)}
+                animationDelay={index * 0.02}
+              />
+            ))
+          )}
         </div>
       </div>
 
-      <div className="p-4 border-t border-border bg-card/50 relative z-10">
-        <div className="max-w-2xl mx-auto space-y-2">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Share with the neighborhood..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              maxLength={500}
-              className="flex-1 h-10 px-4 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              autoComplete="off"
-            />
+      {/* Input area */}
+      <div className="p-4 border-t border-border bg-card/80 backdrop-blur-sm relative z-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Share something with the neighborhood..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                maxLength={500}
+                className="w-full h-12 px-5 rounded-2xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                autoComplete="off"
+              />
+            </div>
             <Button
               onClick={handleSend}
               disabled={!inputValue.trim()}
               size="icon"
-              className="shrink-0 h-10 w-10"
+              className="shrink-0 h-12 w-12 rounded-2xl btn-glow"
             >
               <PaperPlaneRight size={20} weight="fill" />
             </Button>
           </div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Press Enter to send</span>
-            <span>{campfireMessages.length} messages</span>
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 px-1">
+            <span className="flex items-center gap-1">
+              Press Enter to send
+            </span>
+            <span>{campfireMessages.length} messages around the fire</span>
           </div>
         </div>
       </div>
@@ -111,12 +137,14 @@ interface MessageBubbleProps {
   message: Message
   isCurrentUser: boolean
   isAdmin?: boolean
+  animationDelay?: number
 }
 
-function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbleProps) {
+function MessageBubble({ message, isCurrentUser, isAdmin = false, animationDelay = 0 }: MessageBubbleProps) {
   const messageAge = Date.now() - message.timestamp
   const hoursOld = messageAge / (1000 * 60 * 60)
-  const opacity = Math.max(0.3, 1 - (hoursOld / 24) * 0.7)
+  // Messages fade more gracefully
+  const opacity = Math.max(0.4, 1 - (hoursOld / 24) * 0.6)
 
   const timeAgo = () => {
     const seconds = Math.floor(messageAge / 1000)
@@ -125,32 +153,33 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbl
     return `${Math.floor(seconds / 3600)}h ago`
   }
 
-  // Display name - show real username, mark as admin if applicable
+  // Display name
   const displayName = isCurrentUser ? 'You' : message.username
 
   return (
     <div
-      className={`flex gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''}`}
-      style={{ opacity }}
+      className={`flex gap-3 fade-in-up ${isCurrentUser ? 'flex-row-reverse' : ''}`}
+      style={{ opacity, animationDelay: `${animationDelay}s` }}
     >
-      <Avatar className={`flex-shrink-0 h-10 w-10 ${isAdmin ? 'ring-2 ring-amber-400' : ''}`}>
+      <Avatar className={`flex-shrink-0 h-10 w-10 ${isAdmin ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background' : ''}`}>
         <AvatarFallback className={`text-sm font-semibold ${
           isAdmin 
-            ? 'bg-amber-500 text-white' 
-            : 'bg-primary/20 text-primary'
+            ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' 
+            : 'bg-gradient-to-br from-primary/30 to-accent/20 text-foreground'
         }`}>
           {message.username.slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       
       <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''}`}>
-        <div className={`flex items-baseline gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-center gap-2 mb-1.5 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
           <span className={`text-sm font-semibold ${isAdmin ? 'text-amber-400' : 'text-foreground'}`}>
             {displayName}
           </span>
           {isAdmin && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">
-              ADMIN
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium border border-amber-500/30">
+              <Sparkle size={10} weight="fill" />
+              Admin
             </span>
           )}
           <span className="text-xs text-muted-foreground">
@@ -159,15 +188,15 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false }: MessageBubbl
         </div>
         <div
           className={`
-            inline-block p-3 rounded-2xl text-sm
+            inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed
             ${isCurrentUser 
-              ? 'bg-primary text-primary-foreground rounded-br-md' 
-              : 'bg-card text-card-foreground border border-border rounded-bl-md'
+              ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-lg shadow-primary/20' 
+              : 'bg-card text-card-foreground border border-border/50 rounded-bl-md'
             }
-            ${isAdmin && !isCurrentUser ? 'border-amber-400/50' : ''}
+            ${isAdmin && !isCurrentUser ? 'border-amber-400/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5' : ''}
           `}
         >
-          <p className="whitespace-pre-wrap break-words leading-relaxed">
+          <p className="whitespace-pre-wrap break-words">
             {message.content}
           </p>
         </div>
