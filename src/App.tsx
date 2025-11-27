@@ -145,74 +145,53 @@ function App() {
     }
   }, [authUser])
 
+  // Cache for profile names
+  const [profileCache, setProfileCache] = useState<Record<string, string>>({})
+
   // Fetch campfire messages with sender names
   const fetchMessages = async () => {
-    console.log('Fetching messages...')
-    
     try {
-      // Create a timeout promise
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        setTimeout(() => reject(new Error('Messages fetch timeout')), 5000)
-      })
-
-      // Create the fetch promise
-      const fetchPromise = (async () => {
-        const { data: messagesData, error: messagesError } = await supabase
-          .from('messages')
-          .select('*')
-          .is('flare_id', null)
-          .order('created_at', { ascending: true })
-        
-        if (messagesError) {
-          console.error('Error fetching messages:', messagesError)
-          return null
-        }
-        
-        console.log('Messages fetched:', messagesData?.length || 0)
-        return messagesData
-      })()
-
-      // Race between fetch and timeout
-      const messagesData = await Promise.race([fetchPromise, timeoutPromise])
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('messages')
+        .select('*')
+        .is('flare_id', null)
+        .order('created_at', { ascending: true })
       
-      if (!messagesData || messagesData.length === 0) {
-        console.log('No messages found')
-        setMessages([])
+      if (messagesError || !messagesData) {
+        console.error('Error fetching messages:', messagesError)
         return
       }
 
-      // Get unique sender IDs
-      const senderIds = [...new Set(messagesData.map(m => m.sender_id))]
+      // Get sender IDs we don't have cached
+      const unknownSenderIds = [...new Set(messagesData.map(m => m.sender_id))]
+        .filter(id => !profileCache[id])
       
-      // Fetch profiles for those senders (with timeout)
-      const profilesPromise = supabase
-        .from('profiles')
-        .select('user_id, display_name')
-        .in('user_id', senderIds)
-        .then(({ data }) => data)
-      
-      const profilesData = await Promise.race([
-        profilesPromise,
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
-      ])
-      
-      // Create a map of user_id to display_name
-      const profileMap: Record<string, string> = {}
-      profilesData?.forEach(p => {
-        profileMap[p.user_id] = p.display_name
-      })
+      // Only fetch profiles we don't have
+      if (unknownSenderIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', unknownSenderIds)
+        
+        if (profilesData) {
+          const newCache = { ...profileCache }
+          profilesData.forEach(p => {
+            newCache[p.user_id] = p.display_name
+          })
+          setProfileCache(newCache)
+        }
+      }
 
-      // Format messages with usernames
+      // Format messages with usernames from cache
       const formattedMessages: Message[] = messagesData.map(m => ({
         id: m.id,
         userId: m.sender_id,
-        username: profileMap[m.sender_id] || 'Anonymous',
+        username: profileCache[m.sender_id] || 'Anonymous',
         content: m.content,
         timestamp: new Date(m.created_at).getTime(),
         type: 'campfire' as const
       }))
       
-      console.log('Formatted messages:', formattedMessages.length)
       setMessages(formattedMessages)
     } catch (err) {
       console.error('Messages fetch error:', err)
