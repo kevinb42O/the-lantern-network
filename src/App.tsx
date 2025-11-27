@@ -219,13 +219,18 @@ function App() {
     }
   }
 
-  // Subscribe to real-time messages
+  // Subscribe to real-time messages + polling fallback
   useEffect(() => {
     if (!authUser) return
 
     fetchMessages()
 
-    // Subscribe to new messages
+    // Polling fallback - refresh every 3 seconds
+    const pollInterval = setInterval(() => {
+      fetchMessages()
+    }, 3000)
+
+    // Also try real-time subscription
     const channel = supabase
       .channel('campfire-messages')
       .on(
@@ -243,6 +248,7 @@ function App() {
       .subscribe()
 
     return () => {
+      clearInterval(pollInterval)
       supabase.removeChannel(channel)
     }
   }, [authUser])
