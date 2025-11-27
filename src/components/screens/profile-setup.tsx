@@ -17,10 +17,10 @@ const SUGGESTED_TAGS = [
 ];
 
 interface ProfileSetupProps {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
-export function ProfileSetup({ onComplete }: ProfileSetupProps) {
+export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
   const { user, refreshProfile } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -80,7 +80,9 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps) {
       // Refresh the profile in context
       await refreshProfile();
       
-      onComplete();
+      if (onComplete) {
+        onComplete();
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to create profile');
     } finally {
