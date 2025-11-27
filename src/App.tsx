@@ -962,8 +962,9 @@ function App() {
         )}
       </div>
 
-      <nav className="border-t border-border bg-card safe-area-bottom">
-        <div className="flex items-center justify-around p-2">
+      {/* Enhanced Bottom Navigation */}
+      <nav className="border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
+        <div className="flex items-center justify-around p-1.5 max-w-lg mx-auto">
           <NavButton
             icon={Flame}
             label="Flares"
@@ -998,7 +999,16 @@ function App() {
         </div>
       </nav>
 
-      <Toaster />
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            color: 'hsl(var(--foreground))',
+          },
+        }}
+      />
     </div>
   )
 }
@@ -1016,21 +1026,24 @@ function NavButton({ icon: Icon, label, active, onClick, badge }: NavButtonProps
     <button
       onClick={onClick}
       className={cn(
-        'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative',
+        'flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-all duration-200 relative min-w-[60px]',
         active
-          ? 'text-primary bg-primary/10'
-          : 'text-muted-foreground hover:text-foreground'
+          ? 'text-primary bg-primary/15 scale-105'
+          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
       )}
     >
       <div className="relative">
-        <Icon size={24} weight={active ? 'fill' : 'regular'} />
+        <Icon size={22} weight={active ? 'duotone' : 'regular'} className={active ? 'drop-shadow-sm' : ''} />
         {badge !== undefined && badge > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center text-[10px] font-bold bg-red-500 text-white rounded-full">
+          <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-full shadow-lg animate-pulse">
             {badge > 99 ? '99+' : badge}
           </span>
         )}
       </div>
-      <span className="text-xs font-medium">{label}</span>
+      <span className={cn(
+        "text-[10px] font-medium transition-colors",
+        active ? "text-primary" : ""
+      )}>{label}</span>
     </button>
   )
 }

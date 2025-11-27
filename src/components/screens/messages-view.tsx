@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { ChatCircle, Check, X, PaperPlaneRight, Fire, Coins, ArrowLeft, Clock, CheckCircle, Hourglass, XCircle } from '@phosphor-icons/react'
+import { ChatCircle, Check, X, PaperPlaneRight, Fire, Lamp, ArrowLeft, CheckCircle, Hourglass, XCircle, HandHeart, Sparkle } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { User, Flare, Message, HelpRequest } from '@/lib/types'
 import { toast } from 'sonner'
@@ -124,60 +123,71 @@ export function MessagesView({
     <div className="flex flex-col h-full bg-background">
       {!selectedConversation ? (
         <>
-          <div className="p-4 border-b border-border">
-            <div className="max-w-2xl mx-auto">
-              <h1 className="text-xl font-semibold text-foreground">Messages</h1>
-              <p className="text-xs text-muted-foreground mt-1">
-                Help requests and conversations
-              </p>
+          {/* Header */}
+          <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
+            <div className="max-w-2xl mx-auto flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/15">
+                <ChatCircle size={24} weight="duotone" className="text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+                <p className="text-sm text-muted-foreground">
+                  {myHelpRequests.length === 0 
+                    ? 'No conversations yet' 
+                    : `${pendingRequestsForMe.length} pending request${pendingRequestsForMe.length !== 1 ? 's' : ''}`
+                  }
+                </p>
+              </div>
             </div>
           </div>
 
           <ScrollArea className="flex-1">
-            <div className="p-4 space-y-6 max-w-2xl mx-auto">
+            <div className="p-5 space-y-6 max-w-2xl mx-auto">
               {/* Pending Help Requests ON MY FLARES Section */}
               {pendingRequestsForMe.length > 0 && (
                 <div className="space-y-3">
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <span className="relative flex h-2 w-2">
+                    <span className="relative flex h-2.5 w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
                     </span>
-                    Help Requests ({pendingRequestsForMe.length})
+                    Neighbors Want to Help ({pendingRequestsForMe.length})
                   </h2>
-                  {pendingRequestsForMe.map(hr => {
+                  {pendingRequestsForMe.map((hr, index) => {
                     const flare = getFlareForRequest(hr)
                     return (
-                      <Card key={hr.id} className="p-4 border-primary/30 bg-primary/5">
+                      <Card 
+                        key={hr.id} 
+                        className="p-4 border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 card-hover fade-in-up"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
                         <div className="flex items-start gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                          <Avatar className="h-12 w-12 ring-2 ring-primary/30">
+                            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground font-semibold">
                               {hr.helperUsername.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 space-y-2">
                             <div className="flex items-center justify-between">
-                              <span className="font-semibold text-foreground">
+                              <span className="font-semibold text-foreground flex items-center gap-2">
                                 {hr.helperUsername}
+                                <HandHeart size={16} className="text-primary" />
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 {getTimeAgo(hr.createdAt)}
                               </span>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              wants to help with your flare:
+                              wants to help with your flare
                             </p>
                             {flare && (
-                              <div className="flex items-center gap-2 text-xs">
+                              <div className="flex items-center gap-2 text-xs bg-muted/30 px-2 py-1 rounded-md w-fit">
                                 <Fire size={14} className="text-primary" />
-                                <span className="text-foreground">{flare.category}</span>
-                                <span className="text-muted-foreground truncate">
-                                  - {flare.description.slice(0, 50)}...
-                                </span>
+                                <span className="text-foreground font-medium">{flare.category}</span>
                               </div>
                             )}
                             {hr.message && (
-                              <div className="bg-muted/50 rounded-lg p-3 mt-2">
+                              <div className="bg-card/80 rounded-xl p-3 mt-2 border border-border/50">
                                 <p className="text-sm text-foreground italic">
                                   "{hr.message}"
                                 </p>
@@ -186,24 +196,25 @@ export function MessagesView({
                             <div className="flex gap-2 mt-3">
                               <Button 
                                 size="sm" 
-                                className="gap-1.5"
+                                className="gap-2 rounded-xl flex-1 sm:flex-none"
                                 onClick={() => onAcceptHelp(hr.id)}
                               >
-                                <Check size={14} weight="bold" />
-                                Accept
+                                <Check size={16} weight="bold" />
+                                Accept Help
                               </Button>
                               <Button 
                                 size="sm" 
                                 variant="outline" 
-                                className="gap-1.5"
+                                className="gap-2 rounded-xl"
                                 onClick={() => onDenyHelp(hr.id)}
                               >
-                                <X size={14} weight="bold" />
+                                <X size={16} weight="bold" />
                                 Decline
                               </Button>
                             </div>
-                            <p className="text-xs text-muted-foreground text-center mt-1">
-                              Accepting will cost 1 Lantern when task is complete
+                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
+                              <Lamp size={12} />
+                              1 Lantern will be sent when task is complete
                             </p>
                           </div>
                         </div>
@@ -217,7 +228,7 @@ export function MessagesView({
               {myPendingOffers.length > 0 && (
                 <div className="space-y-3">
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <Hourglass size={14} className="text-yellow-500" />
+                    <Hourglass size={14} className="text-amber-400" />
                     Your Pending Offers ({myPendingOffers.length})
                   </h2>
                   {myPendingOffers.map(hr => {
@@ -316,27 +327,30 @@ export function MessagesView({
 
               {/* Active Conversations Section */}
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                  <ChatCircle size={14} />
                   Active Conversations ({activeConversations.length})
                 </h2>
                 {activeConversations.length === 0 && pendingRequestsForMe.length === 0 && myPendingOffers.length === 0 && myDeniedOffers.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="inline-flex p-6 rounded-full bg-muted/50 mb-4">
-                      <ChatCircle size={48} className="text-muted-foreground" />
+                  <div className="text-center py-16">
+                    <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 mb-6">
+                      <ChatCircle size={48} weight="duotone" className="text-primary bounce-subtle" />
                     </div>
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      No messages yet
+                    <h3 className="text-xl font-semibold text-foreground mb-3">
+                      Your inbox is empty
                     </h3>
-                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                    <p className="text-muted-foreground max-w-xs mx-auto leading-relaxed">
                       When you offer to help with a flare or someone offers to help you, conversations will appear here.
                     </p>
                   </div>
                 ) : activeConversations.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No active conversations yet
-                  </p>
+                  <Card className="p-6 text-center bg-muted/20 border-dashed">
+                    <p className="text-sm text-muted-foreground">
+                      No active conversations yet — accept a help request to start chatting!
+                    </p>
+                  </Card>
                 ) : (
-                  activeConversations.map(hr => {
+                  activeConversations.map((hr, index) => {
                     const flare = getFlareForRequest(hr)
                     const other = getOtherParticipant(hr)
                     const lastMessage = getChatMessages(hr.id).slice(-1)[0]
@@ -345,12 +359,13 @@ export function MessagesView({
                     return (
                       <Card 
                         key={hr.id} 
-                        className="p-4 cursor-pointer hover:border-primary/50 transition-colors"
+                        className="p-4 cursor-pointer card-hover border-border/50 bg-card/80 fade-in-up"
+                        style={{ animationDelay: `${index * 0.05}s` }}
                         onClick={() => setSelectedConversation(hr)}
                       >
                         <div className="flex items-start gap-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                          <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground font-semibold">
                               {other.username.slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
@@ -363,27 +378,29 @@ export function MessagesView({
                                 {lastMessage ? getTimeAgo(lastMessage.timestamp) : getTimeAgo(hr.createdAt)}
                               </span>
                             </div>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <Badge variant="secondary" className="text-xs">
+                            <div className="flex items-center gap-2 mt-1">
+                              <Badge variant="secondary" className="text-xs rounded-md">
                                 {flare?.category || 'Flare'}
                               </Badge>
                               {isFlareOwner ? (
-                                <Badge variant="outline" className="text-xs border-blue-500/50 text-blue-500">
+                                <Badge variant="outline" className="text-xs border-primary/30 text-primary rounded-md">
+                                  <Sparkle size={10} className="mr-1" />
                                   Your Flare
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="text-xs border-green-500/50 text-green-500">
+                                <Badge variant="outline" className="text-xs border-success/30 text-success rounded-md">
+                                  <HandHeart size={10} className="mr-1" />
                                   Helping
                                 </Badge>
                               )}
                               {flare?.status === 'completed' && (
-                                <Badge variant="outline" className="text-xs border-muted text-muted-foreground">
-                                  ✅ Completed
+                                <Badge variant="outline" className="text-xs border-muted text-muted-foreground rounded-md">
+                                  ✅ Done
                                 </Badge>
                               )}
                             </div>
                             {lastMessage && (
-                              <p className="text-sm text-muted-foreground truncate mt-1">
+                              <p className="text-sm text-muted-foreground truncate mt-2">
                                 {lastMessage.userId === user.id ? 'You: ' : ''}{lastMessage.content}
                               </p>
                             )}
