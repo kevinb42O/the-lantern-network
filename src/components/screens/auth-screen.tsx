@@ -52,15 +52,23 @@ export function AuthScreen() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-amber-950 via-background to-background">
-      {/* Logo */}
-      <div className="mb-8 text-center">
+      {/* Logo with glow */}
+      <div className="mb-8 text-center relative">
+        {/* Glow layers */}
+        <div className="absolute inset-0 flex items-center justify-center -top-8">
+          <div className="w-40 h-40 rounded-full bg-amber-500/20 blur-3xl animate-pulse" />
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center -top-8">
+          <div className="w-28 h-28 rounded-full bg-orange-400/30 blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+        </div>
+        
         <img
           src="/lantern-logo.png"
           alt="The Lantern Network"
-          className="w-24 h-24 mx-auto mb-4"
+          className="w-32 h-32 mx-auto mb-4 relative z-10 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
         />
-        <h1 className="text-3xl font-bold text-amber-400">The Lantern Network</h1>
-        <p className="text-muted-foreground mt-2">Light the way for your neighbors</p>
+        <h1 className="text-3xl font-bold text-amber-400 relative z-10">The Lantern Network</h1>
+        <p className="text-muted-foreground mt-2 relative z-10">Light the way for your neighbors</p>
       </div>
 
       <Card className="w-full max-w-md">
