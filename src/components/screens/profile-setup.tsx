@@ -54,28 +54,48 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
     setError(null);
 
     try {
-      // Create the profile
-      const { error: profileError } = await supabase.from('profiles').insert({
-        user_id: user.id,
-        display_name: displayName.trim(),
-        bio: bio.trim() || null,
-        vibe_tags: vibeTags,
-        trust_score: 0,
-        lantern_balance: INITIAL_LANTERNS,
-        location: null,
-      });
+      // Check if profile already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
 
-      if (profileError) throw profileError;
+      if (existingProfile) {
+        // Profile exists - update it instead
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            display_name: displayName.trim(),
+            bio: bio.trim() || null,
+            vibe_tags: vibeTags,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user.id);
 
-      // Record initial lantern transactions
-      const transactions = Array(INITIAL_LANTERNS).fill(null).map((_, i) => ({
-        user_id: user.id,
-        type: 'welcome_bonus',
-        amount: 1,
-        description: 'Welcome to The Lantern Network!',
-      }));
+        if (updateError) throw updateError;
+      } else {
+        // Create new profile
+        const { error: profileError } = await supabase.from('profiles').insert({
+          user_id: user.id,
+          display_name: displayName.trim(),
+          bio: bio.trim() || null,
+          vibe_tags: vibeTags,
+          trust_score: 0,
+          lantern_balance: INITIAL_LANTERNS,
+          location: null,
+        });
 
-      await supabase.from('transactions').insert(transactions);
+        if (profileError) throw profileError;
+
+        // Record initial lantern transaction (only for new profiles)
+        await supabase.from('transactions').insert({
+          user_id: user.id,
+          type: 'welcome_bonus',
+          amount: INITIAL_LANTERNS,
+          description: 'Welcome to The Lantern Network!',
+        });
+      }
 
       // Refresh the profile in context
       await refreshProfile();

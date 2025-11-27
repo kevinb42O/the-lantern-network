@@ -62,12 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, 5000);
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       clearTimeout(timeout);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       }
       setLoading(false);
     }).catch((err) => {
