@@ -577,7 +577,7 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ```bash
 # Clone the repository
-git clone https://github.com/kevinb42O/the-lantern-network.git
+git clone https://github.com/your-username/the-lantern-network.git
 cd the-lantern-network
 
 # Install dependencies
@@ -602,7 +602,7 @@ npm run dev
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server (port 5000) |
+| `npm run dev` | Start development server |
 | `npm run build` | Build for production |
 | `npm run preview` | Preview production build |
 | `npm run lint` | Run ESLint |
