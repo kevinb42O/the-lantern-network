@@ -154,6 +154,15 @@ CREATE POLICY "Admins can update any profile" ON profiles
 CREATE POLICY "Active flares are viewable by everyone" ON flares
   FOR SELECT USING (status = 'active' OR creator_id = auth.uid());
 
+-- Admins can view all flares (for admin panel)
+CREATE POLICY "Admins can view all flares" ON flares
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
 CREATE POLICY "Authenticated users can create flares" ON flares
   FOR INSERT WITH CHECK (auth.uid() = creator_id);
 
@@ -185,6 +194,25 @@ CREATE POLICY "Users can leave flares" ON flare_participants
 CREATE POLICY "Users can update their participation" ON flare_participants
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- Flare owners can update participants on their flares
+CREATE POLICY "Flare owners can update participants" ON flare_participants
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM flares 
+      WHERE flares.id = flare_participants.flare_id 
+      AND flares.creator_id = auth.uid()
+    )
+  );
+
+-- Admins can delete any participant (for removing flares)
+CREATE POLICY "Admins can delete any participant" ON flare_participants
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
 -- Connections policies
 CREATE POLICY "Users can view their own connections" ON connections
   FOR SELECT USING (auth.uid() = user_id OR auth.uid() = connected_user_id);
@@ -199,8 +227,9 @@ CREATE POLICY "Users can delete their connections" ON connections
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Messages policies
+-- Users can view their own messages OR campfire messages (flare_id is null)
 CREATE POLICY "Users can view their own messages" ON messages
-  FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+  FOR SELECT USING (auth.uid() = sender_id OR auth.uid() = receiver_id OR flare_id IS NULL);
 
 CREATE POLICY "Authenticated users can send messages" ON messages
   FOR INSERT WITH CHECK (auth.uid() = sender_id);
