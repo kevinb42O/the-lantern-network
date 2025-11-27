@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Flame, Fire, Wallet, UserCircle, ChatCircleDots } from '@phosphor-icons/react'
+import { Flame, Fire, Wallet, UserCircle, ChatCircleDots, ShieldCheck } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { SplashScreen } from '@/components/screens/splash-screen'
@@ -10,6 +10,8 @@ import { CampfireView } from '@/components/screens/campfire-view'
 import { WalletView } from '@/components/screens/wallet-view'
 import { ProfileView } from '@/components/screens/profile-view'
 import { MessagesView } from '@/components/screens/messages-view'
+import { AdminView } from '@/components/screens/admin-view'
+import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
@@ -29,7 +31,7 @@ const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ]
 
-type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile'
+type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin'
 
 // Flare data from Supabase
 interface FlareData {
@@ -92,6 +94,16 @@ function App() {
 
   // Unread message count for badge
   const [unreadCount, setUnreadCount] = useState(0)
+
+  // User profile modal state
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [showUserProfile, setShowUserProfile] = useState(false)
+
+  // Handle user click (for viewing profile)
+  const handleUserClick = (userId: string) => {
+    setSelectedUserId(userId)
+    setShowUserProfile(true)
+  }
 
   // Fetch unread message count
   const fetchUnreadCount = async () => {
@@ -659,6 +671,8 @@ function App() {
 
   // Track admin user IDs - fetch once on load
   const [adminUserIds, setAdminUserIds] = useState<string[]>([])
+  // Track moderator user IDs
+  const [moderatorUserIds, setModeratorUserIds] = useState<string[]>([])
   
   // Fetch admin user IDs on mount
   useEffect(() => {
@@ -690,19 +704,23 @@ function App() {
       // Get all unique sender IDs
       const senderIds = [...new Set(messagesData.map(m => m.sender_id))]
       
-      // Fetch all profiles for these senders, including is_admin flag
+      // Fetch all profiles for these senders, including is_admin and is_moderator flags
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('user_id, display_name, is_admin')
+        .select('user_id, display_name, is_admin, is_moderator')
         .in('user_id', senderIds)
       
-      // Create a map of user_id to display_name and collect admin IDs
+      // Create a map of user_id to display_name and collect admin/moderator IDs
       const profileMap: Record<string, string> = {}
       const fetchedAdminIds: string[] = []
+      const fetchedModeratorIds: string[] = []
       profilesData?.forEach(p => {
         profileMap[p.user_id] = p.display_name
         if (p.is_admin) {
           fetchedAdminIds.push(p.user_id)
+        }
+        if (p.is_moderator) {
+          fetchedModeratorIds.push(p.user_id)
         }
       })
       
@@ -710,6 +728,14 @@ function App() {
       if (fetchedAdminIds.length > 0) {
         setAdminUserIds(prev => {
           const combined = [...new Set([...prev, ...fetchedAdminIds])]
+          return combined
+        })
+      }
+
+      // Update moderator user IDs
+      if (fetchedModeratorIds.length > 0) {
+        setModeratorUserIds(prev => {
+          const combined = [...new Set([...prev, ...fetchedModeratorIds])]
           return combined
         })
       }
@@ -859,6 +885,41 @@ function App() {
     }
   }
 
+  // Admin: Remove a flare
+  const handleRemoveFlare = async (flareId: string) => {
+    if (!authUser) return
+
+    const { error } = await supabase
+      .from('flares')
+      .delete()
+      .eq('id', flareId)
+
+    if (error) {
+      console.error('Error removing flare:', error)
+      throw new Error('Failed to remove flare')
+    }
+
+    fetchFlares()
+  }
+
+  // Admin: Clear all campfire messages
+  const handleClearCampfire = async () => {
+    if (!authUser) return
+
+    // Delete all campfire messages (those without flare_id)
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .is('flare_id', null)
+
+    if (error) {
+      console.error('Error clearing campfire:', error)
+      throw new Error('Failed to clear campfire')
+    }
+
+    setMessages([])
+  }
+
   // Handle sign out
   const handleSignOut = async () => {
     await signOut()
@@ -916,6 +977,7 @@ function App() {
             flares={flares}
             onCreateFlare={handleCreateFlare}
             onJoinFlare={handleJoinFlare}
+            onUserClick={handleUserClick}
           />
         )}
         {currentView === 'campfire' && (
@@ -924,6 +986,8 @@ function App() {
             messages={messages}
             onSendMessage={handleSendMessage}
             adminUserIds={isAdmin ? [...adminUserIds, authUser.id] : adminUserIds}
+            moderatorUserIds={moderatorUserIds}
+            onUserClick={handleUserClick}
           />
         )}
         {currentView === 'wallet' && (
@@ -960,7 +1024,21 @@ function App() {
             onDeleteAccount={handleSignOut}
           />
         )}
+        {currentView === 'admin' && isAdmin && (
+          <AdminView
+            user={userData}
+            onRemoveFlare={handleRemoveFlare}
+            onClearCampfire={handleClearCampfire}
+          />
+        )}
       </div>
+
+      {/* User Profile Modal */}
+      <UserProfileModal
+        userId={selectedUserId}
+        isOpen={showUserProfile}
+        onClose={() => setShowUserProfile(false)}
+      />
 
       {/* Enhanced Bottom Navigation */}
       <nav className="border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
@@ -996,6 +1074,15 @@ function App() {
             active={currentView === 'profile'}
             onClick={() => setCurrentView('profile')}
           />
+          {isAdmin && (
+            <NavButton
+              icon={ShieldCheck}
+              label="Admin"
+              active={currentView === 'admin'}
+              onClick={() => setCurrentView('admin')}
+              isAdminButton
+            />
+          )}
         </div>
       </nav>
 
@@ -1019,17 +1106,22 @@ interface NavButtonProps {
   active: boolean
   onClick: () => void
   badge?: number
+  isAdminButton?: boolean
 }
 
-function NavButton({ icon: Icon, label, active, onClick, badge }: NavButtonProps) {
+function NavButton({ icon: Icon, label, active, onClick, badge, isAdminButton = false }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
       className={cn(
         'flex flex-col items-center gap-0.5 px-4 py-2 rounded-xl transition-all duration-200 relative min-w-[60px]',
         active
-          ? 'text-primary bg-primary/15 scale-105'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+          ? isAdminButton 
+            ? 'text-amber-400 bg-amber-500/15 scale-105'
+            : 'text-primary bg-primary/15 scale-105'
+          : isAdminButton
+            ? 'text-amber-400/60 hover:text-amber-400 hover:bg-amber-500/10'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
       )}
     >
       <div className="relative">
@@ -1042,7 +1134,7 @@ function NavButton({ icon: Icon, label, active, onClick, badge }: NavButtonProps
       </div>
       <span className={cn(
         "text-[10px] font-medium transition-colors",
-        active ? "text-primary" : ""
+        active ? (isAdminButton ? "text-amber-400" : "text-primary") : ""
       )}>{label}</span>
     </button>
   )

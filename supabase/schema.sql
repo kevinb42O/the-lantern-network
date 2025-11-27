@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   lantern_balance INTEGER DEFAULT 5,
   location JSONB,
   is_admin BOOLEAN DEFAULT FALSE,
+  is_moderator BOOLEAN DEFAULT FALSE,
+  badges TEXT[] DEFAULT '{}',
+  completed_flares_count INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -138,6 +141,15 @@ CREATE POLICY "Users can insert their own profile" ON profiles
 CREATE POLICY "Users can update their own profile" ON profiles
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- Admin can update any profile (for badges, moderator status, credits)
+CREATE POLICY "Admins can update any profile" ON profiles
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
 -- Flares policies
 CREATE POLICY "Active flares are viewable by everyone" ON flares
   FOR SELECT USING (status = 'active' OR creator_id = auth.uid());
@@ -150,6 +162,15 @@ CREATE POLICY "Creators can update their own flares" ON flares
 
 CREATE POLICY "Creators can delete their own flares" ON flares
   FOR DELETE USING (auth.uid() = creator_id);
+
+-- Admin can delete any flare
+CREATE POLICY "Admins can delete any flare" ON flares
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
 
 -- Flare participants policies
 CREATE POLICY "Participants are viewable by flare members" ON flare_participants
@@ -186,6 +207,24 @@ CREATE POLICY "Authenticated users can send messages" ON messages
 
 CREATE POLICY "Receivers can update messages (mark as read)" ON messages
   FOR UPDATE USING (auth.uid() = receiver_id);
+
+-- Admin can delete any message (for clearing campfire)
+CREATE POLICY "Admins can delete any message" ON messages
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
+-- Admin can view all campfire messages (for admin panel)
+CREATE POLICY "Admins can view all messages" ON messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
 
 -- Transactions policies
 CREATE POLICY "Users can view their own transactions" ON transactions

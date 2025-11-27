@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Fire, PaperPlaneRight, Sparkle } from '@phosphor-icons/react'
+import { Fire, PaperPlaneRight, Sparkle, ShieldCheck } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import type { Message, User } from '@/lib/types'
@@ -9,9 +9,11 @@ interface CampfireViewProps {
   messages: Message[]
   onSendMessage: (content: string) => void
   adminUserIds?: string[]
+  moderatorUserIds?: string[]
+  onUserClick?: (userId: string) => void
 }
 
-export function CampfireView({ user, messages, onSendMessage, adminUserIds = [] }: CampfireViewProps) {
+export function CampfireView({ user, messages, onSendMessage, adminUserIds = [], moderatorUserIds = [], onUserClick }: CampfireViewProps) {
   const [inputValue, setInputValue] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -89,7 +91,9 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [] 
                 message={message}
                 isCurrentUser={message.userId === user.id}
                 isAdmin={adminUserIds.includes(message.userId)}
+                isModerator={moderatorUserIds.includes(message.userId)}
                 animationDelay={index * 0.02}
+                onUserClick={onUserClick}
               />
             ))
           )}
@@ -137,10 +141,12 @@ interface MessageBubbleProps {
   message: Message
   isCurrentUser: boolean
   isAdmin?: boolean
+  isModerator?: boolean
   animationDelay?: number
+  onUserClick?: (userId: string) => void
 }
 
-function MessageBubble({ message, isCurrentUser, isAdmin = false, animationDelay = 0 }: MessageBubbleProps) {
+function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick }: MessageBubbleProps) {
   const messageAge = Date.now() - message.timestamp
   const hoursOld = messageAge / (1000 * 60 * 60)
   // Messages fade more gracefully
@@ -156,30 +162,59 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, animationDelay
   // Display name
   const displayName = isCurrentUser ? 'You' : message.username
 
+  // Get ring/avatar styles based on role
+  const getRingStyle = () => {
+    if (isAdmin) return 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background'
+    if (isModerator) return 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-background'
+    return ''
+  }
+
+  const getAvatarBgStyle = () => {
+    if (isAdmin) return 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
+    if (isModerator) return 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white'
+    return 'bg-gradient-to-br from-primary/30 to-accent/20 text-foreground'
+  }
+
+  const getNameStyle = () => {
+    if (isAdmin) return 'text-amber-400'
+    if (isModerator) return 'text-cyan-400'
+    return 'text-foreground'
+  }
+
   return (
     <div
       className={`flex gap-3 fade-in-up ${isCurrentUser ? 'flex-row-reverse' : ''}`}
       style={{ opacity, animationDelay: `${animationDelay}s` }}
     >
-      <Avatar className={`flex-shrink-0 h-10 w-10 ${isAdmin ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background' : ''}`}>
-        <AvatarFallback className={`text-sm font-semibold ${
-          isAdmin 
-            ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white' 
-            : 'bg-gradient-to-br from-primary/30 to-accent/20 text-foreground'
-        }`}>
-          {message.username.slice(0, 2).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
+      <button
+        onClick={() => onUserClick?.(message.userId)}
+        className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
+      >
+        <Avatar className={`flex-shrink-0 h-10 w-10 cursor-pointer ${getRingStyle()}`}>
+          <AvatarFallback className={`text-sm font-semibold ${getAvatarBgStyle()}`}>
+            {message.username.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </button>
       
       <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''}`}>
         <div className={`flex items-center gap-2 mb-1.5 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
-          <span className={`text-sm font-semibold ${isAdmin ? 'text-amber-400' : 'text-foreground'}`}>
+          <button
+            onClick={() => onUserClick?.(message.userId)}
+            className={`text-sm font-semibold hover:underline cursor-pointer ${getNameStyle()}`}
+          >
             {displayName}
-          </span>
+          </button>
           {isAdmin && (
             <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium border border-amber-500/30">
               <Sparkle size={10} weight="fill" />
               Admin
+            </span>
+          )}
+          {isModerator && !isAdmin && (
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-medium border border-cyan-500/30">
+              <ShieldCheck size={10} weight="fill" />
+              Mod
             </span>
           )}
           <span className="text-xs text-muted-foreground">
@@ -194,6 +229,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, animationDelay
               : 'bg-card text-card-foreground border border-border/50 rounded-bl-md'
             }
             ${isAdmin && !isCurrentUser ? 'border-amber-400/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5' : ''}
+            ${isModerator && !isAdmin && !isCurrentUser ? 'border-cyan-400/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5' : ''}
           `}
         >
           <p className="whitespace-pre-wrap break-words">
