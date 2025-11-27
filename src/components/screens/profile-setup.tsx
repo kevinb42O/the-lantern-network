@@ -57,7 +57,8 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
       console.log('Creating profile for user:', user.id);
       
       // Try to create the profile using upsert (insert or update)
-      const { data: newProfile, error: upsertError } = await supabase
+      // Don't use .select() - just fire and forget, then reload
+      const { error: upsertError } = await supabase
         .from('profiles')
         .upsert({
           user_id: user.id,
@@ -70,29 +71,16 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
-        })
-        .select()
-        .single();
+        });
 
       if (upsertError) {
         console.error('Upsert error:', upsertError);
         throw upsertError;
       }
       
-      console.log('Profile created/updated:', newProfile);
+      console.log('Profile upsert successful, reloading...');
 
-      // Record initial lantern transaction
-      await supabase.from('transactions').insert({
-        user_id: user.id,
-        type: 'welcome_bonus',
-        amount: INITIAL_LANTERNS,
-        description: 'Welcome to The Lantern Network!',
-      }).then(({ error }) => {
-        if (error) console.log('Transaction already exists or error:', error);
-      });
-
-      // Force page reload to get fresh state
-      console.log('Reloading page...');
+      // Don't bother with transaction - just reload immediately
       window.location.reload();
       
     } catch (err: any) {

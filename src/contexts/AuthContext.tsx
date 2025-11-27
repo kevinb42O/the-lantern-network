@@ -37,20 +37,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Fetching profile for user:', userId);
     
     try {
+      // Use limit(1) instead of maybeSingle for better compatibility
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .maybeSingle();
+        .limit(1);
 
       if (error) {
         console.error('Error fetching profile:', error);
         return null;
       }
 
-      console.log('Profile fetched:', data);
-      setProfile(data);
-      return data;
+      const profile = data && data.length > 0 ? data[0] : null;
+      console.log('Profile fetched:', profile ? 'found' : 'not found');
+      setProfile(profile);
+      return profile;
     } catch (err) {
       console.error('Profile fetch exception:', err);
       return null;
