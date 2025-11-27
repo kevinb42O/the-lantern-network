@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   trust_score INTEGER DEFAULT 0,
   lantern_balance INTEGER DEFAULT 5,
   location JSONB,
+  is_admin BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -39,12 +40,13 @@ CREATE TABLE IF NOT EXISTS flares (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Flare participants
+-- Flare participants (also used for help requests)
 CREATE TABLE IF NOT EXISTS flare_participants (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   flare_id UUID REFERENCES flares(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  status VARCHAR(20) DEFAULT 'joined' CHECK (status IN ('joined', 'completed', 'left')),
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'denied', 'completed', 'left')),
+  message TEXT,
   joined_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(flare_id, user_id)
 );
@@ -216,5 +218,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
 
--- Enable realtime for messages table
+-- Enable realtime for messages and flare_participants tables
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+ALTER PUBLICATION supabase_realtime ADD TABLE flare_participants;
+ALTER PUBLICATION supabase_realtime ADD TABLE flares;

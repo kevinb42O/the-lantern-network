@@ -13,7 +13,16 @@ import { MessagesView } from '@/components/screens/messages-view'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import type { Message } from '@/lib/types'
+import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode } from '@/lib/types'
+import { 
+  generateInviteCode, 
+  ELDER_HELP_THRESHOLD, 
+  ELDER_TRUST_THRESHOLD,
+  HOARD_LIMIT,
+  LANTERN_TRANSFER_AMOUNT,
+  REPUTATION_GAIN_HELPER,
+  REPUTATION_GAIN_OWNER
+} from '@/lib/economy'
 
 // Admin configuration
 const ADMIN_EMAILS = [
@@ -42,8 +51,24 @@ interface FlareData {
   creator_name?: string
 }
 
+// Help request data from Supabase (using flare_participants table)
+interface HelpRequestData {
+  id: string
+  flare_id: string
+  user_id: string
+  status: 'pending' | 'accepted' | 'denied' | 'completed'
+  message: string | null
+  joined_at: string
+  helper_name?: string
+  flare_owner_id?: string
+  flare_owner_name?: string
+  flare_title?: string
+  flare_description?: string
+  flare_category?: string
+}
+
 function App() {
-  const { user: authUser, profile, loading: authLoading, signOut } = useAuth()
+  const { user: authUser, profile, loading: authLoading, signOut, refreshProfile } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
   const [currentView, setCurrentView] = useState<MainView>('flares')
   
@@ -52,6 +77,18 @@ function App() {
   
   // Flares state
   const [flares, setFlares] = useState<FlareData[]>([])
+
+  // Help requests state
+  const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([])
+
+  // Transactions state
+  const [transactions, setTransactions] = useState<LanternTransaction[]>([])
+
+  // Invite codes state  
+  const [inviteCodes, setInviteCodes] = useState<InviteCode[]>([])
+
+  // Help count for profile
+  const [helpCount, setHelpCount] = useState(0)
 
   // Fetch flares with creator names
   const fetchFlares = async () => {
@@ -116,12 +153,378 @@ function App() {
     }
   }
 
-  // Join/offer help on a flare
+  // Join/offer help on a flare - NOW FULLY IMPLEMENTED
   const handleJoinFlare = async (flareId: string) => {
-    if (!authUser) return
+    if (!authUser || !profile) return
     
-    // For now, just show a toast - we can expand this later
-    toast.success('Help offer sent!')
+    // Find the flare to get owner info
+    const flare = flares.find(f => f.id === flareId)
+    if (!flare) {
+      toast.error('Flare not found')
+      return
+    }
+
+    // Check if user already requested to help
+    const { data: existing } = await supabase
+      .from('flare_participants')
+      .select('*')
+      .eq('flare_id', flareId)
+      .eq('user_id', authUser.id)
+      .limit(1)
+
+    if (existing && existing.length > 0) {
+      toast.error('You already offered to help with this flare')
+      return
+    }
+
+    // Create help request (using flare_participants table with 'pending' status)
+    const { error } = await supabase.from('flare_participants').insert({
+      flare_id: flareId,
+      user_id: authUser.id,
+      status: 'pending'
+    })
+
+    if (error) {
+      console.error('Error offering help:', error)
+      toast.error('Failed to send help offer')
+    } else {
+      toast.success('Help offer sent! Waiting for response...')
+      fetchHelpRequests()
+    }
+  }
+
+  // Fetch help requests (for messages view)
+  const fetchHelpRequests = async () => {
+    if (!authUser) return
+
+    try {
+      // Get all help requests where user is involved (as helper or flare owner)
+      const { data: participantsData, error: participantsError } = await supabase
+        .from('flare_participants')
+        .select('*')
+        .order('joined_at', { ascending: false })
+
+      if (participantsError) {
+        console.error('Error fetching help requests:', participantsError)
+        return
+      }
+
+      // Get flare details for these participants
+      const flareIds = [...new Set(participantsData?.map(p => p.flare_id) || [])]
+      
+      const { data: flaresData } = await supabase
+        .from('flares')
+        .select('*')
+        .in('id', flareIds)
+
+      // Get user profiles
+      const userIds = [...new Set([
+        ...(participantsData?.map(p => p.user_id) || []),
+        ...(flaresData?.map(f => f.creator_id) || [])
+      ])]
+
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds)
+
+      const profileMap: Record<string, string> = {}
+      profilesData?.forEach(p => {
+        profileMap[p.user_id] = p.display_name
+      })
+
+      const flareMap: Record<string, FlareData> = {}
+      flaresData?.forEach(f => {
+        flareMap[f.id] = f as FlareData
+      })
+
+      // Filter to only requests involving current user
+      const relevantRequests = participantsData?.filter(p => {
+        const flare = flareMap[p.flare_id]
+        return p.user_id === authUser.id || flare?.creator_id === authUser.id
+      }) || []
+
+      // Format as HelpRequest type
+      const formattedRequests: HelpRequest[] = relevantRequests.map(p => {
+        const flare = flareMap[p.flare_id]
+        return {
+          id: p.id,
+          flareId: p.flare_id,
+          helperId: p.user_id,
+          helperUsername: profileMap[p.user_id] || 'Anonymous',
+          flareOwnerId: flare?.creator_id || '',
+          flareOwnerUsername: profileMap[flare?.creator_id || ''] || 'Anonymous',
+          message: '',
+          status: p.status as 'pending' | 'accepted' | 'denied',
+          createdAt: new Date(p.joined_at).getTime()
+        }
+      })
+
+      setHelpRequests(formattedRequests)
+    } catch (err) {
+      console.error('Help requests fetch error:', err)
+    }
+  }
+
+  // Accept a help request
+  const handleAcceptHelp = async (helpRequestId: string) => {
+    if (!authUser) return
+
+    const { error } = await supabase
+      .from('flare_participants')
+      .update({ status: 'accepted' })
+      .eq('id', helpRequestId)
+
+    if (error) {
+      console.error('Error accepting help:', error)
+      toast.error('Failed to accept help offer')
+    } else {
+      toast.success('Help offer accepted! You can now chat.')
+      fetchHelpRequests()
+    }
+  }
+
+  // Deny a help request
+  const handleDenyHelp = async (helpRequestId: string) => {
+    if (!authUser) return
+
+    const { error } = await supabase
+      .from('flare_participants')
+      .update({ status: 'denied' })
+      .eq('id', helpRequestId)
+
+    if (error) {
+      console.error('Error denying help:', error)
+      toast.error('Failed to decline help offer')
+    } else {
+      toast.info('Help offer declined')
+      fetchHelpRequests()
+    }
+  }
+
+  // Send a message in a help request chat
+  const handleSendChatMessage = async (helpRequestId: string, content: string) => {
+    if (!authUser || !profile) return
+
+    // Find the help request to get the other participant
+    const helpRequest = helpRequests.find(hr => hr.id === helpRequestId)
+    if (!helpRequest) return
+
+    const receiverId = helpRequest.helperId === authUser.id 
+      ? helpRequest.flareOwnerId 
+      : helpRequest.helperId
+
+    const { error } = await supabase.from('messages').insert({
+      sender_id: authUser.id,
+      receiver_id: receiverId,
+      content,
+      flare_id: helpRequest.flareId
+    })
+
+    if (error) {
+      console.error('Error sending message:', error)
+      toast.error('Failed to send message')
+    }
+  }
+
+  // Complete a flare and transfer lanterns
+  const handleCompleteFlare = async (flareId: string, helperId: string) => {
+    if (!authUser || !profile) return
+
+    // Check if user has enough lanterns
+    if (profile.lantern_balance < LANTERN_TRANSFER_AMOUNT) {
+      toast.error('Not enough lanterns to complete this task')
+      return
+    }
+
+    try {
+      // Update flare status
+      await supabase
+        .from('flares')
+        .update({ status: 'completed' })
+        .eq('id', flareId)
+
+      // Update help request status
+      await supabase
+        .from('flare_participants')
+        .update({ status: 'completed' })
+        .eq('flare_id', flareId)
+        .eq('user_id', helperId)
+
+      // Transfer lantern from owner to helper
+      // 1. Deduct from owner
+      await supabase
+        .from('profiles')
+        .update({ 
+          lantern_balance: profile.lantern_balance - LANTERN_TRANSFER_AMOUNT,
+          trust_score: (profile.trust_score || 0) + REPUTATION_GAIN_OWNER
+        })
+        .eq('user_id', authUser.id)
+
+      // 2. Get helper's current balance
+      const { data: helperProfile } = await supabase
+        .from('profiles')
+        .select('lantern_balance, trust_score')
+        .eq('user_id', helperId)
+        .single()
+
+      // 3. Add to helper (max hoard limit)
+      const newBalance = Math.min((helperProfile?.lantern_balance || 0) + LANTERN_TRANSFER_AMOUNT, HOARD_LIMIT)
+      await supabase
+        .from('profiles')
+        .update({ 
+          lantern_balance: newBalance,
+          trust_score: (helperProfile?.trust_score || 0) + REPUTATION_GAIN_HELPER
+        })
+        .eq('user_id', helperId)
+
+      // 4. Record transactions
+      await supabase.from('transactions').insert([
+        {
+          user_id: authUser.id,
+          type: 'transfer_out',
+          amount: -LANTERN_TRANSFER_AMOUNT,
+          description: 'Sent as thanks for help',
+          flare_id: flareId
+        },
+        {
+          user_id: helperId,
+          type: 'transfer_in',
+          amount: LANTERN_TRANSFER_AMOUNT,
+          description: 'Received for helping',
+          flare_id: flareId
+        }
+      ])
+
+      toast.success(`🏮 Task completed! ${LANTERN_TRANSFER_AMOUNT} Lantern sent as thanks!`)
+      
+      // Refresh data
+      fetchFlares()
+      fetchHelpRequests()
+      fetchTransactions()
+      refreshProfile()
+      
+      // Check for elder promotion
+      checkElderPromotion(helperId)
+    } catch (err) {
+      console.error('Error completing flare:', err)
+      toast.error('Failed to complete task')
+    }
+  }
+
+  // Fetch transactions
+  const fetchTransactions = async () => {
+    if (!authUser) return
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('user_id', authUser.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching transactions:', error)
+      return
+    }
+
+    // Format transactions
+    const formatted: LanternTransaction[] = (data || []).map(t => ({
+      id: t.id,
+      from: t.type === 'transfer_in' ? 'neighbor' : authUser.id,
+      to: t.type === 'transfer_out' ? 'neighbor' : authUser.id,
+      amount: Math.abs(t.amount),
+      reason: t.description,
+      timestamp: new Date(t.created_at).getTime()
+    }))
+
+    setTransactions(formatted)
+  }
+
+  // Fetch help count for profile
+  const fetchHelpCount = async () => {
+    if (!authUser) return
+
+    const { count } = await supabase
+      .from('flare_participants')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', authUser.id)
+      .eq('status', 'completed')
+
+    setHelpCount(count || 0)
+  }
+
+  // Fetch invite codes
+  const fetchInviteCodes = async () => {
+    if (!authUser) return
+
+    const { data, error } = await supabase
+      .from('invites')
+      .select('*')
+      .eq('inviter_id', authUser.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching invites:', error)
+      return
+    }
+
+    const formatted: InviteCode[] = (data || []).map(i => ({
+      code: i.code,
+      generatedBy: i.inviter_id,
+      usedBy: i.used_by_id || undefined,
+      usedAt: i.used ? new Date(i.created_at).getTime() : undefined,
+      createdAt: new Date(i.created_at).getTime()
+    }))
+
+    setInviteCodes(formatted)
+  }
+
+  // Generate a new invite code
+  const handleGenerateInvite = async () => {
+    if (!authUser) return
+
+    const code = generateInviteCode()
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 7) // 7 day expiry
+
+    const { error } = await supabase.from('invites').insert({
+      inviter_id: authUser.id,
+      code,
+      expires_at: expiresAt.toISOString()
+    })
+
+    if (error) {
+      console.error('Error generating invite:', error)
+      toast.error('Failed to generate invite code')
+    } else {
+      toast.success('New invite code generated!')
+      fetchInviteCodes()
+    }
+  }
+
+  // Check for elder promotion
+  const checkElderPromotion = async (userId: string) => {
+    // Count completed helps
+    const { count } = await supabase
+      .from('flare_participants')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'completed')
+
+    if ((count || 0) >= ELDER_HELP_THRESHOLD) {
+      // Get user's profile
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('trust_score')
+        .eq('user_id', userId)
+        .single()
+
+      // If they've reached elder threshold, their trust_score should be high enough
+      // The Elder badge is shown when trust_score >= ELDER_TRUST_THRESHOLD
+      if ((userProfile?.trust_score || 0) >= ELDER_TRUST_THRESHOLD) {
+        toast.success('🌟 Congratulations! You\'ve earned Elder status!')
+      }
+    }
   }
 
   // Subscribe to real-time flares
@@ -129,6 +532,10 @@ function App() {
     if (!authUser) return
 
     fetchFlares()
+    fetchHelpRequests()
+    fetchTransactions()
+    fetchHelpCount()
+    fetchInviteCodes()
 
     const channel = supabase
       .channel('flares-changes')
@@ -145,8 +552,26 @@ function App() {
       )
       .subscribe()
 
+    // Also subscribe to flare_participants changes
+    const participantsChannel = supabase
+      .channel('participants-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'flare_participants'
+        },
+        () => {
+          fetchHelpRequests()
+          fetchHelpCount()
+        }
+      )
+      .subscribe()
+
     return () => {
       supabase.removeChannel(channel)
+      supabase.removeChannel(participantsChannel)
     }
   }, [authUser])
 
@@ -218,8 +643,70 @@ function App() {
       }))
       
       setMessages(formattedMessages)
+
+      // Also fetch mission messages (those with flare_id)
+      await fetchMissionMessages()
     } catch (err) {
       console.error('Messages fetch error:', err)
+    }
+  }
+
+  // Fetch mission/chat messages for help requests
+  const [missionMessages, setMissionMessages] = useState<Message[]>([])
+  
+  const fetchMissionMessages = async () => {
+    if (!authUser) return
+
+    try {
+      const { data: messagesData, error } = await supabase
+        .from('messages')
+        .select('*')
+        .not('flare_id', 'is', null)
+        .or(`sender_id.eq.${authUser.id},receiver_id.eq.${authUser.id}`)
+        .order('created_at', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching mission messages:', error)
+        return
+      }
+
+      // Get sender profiles
+      const senderIds = [...new Set(messagesData?.map(m => m.sender_id) || [])]
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', senderIds)
+
+      const profileMap: Record<string, string> = {}
+      profilesData?.forEach(p => {
+        profileMap[p.user_id] = p.display_name
+      })
+
+      // Find help request ID for each flare
+      const flareIds = [...new Set(messagesData?.map(m => m.flare_id).filter(Boolean) || [])]
+      const { data: participantsData } = await supabase
+        .from('flare_participants')
+        .select('id, flare_id')
+        .in('flare_id', flareIds)
+
+      const flareToHelpRequestMap: Record<string, string> = {}
+      participantsData?.forEach(p => {
+        flareToHelpRequestMap[p.flare_id] = p.id
+      })
+
+      const formatted: Message[] = (messagesData || []).map(m => ({
+        id: m.id,
+        userId: m.sender_id,
+        username: profileMap[m.sender_id] || 'Anonymous',
+        content: m.content,
+        timestamp: new Date(m.created_at).getTime(),
+        type: 'mission' as const,
+        chatId: flareToHelpRequestMap[m.flare_id || ''] || m.flare_id || ''
+      }))
+
+      setMissionMessages(formatted)
+    } catch (err) {
+      console.error('Mission messages fetch error:', err)
     }
   }
 
@@ -333,7 +820,7 @@ function App() {
     lanternBalance: profile.lantern_balance,
     reputation: profile.trust_score,
     createdAt: new Date(profile.created_at).getTime(),
-    isElder: profile.trust_score >= 100,
+    isElder: profile.trust_score >= ELDER_TRUST_THRESHOLD,
     location: profile.location as { lat: number; lng: number } | undefined,
     isAdmin
   }
@@ -358,26 +845,35 @@ function App() {
           />
         )}
         {currentView === 'wallet' && (
-          <WalletView user={userData} transactions={[]} />
+          <WalletView user={userData} transactions={transactions} />
         )}
         {currentView === 'messages' && (
           <MessagesView
             user={userData}
-            flares={[]}
-            messages={[]}
-            helpRequests={[]}
-            onAcceptHelp={() => {}}
-            onDenyHelp={() => {}}
-            onSendMessage={() => {}}
-            onCompleteFlare={() => {}}
+            flares={flares.map(f => ({
+              id: f.id,
+              userId: f.creator_id,
+              username: f.creator_name || 'Anonymous',
+              category: f.category as 'Mechanical' | 'Food' | 'Talk' | 'Other',
+              description: f.description,
+              location: f.location || { lat: 0, lng: 0 },
+              status: f.status as 'active' | 'accepted' | 'completed',
+              createdAt: new Date(f.created_at).getTime()
+            }))}
+            messages={missionMessages}
+            helpRequests={helpRequests}
+            onAcceptHelp={handleAcceptHelp}
+            onDenyHelp={handleDenyHelp}
+            onSendMessage={handleSendChatMessage}
+            onCompleteFlare={handleCompleteFlare}
           />
         )}
         {currentView === 'profile' && (
           <ProfileView
             user={userData}
-            helpCount={0}
-            inviteCodes={[]}
-            onGenerateInvite={() => {}}
+            helpCount={helpCount}
+            inviteCodes={inviteCodes}
+            onGenerateInvite={handleGenerateInvite}
             onDeleteAccount={handleSignOut}
           />
         )}
