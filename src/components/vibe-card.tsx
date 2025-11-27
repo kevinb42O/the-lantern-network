@@ -83,7 +83,7 @@ export function VibeCard({ user, helpCount = 0 }: VibeCardProps) {
         </div>
         
         {/* Skill tags */}
-        {user.skillTags && user.skillTags.length > 0 && (
+        {user.skillTags?.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {user.skillTags.map((tag) => (
               <Badge 
