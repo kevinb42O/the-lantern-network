@@ -820,6 +820,7 @@ function App() {
         const flareOwnerId = flareOwnerMap[flareId] || ''
         
         // Determine the helper's user_id for this message
+        // Flare messages are always 1:1 between the flare owner and a helper
         // If sender is the flare owner, the helper is the receiver; otherwise sender is the helper
         const helperId = m.sender_id === flareOwnerId ? m.receiver_id : m.sender_id
         

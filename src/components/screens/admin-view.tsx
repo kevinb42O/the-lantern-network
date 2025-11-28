@@ -189,7 +189,7 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
           console.error('Error recording transaction:', txError)
           // Transaction record failed but credits were added
           // With the new RLS policy, this should work, but log details if it fails
-          toast.warning(`Credits added but transaction log failed: ${txError.message || 'RLS policy error'}`)
+          toast.warning(`Credits added but transaction log failed: ${txError.message || 'Database permission error'}`)
         } else {
           // Transaction recorded successfully - show success with credits added
           toast.success(`Added ${creditsToAdd} credits to ${selectedUser.display_name}!`)
