@@ -790,27 +790,52 @@ function App() {
         profileMap[p.user_id] = p.display_name
       })
 
-      // Find help request ID for each flare
+      // Find help requests for each flare - include user_id to handle multiple participants per flare
       const flareIds = [...new Set(messagesData?.map(m => m.flare_id).filter(Boolean) || [])]
       const { data: participantsData } = await supabase
         .from('flare_participants')
-        .select('id, flare_id')
+        .select('id, flare_id, user_id')
         .in('flare_id', flareIds)
 
-      const flareToHelpRequestMap: Record<string, string> = {}
-      participantsData?.forEach(p => {
-        flareToHelpRequestMap[p.flare_id] = p.id
+      // Get flare creator info to identify the flare owner
+      const { data: flaresData } = await supabase
+        .from('flares')
+        .select('id, creator_id')
+        .in('id', flareIds)
+
+      const flareOwnerMap: Record<string, string> = {}
+      flaresData?.forEach(f => {
+        flareOwnerMap[f.id] = f.creator_id
       })
 
-      const formatted: Message[] = (messagesData || []).map(m => ({
-        id: m.id,
-        userId: m.sender_id,
-        username: profileMap[m.sender_id] || 'Anonymous',
-        content: m.content,
-        timestamp: new Date(m.created_at).getTime(),
-        type: 'mission' as const,
-        chatId: flareToHelpRequestMap[m.flare_id || ''] || m.flare_id || ''
-      }))
+      // Create a map: flare_id + helper_user_id -> help_request_id
+      // This handles multiple participants per flare with separate conversations
+      const participantMap: Record<string, string> = {}
+      participantsData?.forEach(p => {
+        participantMap[`${p.flare_id}:${p.user_id}`] = p.id
+      })
+
+      const formatted: Message[] = (messagesData || []).map(m => {
+        const flareId = m.flare_id || ''
+        const flareOwnerId = flareOwnerMap[flareId] || ''
+        
+        // Determine the helper's user_id for this message
+        // If sender is the flare owner, the helper is the receiver; otherwise sender is the helper
+        const helperId = m.sender_id === flareOwnerId ? m.receiver_id : m.sender_id
+        
+        // Look up the help request for this flare+helper combination
+        const chatId = participantMap[`${flareId}:${helperId}`] || flareId
+        
+        return {
+          id: m.id,
+          userId: m.sender_id,
+          username: profileMap[m.sender_id] || 'Anonymous',
+          content: m.content,
+          timestamp: new Date(m.created_at).getTime(),
+          type: 'mission' as const,
+          chatId
+        }
+      })
 
       setMissionMessages(formatted)
     } catch (err) {

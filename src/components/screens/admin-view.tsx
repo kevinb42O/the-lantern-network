@@ -172,7 +172,7 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
 
       if (error) {
         console.error('Error updating user:', error)
-        toast.error('Failed to update user')
+        toast.error(`Failed to update user: ${error.message || 'Unknown error'}`)
         return
       }
 
@@ -187,17 +187,25 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
 
         if (txError) {
           console.error('Error recording transaction:', txError)
-          // Transaction record failed but credits were added - this is non-critical
-          toast.warning('Credits added but transaction log failed')
+          // Transaction record failed but credits were added
+          // With the new RLS policy, this should work, but log details if it fails
+          toast.warning(`Credits added but transaction log failed: ${txError.message || 'RLS policy error'}`)
+        } else {
+          // Transaction recorded successfully - show success with credits added
+          toast.success(`Added ${creditsToAdd} credits to ${selectedUser.display_name}!`)
         }
       }
 
-      toast.success(`Updated ${selectedUser.display_name}!`)
+      // Show general success if no credits were added or if we didn't already show a credits-specific message
+      if (creditsToAdd <= 0) {
+        toast.success(`Updated ${selectedUser.display_name}!`)
+      }
+      
       setShowUserModal(false)
       fetchProfiles()
     } catch (err) {
       console.error('Update error:', err)
-      toast.error('Failed to update user')
+      toast.error(`Failed to update user: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setUpdating(false)
     }
