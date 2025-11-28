@@ -120,6 +120,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Security definer function to check if current user is admin
+-- This avoids circular RLS checks when querying the profiles table
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Row Level Security (RLS) Policies
 
 -- Enable RLS on all tables
@@ -181,6 +193,10 @@ CREATE POLICY "Admins can delete any flare" ON flares
     )
   );
 
+-- Admin can update any flare (for admin panel operations)
+CREATE POLICY "Admins can update any flare" ON flares
+  FOR UPDATE USING (is_admin());
+
 -- Flare participants policies
 CREATE POLICY "Participants are viewable by flare members" ON flare_participants
   FOR SELECT USING (true);
@@ -212,6 +228,10 @@ CREATE POLICY "Admins can delete any participant" ON flare_participants
       WHERE user_id = auth.uid() AND is_admin = true
     )
   );
+
+-- Admins can update any participant (for admin panel operations)
+CREATE POLICY "Admins can update any participant" ON flare_participants
+  FOR UPDATE USING (is_admin());
 
 -- Connections policies
 CREATE POLICY "Users can view their own connections" ON connections
@@ -261,6 +281,10 @@ CREATE POLICY "Users can view their own transactions" ON transactions
 
 CREATE POLICY "System can create transactions" ON transactions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Admins can create transactions for any user (for bonus credits)
+CREATE POLICY "Admins can create transactions for any user" ON transactions
+  FOR INSERT WITH CHECK (is_admin());
 
 -- Invites policies
 CREATE POLICY "Invites are viewable by creator or anyone validating" ON invites
