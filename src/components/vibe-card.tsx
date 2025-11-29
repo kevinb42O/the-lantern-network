@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import type { User } from '@/lib/types'
-import { getBadgeForFlareCount } from '@/lib/economy'
+import { getHighestBadge } from '@/lib/economy'
 
 interface VibeCardProps {
   user: User
@@ -16,8 +16,8 @@ export function VibeCard({ user, helpCount = 0, isModerator = false }: VibeCardP
   const memberSince = user.createdAt ? new Date(user.createdAt) : new Date()
   const daysSinceJoined = Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))
 
-  // Get trust badge based on completed flares
-  const trustBadge = getBadgeForFlareCount(helpCount)
+  // Get trust badge based on completed flares AND admin-granted badges (display highest)
+  const trustBadge = getHighestBadge(helpCount, user.badges)
 
   return (
     <Card className="overflow-hidden bg-gradient-to-br from-card via-card to-card/80 border-border/50">

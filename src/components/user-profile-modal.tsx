@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
-import { getBadgeForFlareCount, getEarnedBadges, getNextBadge, BADGES } from '@/lib/economy'
+import { getHighestBadge, getEarnedBadges, getNextBadge, getAllUserBadges, BADGES } from '@/lib/economy'
 
 export interface UserProfileData {
   user_id: string
@@ -78,19 +78,23 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
   const memberSince = profile?.created_at ? new Date(profile.created_at) : new Date()
   const daysSinceJoined = Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))
 
-  // Get badge based on completed flares
+  // Get badge based on completed flares AND admin-granted badges (display highest)
   const completedFlares = profile?.completed_flares_count || helpCount
-  const currentBadge = getBadgeForFlareCount(completedFlares)
+  const adminBadges = profile?.badges || []
+  const currentBadge = getHighestBadge(completedFlares, adminBadges)
   const earnedBadges = getEarnedBadges(completedFlares)
   const nextBadge = getNextBadge(completedFlares)
   
-  // Get custom badges assigned by admin (these are additive to earned badges)
-  const customBadges = profile?.badges 
-    ? BADGES.filter(b => profile.badges.includes(b.id))
+  // Get all user badges (earned + admin-granted, no duplicates)
+  const allUserBadges = getAllUserBadges(completedFlares, adminBadges)
+  
+  // Get custom badges assigned by admin that are NOT already earned through flares
+  const customBadges = adminBadges.length > 0
+    ? BADGES.filter(b => adminBadges.includes(b.id) && !earnedBadges.some(eb => eb.id === b.id))
     : []
   
-  // Total badge count combines earned badges (from helping) and custom badges (from admin)
-  const totalBadgeCount = earnedBadges.length + customBadges.length
+  // Total badge count is the unique badges the user has
+  const totalBadgeCount = allUserBadges.length
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

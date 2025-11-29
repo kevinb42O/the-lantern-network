@@ -120,6 +120,57 @@ export function getNextBadge(completedFlares: number): { badge: BadgeInfo; flare
   return null // User has all badges
 }
 
+// Get the highest badge considering both earned badges (from completed flares) and admin-granted badges
+export function getHighestBadge(completedFlares: number, adminBadges?: string[]): BadgeInfo {
+  // Get the badge earned through completed flares
+  const earnedBadge = getBadgeForFlareCount(completedFlares)
+  
+  // If no admin-granted badges, return the earned badge
+  if (!adminBadges || adminBadges.length === 0) {
+    return earnedBadge
+  }
+  
+  // Find the highest admin-granted badge
+  let highestAdminBadge: BadgeInfo | null = null
+  for (let i = BADGES.length - 1; i >= 0; i--) {
+    if (adminBadges.includes(BADGES[i].id)) {
+      highestAdminBadge = BADGES[i]
+      break
+    }
+  }
+  
+  // If no valid admin badge found, return earned badge
+  if (!highestAdminBadge) {
+    return earnedBadge
+  }
+  
+  // Compare and return the higher one based on minFlares (higher minFlares = higher tier)
+  return earnedBadge.minFlares >= highestAdminBadge.minFlares ? earnedBadge : highestAdminBadge
+}
+
+// Get all badges a user has (combining earned and admin-granted, without duplicates)
+export function getAllUserBadges(completedFlares: number, adminBadges?: string[]): BadgeInfo[] {
+  const earnedBadges = getEarnedBadges(completedFlares)
+  
+  if (!adminBadges || adminBadges.length === 0) {
+    return earnedBadges
+  }
+  
+  // Get admin-granted badges as BadgeInfo objects
+  const grantedBadges = BADGES.filter(b => adminBadges.includes(b.id))
+  
+  // Combine and remove duplicates (keep unique by badge id)
+  const allBadges = [...earnedBadges]
+  for (const grantedBadge of grantedBadges) {
+    if (!allBadges.some(b => b.id === grantedBadge.id)) {
+      allBadges.push(grantedBadge)
+    }
+  }
+  
+  // Sort by minFlares (tier) descending
+  return allBadges.sort((a, b) => b.minFlares - a.minFlares)
+}
+
 export function canReceiveLantern(user: User): boolean {
   return user.lanternBalance < HOARD_LIMIT
 }
