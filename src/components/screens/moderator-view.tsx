@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
-import { BADGES, getBadgeForFlareCount } from '@/lib/economy'
+import { BADGES, getHighestBadge } from '@/lib/economy'
 import { toast } from 'sonner'
 import type { User } from '@/lib/types'
 
@@ -289,7 +289,7 @@ export function ModeratorView({ user, onRemoveFlare, onClearCampfire }: Moderato
               ) : (
                 <div className="space-y-2">
                   {filteredProfiles.map((profile) => {
-                    const badge = getBadgeForFlareCount(profile.completed_flares_count || 0)
+                    const badge = getHighestBadge(profile.completed_flares_count || 0, profile.badges)
                     return (
                       <Card
                         key={profile.id}
