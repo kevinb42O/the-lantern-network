@@ -995,7 +995,8 @@ function App() {
     isElder: profile.trust_score >= ELDER_TRUST_THRESHOLD,
     location: profile.location as { lat: number; lng: number } | undefined,
     isAdmin,
-    isModerator
+    isModerator,
+    badges: profile.badges || []
   }
 
   return (
