@@ -235,7 +235,8 @@ function App() {
       sender_id: authUser.id,
       receiver_id: flare.creator_id,
       content: message,
-      flare_id: flareId
+      flare_id: flareId,
+      read: false
     })
 
     if (messageError) {
@@ -381,8 +382,9 @@ function App() {
       ? helpRequest.flareOwnerId 
       : helpRequest.helperId
 
-    // Validate receiverId is a valid UUID
-    if (!receiverId || receiverId.length < 10) {
+    // Validate receiverId is a valid UUID (standard format: 8-4-4-4-12 = 36 chars with hyphens)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!receiverId || !uuidRegex.test(receiverId)) {
       console.error('Invalid receiver ID:', receiverId)
       toast.error('Unable to send message. Please refresh and try again.')
       fetchHelpRequests() // Refresh data to fix the issue
@@ -393,7 +395,8 @@ function App() {
       sender_id: authUser.id,
       receiver_id: receiverId,
       content,
-      flare_id: helpRequest.flareId
+      flare_id: helpRequest.flareId,
+      read: false
     })
 
     if (error) {
