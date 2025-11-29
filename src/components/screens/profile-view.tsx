@@ -9,7 +9,7 @@ import { VibeCard } from '@/components/vibe-card'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
-import { getBadgeForFlareCount, getNextBadge, getEarnedBadges } from '@/lib/economy'
+import { getBadgeForFlareCount, getNextBadge, getEarnedBadges, BADGES } from '@/lib/economy'
 
 // Check if Supabase is configured
 const isSupabaseConfigured = 
@@ -56,6 +56,11 @@ export function ProfileView({
   const currentBadge = getBadgeForFlareCount(helpCount)
   const nextBadge = getNextBadge(helpCount)
   const earnedBadges = getEarnedBadges(helpCount)
+  
+  // Get custom badges assigned by admin
+  const customBadges = user.badges 
+    ? BADGES.filter(b => user.badges?.includes(b.id))
+    : []
 
   // Calculate member duration
   const memberSince = user.createdAt ? new Date(user.createdAt) : new Date()
@@ -341,6 +346,33 @@ export function ProfileView({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
+            {/* Custom Badges (assigned by admin) */}
+            {customBadges.length > 0 && (
+              <>
+                <h4 className="text-sm font-medium text-foreground pt-1">Special Badges</h4>
+                {customBadges.map((badge) => (
+                  <Card 
+                    key={`custom-${badge.id}`} 
+                    className={`p-4 ${badge.bgColor} border-2 ${badge.borderColor}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">✨ {badge.emoji}</span>
+                      <div className="flex-1">
+                        <h4 className={`font-semibold ${badge.color}`}>{badge.name}</h4>
+                        <p className="text-xs text-muted-foreground">{badge.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Awarded by admin
+                        </p>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 font-medium">
+                        Special
+                      </span>
+                    </div>
+                  </Card>
+                ))}
+                <h4 className="text-sm font-medium text-foreground pt-2">Earned Badges</h4>
+              </>
+            )}
             {earnedBadges.map((badge) => (
               <Card 
                 key={badge.id} 

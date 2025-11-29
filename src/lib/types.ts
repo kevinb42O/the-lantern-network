@@ -15,6 +15,7 @@ export interface User {
     lng: number
   }
   lastSeenMessagesAt?: number
+  badges?: string[]
 }
 
 export interface LanternTransaction {
