@@ -163,8 +163,20 @@ CREATE POLICY "Admins can update any profile" ON profiles
   );
 
 -- Flares policies
+-- Users can view flares that are:
+-- 1. Active (visible to everyone)
+-- 2. Created by them (creator can always see their flares)
+-- 3. They are participating in (helpers can see flares they offered to help with)
 CREATE POLICY "Active flares are viewable by everyone" ON flares
-  FOR SELECT USING (status = 'active' OR creator_id = auth.uid());
+  FOR SELECT USING (
+    status = 'active' 
+    OR creator_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM flare_participants 
+      WHERE flare_participants.flare_id = flares.id 
+      AND flare_participants.user_id = auth.uid()
+    )
+  );
 
 -- Admins can view all flares (for admin panel)
 CREATE POLICY "Admins can view all flares" ON flares

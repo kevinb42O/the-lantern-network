@@ -223,6 +223,14 @@ function App() {
     }
 
     // Also send a message to the flare owner so they get a notification
+    // Validate that we have valid UUIDs before inserting
+    if (!flare.creator_id || flare.creator_id === authUser.id) {
+      // Can't send message to yourself or invalid creator
+      toast.success('Help offer sent! Waiting for response...')
+      fetchHelpRequests()
+      return
+    }
+
     const { error: messageError } = await supabase.from('messages').insert({
       sender_id: authUser.id,
       receiver_id: flare.creator_id,
@@ -233,8 +241,9 @@ function App() {
 
     if (messageError) {
       console.error('Error sending notification message:', messageError)
-      // Help request was created, but notification message failed
-      toast.warning('Help offer sent, but notification may be delayed')
+      console.error('Message error details:', JSON.stringify(messageError, null, 2))
+      // Help request was created, the message in flare_participants serves as backup
+      toast.success('Help offer sent! Waiting for response...')
     } else {
       toast.success('Help offer sent! Waiting for response...')
     }
@@ -294,20 +303,27 @@ function App() {
       }) || []
 
       // Format as HelpRequest type
-      const formattedRequests: HelpRequest[] = relevantRequests.map(p => {
-        const flare = flareMap[p.flare_id]
-        return {
-          id: p.id,
-          flareId: p.flare_id,
-          helperId: p.user_id,
-          helperUsername: profileMap[p.user_id] || 'Anonymous',
-          flareOwnerId: flare?.creator_id || '',
-          flareOwnerUsername: profileMap[flare?.creator_id || ''] || 'Anonymous',
-          message: p.message || '',
-          status: p.status as 'pending' | 'accepted' | 'denied',
-          createdAt: new Date(p.joined_at).getTime()
-        }
-      })
+      // Filter out requests where we couldn't find the flare (shouldn't happen but be safe)
+      const formattedRequests: HelpRequest[] = relevantRequests
+        .filter(p => {
+          const flare = flareMap[p.flare_id]
+          // Only include if we have valid flare data with a creator_id
+          return flare && flare.creator_id
+        })
+        .map(p => {
+          const flare = flareMap[p.flare_id]
+          return {
+            id: p.id,
+            flareId: p.flare_id,
+            helperId: p.user_id,
+            helperUsername: profileMap[p.user_id] || 'Anonymous',
+            flareOwnerId: flare!.creator_id,  // Safe because of filter above
+            flareOwnerUsername: profileMap[flare!.creator_id] || 'Anonymous',
+            message: p.message || '',
+            status: p.status as 'pending' | 'accepted' | 'denied',
+            createdAt: new Date(p.joined_at).getTime()
+          }
+        })
 
       setHelpRequests(formattedRequests)
     } catch (err) {
@@ -357,22 +373,36 @@ function App() {
 
     // Find the help request to get the other participant
     const helpRequest = helpRequests.find(hr => hr.id === helpRequestId)
-    if (!helpRequest) return
+    if (!helpRequest) {
+      toast.error('Conversation not found. Please refresh and try again.')
+      return
+    }
 
     const receiverId = helpRequest.helperId === authUser.id 
       ? helpRequest.flareOwnerId 
       : helpRequest.helperId
 
+    // Validate receiverId is a valid UUID (standard format: 8-4-4-4-12 = 36 chars with hyphens)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!receiverId || !uuidRegex.test(receiverId)) {
+      console.error('Invalid receiver ID:', receiverId)
+      toast.error('Unable to send message. Please refresh and try again.')
+      fetchHelpRequests() // Refresh data to fix the issue
+      return
+    }
+
     const { error } = await supabase.from('messages').insert({
       sender_id: authUser.id,
       receiver_id: receiverId,
       content,
-      flare_id: helpRequest.flareId
+      flare_id: helpRequest.flareId,
+      read: false
     })
 
     if (error) {
       console.error('Error sending message:', error)
-      toast.error('Failed to send message')
+      console.error('Error details:', JSON.stringify(error, null, 2))
+      toast.error('Failed to send message. Please try again.')
     }
   }
 
