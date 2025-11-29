@@ -11,6 +11,7 @@ import { WalletView } from '@/components/screens/wallet-view'
 import { ProfileView } from '@/components/screens/profile-view'
 import { MessagesView } from '@/components/screens/messages-view'
 import { AdminView } from '@/components/screens/admin-view'
+import { ModeratorView } from '@/components/screens/moderator-view'
 import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
@@ -31,7 +32,7 @@ const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ]
 
-type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin'
+type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
 
 // Flare data from Supabase
 interface FlareData {
@@ -1062,6 +1063,13 @@ function App() {
             onClearCampfire={handleClearCampfire}
           />
         )}
+        {currentView === 'moderator' && isModerator && !isAdmin && (
+          <ModeratorView
+            user={userData}
+            onRemoveFlare={handleRemoveFlare}
+            onClearCampfire={handleClearCampfire}
+          />
+        )}
       </div>
 
       {/* User Profile Modal */}
@@ -1105,6 +1113,15 @@ function App() {
             active={currentView === 'profile'}
             onClick={() => setCurrentView('profile')}
           />
+          {isModerator && !isAdmin && (
+            <NavButton
+              icon={ShieldCheck}
+              label="Mod"
+              active={currentView === 'moderator'}
+              onClick={() => setCurrentView('moderator')}
+              isModeratorButton
+            />
+          )}
           {isAdmin && (
             <NavButton
               icon={ShieldCheck}
@@ -1138,9 +1155,10 @@ interface NavButtonProps {
   onClick: () => void
   badge?: number
   isAdminButton?: boolean
+  isModeratorButton?: boolean
 }
 
-function NavButton({ icon: Icon, label, active, onClick, badge, isAdminButton = false }: NavButtonProps) {
+function NavButton({ icon: Icon, label, active, onClick, badge, isAdminButton = false, isModeratorButton = false }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
@@ -1149,10 +1167,14 @@ function NavButton({ icon: Icon, label, active, onClick, badge, isAdminButton = 
         active
           ? isAdminButton 
             ? 'text-amber-400 bg-amber-500/15 scale-105'
-            : 'text-primary bg-primary/15 scale-105'
+            : isModeratorButton
+              ? 'text-cyan-400 bg-cyan-500/15 scale-105'
+              : 'text-primary bg-primary/15 scale-105'
           : isAdminButton
             ? 'text-amber-400/60 hover:text-amber-400 hover:bg-amber-500/10'
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+            : isModeratorButton
+              ? 'text-cyan-400/60 hover:text-cyan-400 hover:bg-cyan-500/10'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
       )}
     >
       <div className="relative">
@@ -1165,7 +1187,7 @@ function NavButton({ icon: Icon, label, active, onClick, badge, isAdminButton = 
       </div>
       <span className={cn(
         "text-[10px] font-medium transition-colors",
-        active ? (isAdminButton ? "text-amber-400" : "text-primary") : ""
+        active ? (isAdminButton ? "text-amber-400" : isModeratorButton ? "text-cyan-400" : "text-primary") : ""
       )}>{label}</span>
     </button>
   )
