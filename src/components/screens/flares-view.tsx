@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, MapPin, Clock, Users, Wrench, Hamburger, Chat, Lightbulb, HandWaving, Sparkle, Fire } from '@phosphor-icons/react'
+import { Plus, MapPin, Clock, Users, Wrench, Hamburger, Chat, Lightbulb, HandWaving, Sparkle, Fire, Hourglass, CheckCircle, XCircle } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import type { User } from '@/lib/types'
+import type { User, HelpRequest } from '@/lib/types'
 
 // Flare from Supabase
 interface FlareData {
@@ -34,6 +34,7 @@ interface FlareData {
 interface FlaresViewProps {
   user: User
   flares: FlareData[]
+  helpRequests: HelpRequest[]
   onCreateFlare: (flare: {
     title: string
     description: string
@@ -73,7 +74,7 @@ const categoryConfig: Record<string, { icon: React.ElementType; color: string; b
 
 const categories = ['Mechanical', 'Food', 'Talk', 'Other']
 
-export function FlaresView({ user, flares, onCreateFlare, onJoinFlare, onUserClick }: FlaresViewProps) {
+export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFlare, onUserClick }: FlaresViewProps) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
   const [category, setCategory] = useState('Other')
@@ -87,6 +88,20 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare, onUserCli
   const [helpFlare, setHelpFlare] = useState<FlareData | null>(null)
   const [helpMessage, setHelpMessage] = useState('')
   const [sendingHelp, setSendingHelp] = useState(false)
+
+  // Check if user already sent a help request for a flare
+  const hasAlreadyOfferedHelp = (flareId: string): boolean => {
+    return helpRequests.some(
+      hr => hr.flareId === flareId && hr.helperId === user.id
+    )
+  }
+
+  // Get help request status for a flare
+  const getHelpRequestStatus = (flareId: string): HelpRequest | undefined => {
+    return helpRequests.find(
+      hr => hr.flareId === flareId && hr.helperId === user.id
+    )
+  }
 
   // Get user location when creating flare
   const handleOpenCreate = () => {
@@ -120,6 +135,18 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare, onUserCli
   }
 
   const handleOpenHelpModal = (flare: FlareData) => {
+    // Check if user already offered help
+    if (hasAlreadyOfferedHelp(flare.id)) {
+      const status = getHelpRequestStatus(flare.id)
+      if (status?.status === 'pending') {
+        toast.info('Your help offer is pending. Check Messages for updates.')
+      } else if (status?.status === 'accepted') {
+        toast.info('Your help offer was accepted! Check Messages to chat.')
+      } else if (status?.status === 'denied') {
+        toast.info('Your help offer was declined.')
+      }
+      return
+    }
     setHelpFlare(flare)
     setHelpMessage('')
     setShowHelpModal(true)
@@ -271,14 +298,41 @@ export function FlaresView({ user, flares, onCreateFlare, onJoinFlare, onUserCli
                         )}
                       </div>
                       {!isOwner ? (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleOpenHelpModal(flare)}
-                          className="gap-2 rounded-xl"
-                        >
-                          <HandWaving size={16} weight="duotone" />
-                          I Can Help
-                        </Button>
+                        (() => {
+                          const helpStatus = getHelpRequestStatus(flare.id)
+                          if (helpStatus?.status === 'pending') {
+                            return (
+                              <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-500/30 gap-1.5">
+                                <Hourglass size={12} />
+                                Pending
+                              </Badge>
+                            )
+                          } else if (helpStatus?.status === 'accepted') {
+                            return (
+                              <Badge variant="outline" className="text-xs text-green-500 border-green-500/30 gap-1.5">
+                                <CheckCircle size={12} weight="fill" />
+                                Accepted
+                              </Badge>
+                            )
+                          } else if (helpStatus?.status === 'denied') {
+                            return (
+                              <Badge variant="outline" className="text-xs text-muted-foreground gap-1.5">
+                                <XCircle size={12} />
+                                Declined
+                              </Badge>
+                            )
+                          }
+                          return (
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleOpenHelpModal(flare)}
+                              className="gap-2 rounded-xl"
+                            >
+                              <HandWaving size={16} weight="duotone" />
+                              I Can Help
+                            </Button>
+                          )
+                        })()
                       ) : (
                         <Badge variant="secondary" className="text-xs bg-primary/10 text-primary border-0">
                           <Sparkle size={12} className="mr-1" />
