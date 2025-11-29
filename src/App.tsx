@@ -218,7 +218,8 @@ function App() {
 
     if (error) {
       console.error('Error offering help:', error)
-      toast.error('Failed to send help offer')
+      const errorDetail = error.message || error.code || JSON.stringify(error).slice(0, 100)
+      toast.error(`Failed to send help offer: ${errorDetail}`)
       return
     }
 
