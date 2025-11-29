@@ -59,7 +59,7 @@ export function ProfileView({
   
   // Get custom badges assigned by admin
   const customBadges = user.badges 
-    ? BADGES.filter(b => user.badges!.includes(b.id))
+    ? BADGES.filter(b => user.badges?.includes(b.id))
     : []
 
   // Calculate member duration
