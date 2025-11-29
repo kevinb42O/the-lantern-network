@@ -1007,6 +1007,7 @@ function App() {
           <FlaresView
             user={userData}
             flares={flares}
+            helpRequests={helpRequests}
             onCreateFlare={handleCreateFlare}
             onJoinFlare={handleJoinFlare}
             onUserClick={handleUserClick}
