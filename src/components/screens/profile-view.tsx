@@ -9,7 +9,7 @@ import { VibeCard } from '@/components/vibe-card'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
-import { getBadgeForFlareCount, getNextBadge, getEarnedBadges, BADGES } from '@/lib/economy'
+import { getHighestBadge, getNextBadge, getEarnedBadges, getAllUserBadges, BADGES } from '@/lib/economy'
 
 // Check if Supabase is configured
 const isSupabaseConfigured = 
@@ -52,14 +52,18 @@ export function ProfileView({
     }
   };
   
-  // Get badge info
-  const currentBadge = getBadgeForFlareCount(helpCount)
+  // Get badge info - use highest badge considering both earned and admin-granted badges
+  const adminBadges = user.badges || []
+  const currentBadge = getHighestBadge(helpCount, adminBadges)
   const nextBadge = getNextBadge(helpCount)
   const earnedBadges = getEarnedBadges(helpCount)
   
-  // Get custom badges assigned by admin
-  const customBadges = user.badges 
-    ? BADGES.filter(b => user.badges?.includes(b.id))
+  // Get all user badges (earned + admin-granted, no duplicates)
+  const allUserBadges = getAllUserBadges(helpCount, adminBadges)
+  
+  // Get custom badges assigned by admin that are NOT already earned through flares
+  const customBadges = adminBadges.length > 0
+    ? BADGES.filter(b => adminBadges.includes(b.id) && !earnedBadges.some(eb => eb.id === b.id))
     : []
 
   // Calculate member duration
