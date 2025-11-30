@@ -102,6 +102,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   // Track if we're currently refreshing in the background
   const isBackgroundRefreshRef = useRef(false);
+  // Use ref to track current user for visibility change handler to avoid circular dependency
+  const userRef = useRef<User | null>(null);
+  
+  // Keep userRef in sync with user state
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   // Update profile state and cache
   const updateProfileState = useCallback((newProfile: Profile | null, isNewUser = false) => {
@@ -267,11 +274,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for visibility changes to handle app resume from background
     const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && user && !isBackgroundRefreshRef.current) {
+      const currentUser = userRef.current;
+      if (document.visibilityState === 'visible' && currentUser && !isBackgroundRefreshRef.current) {
         console.log('App resumed from background, refreshing profile...');
         isBackgroundRefreshRef.current = true;
         try {
-          await fetchProfile(user.id, user.email, true);
+          await fetchProfile(currentUser.id, currentUser.email, true);
         } finally {
           isBackgroundRefreshRef.current = false;
         }
@@ -285,7 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user, fetchProfile, updateProfileState]);
+  }, [fetchProfile, updateProfileState]);
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
