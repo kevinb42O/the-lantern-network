@@ -71,7 +71,7 @@ interface HelpRequestData {
 }
 
 function App() {
-  const { user: authUser, profile, loading: authLoading, signOut, refreshProfile } = useAuth()
+  const { user: authUser, profile, loading: authLoading, signOut, refreshProfile, hasCompletedOnboarding } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
   const [currentView, setCurrentView] = useState<MainView>('flares')
   
@@ -1003,9 +1003,28 @@ function App() {
     return <AuthScreen />
   }
 
-  // Logged in but no profile - show profile setup
-  if (!profile) {
+  // Logged in but no profile AND haven't completed onboarding - show profile setup
+  // This check uses hasCompletedOnboarding flag to prevent showing ProfileSetup 
+  // for existing users who have network issues or timeouts on profile fetch
+  if (!profile && !hasCompletedOnboarding) {
     return <ProfileSetup />
+  }
+
+  // If we have no profile but hasCompletedOnboarding is true, show a loading/retry state
+  // This handles the case where profile fetch failed for an existing user
+  if (!profile && hasCompletedOnboarding) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground text-center">Loading your profile...</p>
+        <button 
+          onClick={refreshProfile}
+          className="text-primary hover:underline text-sm"
+        >
+          Tap to retry
+        </button>
+      </div>
+    )
   }
 
   // Check if current user is admin (case-insensitive)
