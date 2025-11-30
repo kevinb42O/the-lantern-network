@@ -146,10 +146,26 @@ export function ReportsView({ isAdmin = false }: ReportsViewProps) {
 
       // If action is content_removed, attempt to delete the content
       if (action === 'content_removed' && selectedReport.target_id) {
+        let contentDeleted = false
         if (selectedReport.report_type === 'message') {
-          await supabase.from('messages').delete().eq('id', selectedReport.target_id)
+          const { error: deleteError } = await supabase.from('messages').delete().eq('id', selectedReport.target_id)
+          if (deleteError) {
+            console.error('Error deleting message:', deleteError)
+            toast.error('Failed to remove message content. Report will still be updated.')
+          } else {
+            contentDeleted = true
+          }
         } else if (selectedReport.report_type === 'flare') {
-          await supabase.from('flares').delete().eq('id', selectedReport.target_id)
+          const { error: deleteError } = await supabase.from('flares').delete().eq('id', selectedReport.target_id)
+          if (deleteError) {
+            console.error('Error deleting flare:', deleteError)
+            toast.error('Failed to remove flare content. Report will still be updated.')
+          } else {
+            contentDeleted = true
+          }
+        }
+        if (contentDeleted) {
+          toast.success('Content removed successfully')
         }
       }
 

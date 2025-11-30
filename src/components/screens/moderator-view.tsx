@@ -22,7 +22,6 @@ import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
 import { BADGES, getHighestBadge } from '@/lib/economy'
 import { toast } from 'sonner'
-import type { User } from '@/lib/types'
 import { ReportsView } from './reports-view'
 
 interface ProfileData {
@@ -53,7 +52,6 @@ interface FlareData {
 }
 
 interface ModeratorViewProps {
-  user: User
   onRemoveFlare: (flareId: string) => Promise<void>
   onClearCampfire: () => Promise<void>
 }
