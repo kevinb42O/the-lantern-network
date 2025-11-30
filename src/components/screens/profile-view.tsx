@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy, Medal } from '@phosphor-icons/react'
+import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy, Medal, BookOpen } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { VibeCard } from '@/components/vibe-card'
+import { PhilosophyView } from './philosophy-view'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
@@ -37,6 +38,7 @@ export function ProfileView({
   const [showSettings, setShowSettings] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showBadges, setShowBadges] = useState(false)
+  const [showPhilosophy, setShowPhilosophy] = useState(false)
 
   const availableInvites = inviteCodes.filter(code => !code.usedBy)
 
@@ -69,6 +71,11 @@ export function ProfileView({
   // Calculate member duration
   const memberSince = user.createdAt ? new Date(user.createdAt) : new Date()
   const daysSinceJoined = Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))
+
+  // Show philosophy page if requested
+  if (showPhilosophy) {
+    return <PhilosophyView onBack={() => setShowPhilosophy(false)} />;
+  }
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -201,6 +208,14 @@ export function ProfileView({
               Account
             </h3>
             <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3 rounded-xl h-12"
+                onClick={() => setShowPhilosophy(true)}
+              >
+                <BookOpen size={18} className="text-muted-foreground" />
+                Our Philosophy
+              </Button>
               {isSupabaseConfigured && (
                 <Button
                   variant="outline"
