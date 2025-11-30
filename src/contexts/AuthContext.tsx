@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import type { Profile } from '@/lib/database.types';
@@ -19,11 +19,69 @@ const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ];
 
+// localStorage keys for session persistence
+const STORAGE_KEYS = {
+  CACHED_PROFILE: 'lantern_cached_profile',
+  HAS_COMPLETED_ONBOARDING: 'lantern_has_completed_onboarding',
+} as const;
+
+// Helper functions for localStorage with error handling
+const getStoredProfile = (): Profile | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.CACHED_PROFILE);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+const setStoredProfile = (profile: Profile | null): void => {
+  try {
+    if (profile) {
+      localStorage.setItem(STORAGE_KEYS.CACHED_PROFILE, JSON.stringify(profile));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CACHED_PROFILE);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+};
+
+const getHasCompletedOnboarding = (): boolean => {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING) === 'true';
+  } catch {
+    return false;
+  }
+};
+
+const setHasCompletedOnboarding = (value: boolean): void => {
+  try {
+    if (value) {
+      localStorage.setItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING, 'true');
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+};
+
+const clearAllStoredData = (): void => {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.CACHED_PROFILE);
+    localStorage.removeItem(STORAGE_KEYS.HAS_COMPLETED_ONBOARDING);
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  hasCompletedOnboarding: boolean;
   signUp: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithOtp: (email: string) => Promise<{ error: AuthError | null }>;
@@ -37,14 +95,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  // Initialize profile from cache for faster startup
+  const [profile, setProfile] = useState<Profile | null>(() => getStoredProfile());
   const [loading, setLoading] = useState(isSupabaseConfigured); // Only loading if Supabase is configured
+  const [hasCompletedOnboarding, setHasCompletedOnboardingState] = useState<boolean>(() => getHasCompletedOnboarding());
+  
+  // Track if we're currently refreshing in the background
+  const isBackgroundRefreshRef = useRef(false);
+
+  // Update profile state and cache
+  const updateProfileState = useCallback((newProfile: Profile | null, isNewUser = false) => {
+    setProfile(newProfile);
+    setStoredProfile(newProfile);
+    
+    // If we have a profile, mark onboarding as completed
+    if (newProfile) {
+      setHasCompletedOnboardingState(true);
+      setHasCompletedOnboarding(true);
+    } else if (isNewUser) {
+      // Only clear onboarding flag for truly new users (explicit sign out or no profile on first load)
+      setHasCompletedOnboardingState(false);
+      setHasCompletedOnboarding(false);
+    }
+    // If newProfile is null but not a new user, preserve the hasCompletedOnboarding flag
+  }, []);
 
   // Fetch user profile with timeout and sync admin status
-  const fetchProfile = async (userId: string, userEmail?: string): Promise<Profile | null> => {
+  const fetchProfile = useCallback(async (userId: string, userEmail?: string, isBackgroundRefresh = false): Promise<Profile | null> => {
     if (!isSupabaseConfigured) return null;
     
-    console.log('Fetching profile for user:', userId);
+    console.log('Fetching profile for user:', userId, isBackgroundRefresh ? '(background refresh)' : '');
+    
+    // Get cached profile to use as fallback
+    const cachedProfile = getStoredProfile();
     
     try {
       // Create a timeout promise
@@ -93,15 +176,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
-      setProfile(fetchedProfile);
+      updateProfileState(fetchedProfile);
       return fetchedProfile;
     } catch (err) {
       console.error('Profile fetch error:', err);
-      // On timeout, set profile to null and continue - user will see profile setup
-      setProfile(null);
-      return null;
+      
+      // On timeout/error during background refresh, keep the cached profile
+      // On timeout/error during foreground fetch, use cached profile if we have completed onboarding
+      if (cachedProfile && (isBackgroundRefresh || getHasCompletedOnboarding())) {
+        console.log('Using cached profile due to fetch error');
+        setProfile(cachedProfile);
+        return cachedProfile;
+      }
+      
+      // Only set profile to null if we don't have cached data AND haven't completed onboarding
+      // This prevents showing ProfileSetup for existing users
+      if (!getHasCompletedOnboarding()) {
+        setProfile(null);
+      }
+      return cachedProfile;
     }
-  };
+  }, [updateProfileState]);
 
   // Initialize auth state - only if Supabase is configured
   useEffect(() => {
@@ -157,9 +252,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        await fetchProfile(session.user.id, session.user.email);
+        // Mark as background refresh for TOKEN_REFRESHED events to preserve cached data
+        const isBackground = event === 'TOKEN_REFRESHED';
+        await fetchProfile(session.user.id, session.user.email, isBackground);
       } else {
-        setProfile(null);
+        // User signed out - clear profile and stored data
+        updateProfileState(null, true);
       }
 
       if (isMounted) {
@@ -167,11 +265,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
+    // Listen for visibility changes to handle app resume from background
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && user && !isBackgroundRefreshRef.current) {
+        console.log('App resumed from background, refreshing profile...');
+        isBackgroundRefreshRef.current = true;
+        try {
+          await fetchProfile(user.id, user.email, true);
+        } finally {
+          isBackgroundRefreshRef.current = false;
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [user, fetchProfile, updateProfileState]);
 
   const signUp = async (email: string, password: string) => {
     const { error } = await supabase.auth.signUp({
@@ -198,7 +312,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Clear all cached data on explicit sign out
+    clearAllStoredData();
     setProfile(null);
+    setHasCompletedOnboardingState(false);
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
@@ -229,6 +346,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     profile,
     loading,
+    hasCompletedOnboarding,
     signUp,
     signIn,
     signInWithOtp,
