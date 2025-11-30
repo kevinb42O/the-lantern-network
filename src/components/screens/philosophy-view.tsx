@@ -28,7 +28,7 @@ interface PhilosophyViewProps {
 
 export function PhilosophyView({ onBack }: PhilosophyViewProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header */}
       <div className="p-5 border-b border-border/50 bg-gradient-to-b from-orange-950/20 to-transparent">
         <div className="max-w-2xl mx-auto flex items-center gap-4">
