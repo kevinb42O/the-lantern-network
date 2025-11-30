@@ -12,6 +12,7 @@ import { ProfileView } from '@/components/screens/profile-view'
 import { MessagesView } from '@/components/screens/messages-view'
 import { AdminView } from '@/components/screens/admin-view'
 import { ModeratorView } from '@/components/screens/moderator-view'
+import { StatisticsView } from '@/components/screens/statistics-view'
 import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
@@ -982,6 +983,29 @@ function App() {
   const handleSignOut = async () => {
     await signOut()
     setShowSplash(true)
+  }
+
+  // Check for demo mode via URL parameter (for testing/screenshots)
+  const urlParams = new URLSearchParams(window.location.search)
+  const demoMode = urlParams.get('demo') === 'stats'
+
+  // Demo mode: Show statistics view directly
+  if (demoMode) {
+    return (
+      <div className="h-screen bg-background">
+        <StatisticsView isAdmin={true} />
+        <Toaster 
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: 'hsl(var(--card))',
+              border: '1px solid hsl(var(--border))',
+              color: 'hsl(var(--foreground))',
+            },
+          }}
+        />
+      </div>
+    )
   }
 
   // Show splash screen first
