@@ -602,7 +602,7 @@ export function StatisticsView({ isAdmin = false }: StatisticsViewProps) {
                 {expandedSection === 'activity' ? <CaretUp size={16} /> : <CaretDown size={16} />}
               </Button>
             </div>
-            <div className={`transition-all duration-300 ${expandedSection === 'activity' || window.innerWidth >= 640 ? 'block' : 'hidden sm:block'}`}>
+            <div className={`transition-all duration-300 ${expandedSection === 'activity' ? '' : 'hidden sm:block'}`}>
               <Tabs defaultValue="combined" className="w-full">
                 <TabsList className="mb-4 flex-wrap h-auto gap-1">
                   <TabsTrigger value="combined" className="text-xs sm:text-sm">Combined</TabsTrigger>
@@ -758,7 +758,7 @@ export function StatisticsView({ isAdmin = false }: StatisticsViewProps) {
                   {expandedSection === 'category' ? <CaretUp size={16} /> : <CaretDown size={16} />}
                 </Button>
               </div>
-              <div className={`transition-all duration-300 ${expandedSection === 'category' || window.innerWidth >= 640 ? 'block' : 'hidden sm:block'}`}>
+              <div className={`transition-all duration-300 ${expandedSection === 'category' ? '' : 'hidden sm:block'}`}>
                 {categoryData.length > 0 ? (
                   <div className="h-[180px] sm:h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -817,7 +817,7 @@ export function StatisticsView({ isAdmin = false }: StatisticsViewProps) {
                   {expandedSection === 'status' ? <CaretUp size={16} /> : <CaretDown size={16} />}
                 </Button>
               </div>
-              <div className={`transition-all duration-300 ${expandedSection === 'status' || window.innerWidth >= 640 ? 'block' : 'hidden sm:block'}`}>
+              <div className={`transition-all duration-300 ${expandedSection === 'status' ? '' : 'hidden sm:block'}`}>
                 {statusData.length > 0 ? (
                   <div className="h-[180px] sm:h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -879,7 +879,7 @@ export function StatisticsView({ isAdmin = false }: StatisticsViewProps) {
                   {expandedSection === 'helpers' ? <CaretUp size={16} /> : <CaretDown size={16} />}
                 </Button>
               </div>
-              <div className={`transition-all duration-300 ${expandedSection === 'helpers' || window.innerWidth >= 640 ? 'block' : 'hidden sm:block'}`}>
+              <div className={`transition-all duration-300 ${expandedSection === 'helpers' ? '' : 'hidden sm:block'}`}>
                 <div className="space-y-2">
                   {topHelpers.length > 0 ? topHelpers.map((helper, index) => (
                     <LeaderboardItem
@@ -909,7 +909,7 @@ export function StatisticsView({ isAdmin = false }: StatisticsViewProps) {
                   {expandedSection === 'earners' ? <CaretUp size={16} /> : <CaretDown size={16} />}
                 </Button>
               </div>
-              <div className={`transition-all duration-300 ${expandedSection === 'earners' || window.innerWidth >= 640 ? 'block' : 'hidden sm:block'}`}>
+              <div className={`transition-all duration-300 ${expandedSection === 'earners' ? '' : 'hidden sm:block'}`}>
                 <div className="space-y-2">
                   {topEarners.length > 0 ? topEarners.map((earner, index) => (
                     <LeaderboardItem
