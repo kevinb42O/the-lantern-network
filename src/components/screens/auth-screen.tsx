@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { EnvelopeSimple, Key, Eye, EyeSlash, Sparkle, ArrowRight, MagicWand } from '@phosphor-icons/react';
+import { EnvelopeSimple, Key, Eye, EyeSlash, Sparkle, ArrowRight, MagicWand, BookOpen } from '@phosphor-icons/react';
+import { PhilosophyView } from './philosophy-view';
 
 type AuthMode = 'sign-in' | 'sign-up' | 'magic-link';
 
@@ -17,6 +18,7 @@ export function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [showPhilosophy, setShowPhilosophy] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +51,11 @@ export function AuthScreen() {
       setLoading(false);
     }
   };
+
+  // Show philosophy page if requested
+  if (showPhilosophy) {
+    return <PhilosophyView onBack={() => setShowPhilosophy(false)} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-orange-950/40 via-background to-background overflow-hidden">
@@ -239,8 +246,17 @@ export function AuthScreen() {
         </CardContent>
       </Card>
 
+      {/* Philosophy Link */}
+      <button
+        onClick={() => setShowPhilosophy(true)}
+        className="mt-8 flex items-center gap-2 text-sm text-muted-foreground/80 hover:text-primary transition-colors relative z-10"
+      >
+        <BookOpen size={16} />
+        <span>Learn about our philosophy</span>
+      </button>
+
       {/* Footer text */}
-      <p className="mt-8 text-sm text-muted-foreground/60 text-center relative z-10">
+      <p className="mt-4 text-sm text-muted-foreground/60 text-center relative z-10">
         Join thousands of neighbors helping each other
       </p>
     </div>
