@@ -1,12 +1,23 @@
 import { useState, useEffect } from 'react'
-import { X, Star, HandHeart, Clock, Sparkle, Shield, ShieldCheck } from '@phosphor-icons/react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { X, Star, HandHeart, Clock, Sparkle, Shield, ShieldCheck, Flag } from '@phosphor-icons/react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
 import { getHighestBadge, getEarnedBadges, getNextBadge, getAllUserBadges, BADGES } from '@/lib/economy'
+import { toast } from 'sonner'
+import type { ReportCategory } from '@/lib/types'
+
+const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'inappropriate_content', label: 'Inappropriate Content' },
+  { value: 'safety_concern', label: 'Safety Concern' },
+  { value: 'other', label: 'Other' }
+]
 
 export interface UserProfileData {
   user_id: string
@@ -33,12 +44,23 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
   const [profile, setProfile] = useState<UserProfileData | null>(null)
   const [loading, setLoading] = useState(false)
   const [helpCount, setHelpCount] = useState(0)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportCategory, setReportCategory] = useState<ReportCategory>('harassment')
+  const [reportDescription, setReportDescription] = useState('')
+  const [submittingReport, setSubmittingReport] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     if (userId && isOpen) {
       fetchProfile(userId)
+      fetchCurrentUser()
     }
   }, [userId, isOpen])
+
+  const fetchCurrentUser = async () => {
+    const { data } = await supabase.auth.getUser()
+    setCurrentUserId(data.user?.id || null)
+  }
 
   const fetchProfile = async (id: string) => {
     setLoading(true)
@@ -69,6 +91,52 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
       console.error('Profile fetch error:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleReportUser = () => {
+    setReportCategory('harassment')
+    setReportDescription('')
+    setShowReportModal(true)
+  }
+
+  const handleSubmitReport = async () => {
+    if (!profile || !reportDescription.trim()) {
+      toast.error('Please provide a description')
+      return
+    }
+
+    setSubmittingReport(true)
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) {
+        toast.error('You must be logged in to report')
+        return
+      }
+
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: userData.user.id,
+        reported_user_id: profile.user_id,
+        report_type: 'user',
+        target_id: null,
+        category: reportCategory,
+        description: reportDescription.trim(),
+        status: 'pending'
+      })
+
+      if (error) {
+        console.error('Error submitting report:', error)
+        toast.error('Failed to submit report')
+        return
+      }
+
+      toast.success('Report submitted. Thank you for helping keep our community safe.')
+      setShowReportModal(false)
+    } catch (err) {
+      console.error('Report error:', err)
+      toast.error('Failed to submit report')
+    } finally {
+      setSubmittingReport(false)
     }
   }
 
@@ -120,6 +188,18 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
               >
                 <X size={18} />
               </Button>
+              {/* Report button - only show for other users */}
+              {currentUserId && currentUserId !== profile.user_id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-12 rounded-full bg-background/50 backdrop-blur-sm hover:bg-red-500/20 hover:text-red-400"
+                  onClick={handleReportUser}
+                  title="Report user"
+                >
+                  <Flag size={18} />
+                </Button>
+              )}
             </div>
 
             {/* Profile content */}
@@ -274,6 +354,88 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
           </div>
         )}
       </DialogContent>
+
+      {/* Report User Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Flag size={24} weight="duotone" className="text-red-400" />
+              Report User
+            </DialogTitle>
+            <DialogDescription>
+              Help us keep the community safe by reporting inappropriate behavior
+            </DialogDescription>
+          </DialogHeader>
+
+          {profile && (
+            <div className="space-y-4 py-2">
+              {/* User preview */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={profile.avatar_url || undefined} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20">
+                    {profile.display_name.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium text-foreground">{profile.display_name}</p>
+                  <p className="text-xs text-muted-foreground">User being reported</p>
+                </div>
+              </div>
+
+              {/* Category selection */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Category</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {REPORT_CATEGORIES.map((cat) => (
+                    <Button
+                      key={cat.value}
+                      variant={reportCategory === cat.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setReportCategory(cat.value)}
+                      className="rounded-xl text-xs"
+                    >
+                      {cat.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Description <span className="text-red-400">*</span>
+                </Label>
+                <textarea
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Please describe the issue with this user..."
+                  className="w-full h-24 px-3 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  onClick={() => setShowReportModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 rounded-xl bg-red-500 hover:bg-red-600"
+                  onClick={handleSubmitReport}
+                  disabled={submittingReport || !reportDescription.trim()}
+                >
+                  {submittingReport ? 'Submitting...' : 'Submit Report'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

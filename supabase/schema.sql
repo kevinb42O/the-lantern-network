@@ -308,6 +308,71 @@ CREATE POLICY "Authenticated users can create invites" ON invites
 CREATE POLICY "Invites can be updated when redeemed" ON invites
   FOR UPDATE USING (true);
 
+-- Reports table (user content reports)
+CREATE TABLE IF NOT EXISTS reports (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  reporter_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  reported_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  report_type VARCHAR(20) NOT NULL CHECK (report_type IN ('message', 'flare', 'user')),
+  target_id UUID,
+  category VARCHAR(30) NOT NULL CHECK (category IN ('harassment', 'spam', 'inappropriate_content', 'safety_concern', 'other')),
+  description TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'dismissed', 'action_taken')),
+  reviewed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  review_notes TEXT,
+  action_taken VARCHAR(20) CHECK (action_taken IN ('none', 'warning', 'content_removed', 'user_banned')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  reviewed_at TIMESTAMPTZ
+);
+
+-- Enable RLS on reports table
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+
+-- Reports policies
+-- Users can create reports
+CREATE POLICY "Users can create reports" ON reports
+  FOR INSERT WITH CHECK (auth.uid() = reporter_id);
+
+-- Users can view their own reports
+CREATE POLICY "Users can view their own reports" ON reports
+  FOR SELECT USING (auth.uid() = reporter_id);
+
+-- Admins can view all reports
+CREATE POLICY "Admins can view all reports" ON reports
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
+-- Moderators can view all reports
+CREATE POLICY "Moderators can view all reports" ON reports
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_moderator = true
+    )
+  );
+
+-- Admins can update reports
+CREATE POLICY "Admins can update reports" ON reports
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
+-- Moderators can update reports
+CREATE POLICY "Moderators can update reports" ON reports
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_moderator = true
+    )
+  );
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_flares_creator_id ON flares(creator_id);
@@ -321,6 +386,9 @@ CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
+CREATE INDEX IF NOT EXISTS idx_reports_reporter_id ON reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_reports_reported_user_id ON reports(reported_user_id);
+CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 
 -- Enable realtime for messages and flare_participants tables
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;

@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { Fire, PaperPlaneRight, Sparkle, ShieldCheck } from '@phosphor-icons/react'
+import { Fire, PaperPlaneRight, Sparkle, ShieldCheck, Flag } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import type { Message, User } from '@/lib/types'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
+import type { Message, User, ReportCategory } from '@/lib/types'
 
 interface CampfireViewProps {
   user: User
@@ -13,9 +17,24 @@ interface CampfireViewProps {
   onUserClick?: (userId: string) => void
 }
 
+const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
+  { value: 'harassment', label: 'Harassment' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'inappropriate_content', label: 'Inappropriate Content' },
+  { value: 'safety_concern', label: 'Safety Concern' },
+  { value: 'other', label: 'Other' }
+]
+
 export function CampfireView({ user, messages, onSendMessage, adminUserIds = [], moderatorUserIds = [], onUserClick }: CampfireViewProps) {
   const [inputValue, setInputValue] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  
+  // Report modal state
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportingMessage, setReportingMessage] = useState<Message | null>(null)
+  const [reportCategory, setReportCategory] = useState<ReportCategory>('harassment')
+  const [reportDescription, setReportDescription] = useState('')
+  const [submittingReport, setSubmittingReport] = useState(false)
 
   const campfireMessages = messages
     .filter(m => m.type === 'campfire')
@@ -39,6 +58,54 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    }
+  }
+
+  const handleReportMessage = (message: Message) => {
+    setReportingMessage(message)
+    setReportCategory('harassment')
+    setReportDescription('')
+    setShowReportModal(true)
+  }
+
+  const handleSubmitReport = async () => {
+    if (!reportingMessage || !reportDescription.trim()) {
+      toast.error('Please provide a description')
+      return
+    }
+
+    setSubmittingReport(true)
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) {
+        toast.error('You must be logged in to report')
+        return
+      }
+
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: userData.user.id,
+        reported_user_id: reportingMessage.userId,
+        report_type: 'message',
+        target_id: reportingMessage.id,
+        category: reportCategory,
+        description: reportDescription.trim(),
+        status: 'pending'
+      })
+
+      if (error) {
+        console.error('Error submitting report:', error)
+        toast.error('Failed to submit report')
+        return
+      }
+
+      toast.success('Report submitted. Thank you for helping keep our community safe.')
+      setShowReportModal(false)
+      setReportingMessage(null)
+    } catch (err) {
+      console.error('Report error:', err)
+      toast.error('Failed to submit report')
+    } finally {
+      setSubmittingReport(false)
     }
   }
 
@@ -94,6 +161,7 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
                 isModerator={moderatorUserIds.includes(message.userId)}
                 animationDelay={index * 0.02}
                 onUserClick={onUserClick}
+                onReport={handleReportMessage}
               />
             ))
           )}
@@ -133,6 +201,80 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Flag size={24} weight="duotone" className="text-red-400" />
+              Report Message
+            </DialogTitle>
+            <DialogDescription>
+              Help us keep the community safe by reporting inappropriate content
+            </DialogDescription>
+          </DialogHeader>
+
+          {reportingMessage && (
+            <div className="space-y-4 py-2">
+              {/* Message preview */}
+              <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                <p className="text-xs text-muted-foreground mb-1">Message from {reportingMessage.username}:</p>
+                <p className="text-sm text-foreground line-clamp-3">{reportingMessage.content}</p>
+              </div>
+
+              {/* Category selection */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Category</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {REPORT_CATEGORIES.map((cat) => (
+                    <Button
+                      key={cat.value}
+                      variant={reportCategory === cat.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setReportCategory(cat.value)}
+                      className="rounded-xl text-xs"
+                    >
+                      {cat.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Description <span className="text-red-400">*</span>
+                </Label>
+                <textarea
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Please describe what's wrong with this message..."
+                  className="w-full h-24 px-3 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  onClick={() => setShowReportModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 rounded-xl bg-red-500 hover:bg-red-600"
+                  onClick={handleSubmitReport}
+                  disabled={submittingReport || !reportDescription.trim()}
+                >
+                  {submittingReport ? 'Submitting...' : 'Submit Report'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -144,9 +286,10 @@ interface MessageBubbleProps {
   isModerator?: boolean
   animationDelay?: number
   onUserClick?: (userId: string) => void
+  onReport?: (message: Message) => void
 }
 
-function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick }: MessageBubbleProps) {
+function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick, onReport }: MessageBubbleProps) {
   const messageAge = Date.now() - message.timestamp
   const hoursOld = messageAge / (1000 * 60 * 60)
   // Messages fade more gracefully
@@ -183,7 +326,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
 
   return (
     <div
-      className={`flex gap-3 fade-in-up ${isCurrentUser ? 'flex-row-reverse' : ''}`}
+      className={`flex gap-3 fade-in-up group ${isCurrentUser ? 'flex-row-reverse' : ''}`}
       style={{ opacity, animationDelay: `${animationDelay}s` }}
     >
       <button
@@ -222,6 +365,19 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
           <span className="text-xs text-muted-foreground">
             {timeAgo()}
           </span>
+          {/* Report button - only show for other users' messages */}
+          {!isCurrentUser && onReport && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onReport(message)
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
+              title="Report message"
+            >
+              <Flag size={14} />
+            </button>
+          )}
         </div>
         <div
           className={`
