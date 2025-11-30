@@ -12,7 +12,8 @@ import {
   Check,
   X,
   Sparkle,
-  Warning
+  Warning,
+  ChartLine
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -25,6 +26,7 @@ import { supabase } from '@/lib/supabase'
 import { BADGES, getHighestBadge } from '@/lib/economy'
 import { toast } from 'sonner'
 import type { User } from '@/lib/types'
+import { StatisticsView } from './statistics-view'
 
 interface ProfileData {
   id: string
@@ -60,7 +62,7 @@ interface AdminViewProps {
 }
 
 export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'statistics'>('users')
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [flares, setFlares] = useState<FlareData[]>([])
   const [loading, setLoading] = useState(true)
@@ -270,7 +272,7 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
           </div>
 
           {/* Tab Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant={activeTab === 'users' ? 'default' : 'outline'}
               size="sm"
@@ -297,6 +299,15 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
             >
               <ChatCircleDots size={16} />
               Campfire
+            </Button>
+            <Button
+              variant={activeTab === 'statistics' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('statistics')}
+              className="gap-2 rounded-xl bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20 hover:text-violet-300 data-[state=active]:bg-violet-500 data-[state=active]:text-white"
+            >
+              <ChartLine size={16} />
+              Statistics
             </Button>
           </div>
         </div>
@@ -439,6 +450,12 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
                   Use this feature sparingly to maintain community trust.
                 </p>
               </Card>
+            </div>
+          )}
+
+          {activeTab === 'statistics' && (
+            <div className="-m-4">
+              <StatisticsView user={user} isAdmin={true} />
             </div>
           )}
         </div>
