@@ -48,8 +48,6 @@ import { format, subDays, startOfDay, eachDayOfInterval } from 'date-fns'
 import { getBadgeForFlareCount } from '@/lib/economy'
 
 interface StatisticsViewProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user?: any
   isAdmin?: boolean
 }
 

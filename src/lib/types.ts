@@ -93,3 +93,29 @@ export interface Notification {
   read: boolean
   createdAt: number
 }
+
+export type ReportType = 'message' | 'flare' | 'user'
+export type ReportCategory = 'harassment' | 'spam' | 'inappropriate_content' | 'safety_concern' | 'other'
+export type ReportStatus = 'pending' | 'reviewed' | 'dismissed' | 'action_taken'
+export type ReportAction = 'none' | 'warning' | 'content_removed' | 'user_banned'
+
+export interface Report {
+  id: string
+  reporter_id: string
+  reported_user_id: string
+  report_type: ReportType
+  target_id: string | null
+  category: ReportCategory
+  description: string
+  status: ReportStatus
+  reviewed_by: string | null
+  review_notes: string | null
+  action_taken: ReportAction | null
+  created_at: string
+  reviewed_at: string | null
+  // Joined data
+  reporter_name?: string
+  reporter_avatar?: string | null
+  reported_user_name?: string
+  reported_user_avatar?: string | null
+}

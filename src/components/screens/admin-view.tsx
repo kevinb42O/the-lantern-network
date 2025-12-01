@@ -13,6 +13,7 @@ import {
   X,
   Sparkle,
   Warning,
+  Flag,
   ChartLine
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -25,7 +26,7 @@ import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase'
 import { BADGES, getHighestBadge } from '@/lib/economy'
 import { toast } from 'sonner'
-import type { User } from '@/lib/types'
+import { ReportsView } from './reports-view'
 import { StatisticsView } from './statistics-view'
 
 interface ProfileData {
@@ -56,17 +57,17 @@ interface FlareData {
 }
 
 interface AdminViewProps {
-  user: User
   onRemoveFlare: (flareId: string) => Promise<void>
   onClearCampfire: () => Promise<void>
 }
 
-export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'statistics'>('users')
+export function AdminView({ onRemoveFlare, onClearCampfire }: AdminViewProps) {
+  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'reports' | 'statistics'>('users')
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [flares, setFlares] = useState<FlareData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [pendingReportsCount, setPendingReportsCount] = useState(0)
   
   // Selected user for editing
   const [selectedUser, setSelectedUser] = useState<ProfileData | null>(null)
@@ -83,7 +84,23 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
   useEffect(() => {
     fetchProfiles()
     fetchFlares()
+    fetchPendingReportsCount()
   }, [])
+
+  const fetchPendingReportsCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+      
+      if (!error && count !== null) {
+        setPendingReportsCount(count)
+      }
+    } catch (err) {
+      console.error('Error fetching pending reports count:', err)
+    }
+  }
 
   const fetchProfiles = async () => {
     setLoading(true)
@@ -301,6 +318,20 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
               Campfire
             </Button>
             <Button
+              variant={activeTab === 'reports' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('reports')}
+              className="gap-2 rounded-xl relative"
+            >
+              <Flag size={16} />
+              Reports
+              {pendingReportsCount > 0 && (
+                <Badge className="ml-1 bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                  {pendingReportsCount}
+                </Badge>
+              )}
+            </Button>
+            <Button
               variant={activeTab === 'statistics' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setActiveTab('statistics')}
@@ -314,6 +345,11 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
       </div>
 
       {/* Content */}
+      {activeTab === 'reports' ? (
+        <ReportsView isAdmin />
+      ) : activeTab === 'statistics' ? (
+        <StatisticsView isAdmin />
+      ) : (
       <ScrollArea className="flex-1">
         <div className="p-4 max-w-2xl mx-auto">
           {activeTab === 'users' && (
@@ -460,6 +496,7 @@ export function AdminView({ user, onRemoveFlare, onClearCampfire }: AdminViewPro
           )}
         </div>
       </ScrollArea>
+      )}
 
       {/* User Edit Modal */}
       <Dialog open={showUserModal} onOpenChange={setShowUserModal}>

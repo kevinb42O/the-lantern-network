@@ -1,4 +1,4 @@
-import { Wrench, ForkKnife, ChatsCircle, Lightbulb, MapPin, Clock, ChatCircle, CheckCircle, Hourglass, XCircle } from '@phosphor-icons/react'
+import { Wrench, ForkKnife, ChatsCircle, Lightbulb, MapPin, Clock, CheckCircle, Hourglass, XCircle, Flag } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ interface FlareCardProps {
   helpRequestStatus?: 'pending' | 'accepted' | 'denied'
   onHelp?: () => void
   onClick?: () => void
+  onReport?: (flare: Flare) => void
 }
 
 const categoryIcons = {
@@ -36,14 +37,14 @@ const statusColors = {
   completed: 'bg-muted text-muted-foreground border-muted'
 }
 
-export function FlareCard({ flare, distance, isOwner, pendingHelpCount, helpRequestStatus, onHelp, onClick }: FlareCardProps) {
+export function FlareCard({ flare, distance, isOwner, pendingHelpCount, helpRequestStatus, onHelp, onClick, onReport }: FlareCardProps) {
   const Icon = categoryIcons[flare.category]
   const iconColor = categoryColors[flare.category]
   const timeAgo = getTimeAgo(flare.createdAt)
 
   return (
     <Card 
-      className={`p-4 space-y-3 transition-colors ${isOwner ? 'border-primary/30 bg-primary/5' : ''} ${onClick ? 'cursor-pointer hover:border-primary/50' : ''}`}
+      className={`p-4 space-y-3 transition-colors group ${isOwner ? 'border-primary/30 bg-primary/5' : ''} ${onClick ? 'cursor-pointer hover:border-primary/50' : ''}`}
       onClick={onClick}
     >
       <div className="flex items-start gap-3">
@@ -68,12 +69,27 @@ export function FlareCard({ flare, distance, isOwner, pendingHelpCount, helpRequ
                 </Badge>
               )}
             </div>
-            {distance !== undefined && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <MapPin size={12} />
-                {formatDistance(distance)}
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Report button - only show for other users' flares */}
+              {!isOwner && onReport && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onReport(flare)
+                  }}
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
+                  title="Report flare"
+                >
+                  <Flag size={14} />
+                </button>
+              )}
+              {distance !== undefined && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin size={12} />
+                  {formatDistance(distance)}
+                </div>
+              )}
+            </div>
           </div>
           
           <p className="text-sm text-foreground line-clamp-2">

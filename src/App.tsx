@@ -1133,14 +1133,12 @@ function App() {
         )}
         {currentView === 'admin' && isAdmin && (
           <AdminView
-            user={userData}
             onRemoveFlare={handleRemoveFlare}
             onClearCampfire={handleClearCampfire}
           />
         )}
         {currentView === 'moderator' && isModerator && !isAdmin && (
           <ModeratorView
-            user={userData}
             onRemoveFlare={handleRemoveFlare}
             onClearCampfire={handleClearCampfire}
           />
