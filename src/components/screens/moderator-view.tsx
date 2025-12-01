@@ -10,7 +10,6 @@ import {
   CaretDown,
   Sparkle,
   Warning,
-  Flag,
   ChartLine
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -58,8 +57,8 @@ interface ModeratorViewProps {
   onClearCampfire: () => Promise<void>
 }
 
-export function ModeratorView({ onRemoveFlare, onClearCampfire }: ModeratorViewProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'reports' | 'statistics'>('users')
+export function ModeratorView({ user, onRemoveFlare, onClearCampfire }: ModeratorViewProps) {
+  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'statistics'>('users')
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [flares, setFlares] = useState<FlareData[]>([])
   const [loading, setLoading] = useState(true)
@@ -449,6 +448,12 @@ export function ModeratorView({ onRemoveFlare, onClearCampfire }: ModeratorViewP
                   Use this feature sparingly to maintain community trust.
                 </p>
               </Card>
+            </div>
+          )}
+
+          {activeTab === 'statistics' && (
+            <div className="-m-4">
+              <StatisticsView user={user} isAdmin={false} />
             </div>
           )}
         </div>

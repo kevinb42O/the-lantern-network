@@ -488,6 +488,12 @@ export function AdminView({ onRemoveFlare, onClearCampfire }: AdminViewProps) {
               </Card>
             </div>
           )}
+
+          {activeTab === 'statistics' && (
+            <div className="-m-4">
+              <StatisticsView user={user} isAdmin={true} />
+            </div>
+          )}
         </div>
       </ScrollArea>
       )}
