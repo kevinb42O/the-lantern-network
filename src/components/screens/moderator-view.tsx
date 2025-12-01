@@ -10,7 +10,8 @@ import {
   CaretDown,
   Sparkle,
   Warning,
-  Flag
+  Flag,
+  ChartLine
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -23,6 +24,7 @@ import { supabase } from '@/lib/supabase'
 import { BADGES, getHighestBadge } from '@/lib/economy'
 import { toast } from 'sonner'
 import { ReportsView } from './reports-view'
+import { StatisticsView } from './statistics-view'
 
 interface ProfileData {
   id: string
@@ -57,7 +59,7 @@ interface ModeratorViewProps {
 }
 
 export function ModeratorView({ onRemoveFlare, onClearCampfire }: ModeratorViewProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'reports'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'reports' | 'statistics'>('users')
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [flares, setFlares] = useState<FlareData[]>([])
   const [loading, setLoading] = useState(true)
@@ -292,6 +294,15 @@ export function ModeratorView({ onRemoveFlare, onClearCampfire }: ModeratorViewP
                 </Badge>
               )}
             </Button>
+            <Button
+              variant={activeTab === 'statistics' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('statistics')}
+              className="gap-2 rounded-xl bg-violet-500/10 border-violet-500/30 text-violet-400 hover:bg-violet-500/20 hover:text-violet-300"
+            >
+              <ChartLine size={16} />
+              Statistics
+            </Button>
           </div>
         </div>
       </div>
@@ -299,6 +310,8 @@ export function ModeratorView({ onRemoveFlare, onClearCampfire }: ModeratorViewP
       {/* Content */}
       {activeTab === 'reports' ? (
         <ReportsView />
+      ) : activeTab === 'statistics' ? (
+        <StatisticsView isAdmin={false} />
       ) : (
       <ScrollArea className="flex-1">
         <div className="p-4 max-w-2xl mx-auto">
