@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Flame, Fire, Wallet, UserCircle, ChatCircleDots, ShieldCheck } from '@phosphor-icons/react'
+import { Flame, Fire, Wallet, UserCircle, ChatCircleDots, ShieldCheck, MapTrifold } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { SplashScreen } from '@/components/screens/splash-screen'
 import { AuthScreen } from '@/components/screens/auth-screen'
 import { ProfileSetup } from '@/components/screens/profile-setup'
+import { ExploreView } from '@/components/screens/explore-view'
 import { FlaresView } from '@/components/screens/flares-view'
 import { CampfireView } from '@/components/screens/campfire-view'
 import { WalletView } from '@/components/screens/wallet-view'
@@ -17,7 +18,7 @@ import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode } from '@/lib/types'
+import type { Message, HelpRequest, LanternTransaction, InviteCode } from '@/lib/types'
 import { 
   generateInviteCode, 
   ELDER_HELP_THRESHOLD, 
@@ -33,7 +34,7 @@ const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ]
 
-type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
+type MainView = 'explore' | 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
 
 // Flare data from Supabase
 interface FlareData {
@@ -74,7 +75,7 @@ interface HelpRequestData {
 function App() {
   const { user: authUser, profile, loading: authLoading, signOut, refreshProfile, hasCompletedOnboarding } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
-  const [currentView, setCurrentView] = useState<MainView>('flares')
+  const [currentView, setCurrentView] = useState<MainView>('explore')
   
   // Messages state with real-time sync
   const [messages, setMessages] = useState<Message[]>([])
@@ -1077,6 +1078,9 @@ function App() {
   return (
     <div className="h-screen flex flex-col bg-background">
       <div className="flex-1 overflow-hidden">
+        {currentView === 'explore' && (
+          <ExploreView user={userData} />
+        )}
         {currentView === 'flares' && (
           <FlaresView
             user={userData}
@@ -1155,6 +1159,12 @@ function App() {
       {/* Enhanced Bottom Navigation */}
       <nav className="border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
         <div className="flex items-center justify-around p-1.5 max-w-lg mx-auto">
+          <NavButton
+            icon={MapTrifold}
+            label="Explore"
+            active={currentView === 'explore'}
+            onClick={() => setCurrentView('explore')}
+          />
           <NavButton
             icon={Flame}
             label="Flares"

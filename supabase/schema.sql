@@ -394,3 +394,135 @@ CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE flare_participants;
 ALTER PUBLICATION supabase_realtime ADD TABLE flares;
+
+-- ============================================================
+-- GEO-MINING GAME TABLES
+-- ============================================================
+
+-- Resources master table (defines all possible resources)
+CREATE TABLE IF NOT EXISTS resource_types (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  type VARCHAR(50) NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common', 'uncommon', 'rare', 'epic', 'legendary')),
+  base_value INTEGER NOT NULL,
+  icon VARCHAR(10) NOT NULL,
+  description TEXT,
+  spawn_weight INTEGER DEFAULT 100,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Spawned resources in the world
+CREATE TABLE IF NOT EXISTS world_resources (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  resource_type_id UUID REFERENCES resource_types(id) NOT NULL,
+  location JSONB NOT NULL,
+  spawned_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ NOT NULL,
+  mined_by UUID REFERENCES auth.users(id),
+  mined_at TIMESTAMPTZ,
+  is_active BOOLEAN DEFAULT TRUE
+);
+
+-- User inventory
+CREATE TABLE IF NOT EXISTS user_inventory (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  resource_type_id UUID REFERENCES resource_types(id) NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  acquired_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, resource_type_id)
+);
+
+-- Mining history/log
+CREATE TABLE IF NOT EXISTS mining_log (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  world_resource_id UUID REFERENCES world_resources(id),
+  resource_type_id UUID REFERENCES resource_types(id) NOT NULL,
+  mined_at TIMESTAMPTZ DEFAULT NOW(),
+  location JSONB
+);
+
+-- Add mining stats to profiles
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS total_mined INTEGER DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS mining_level INTEGER DEFAULT 1;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS mining_xp INTEGER DEFAULT 0;
+
+-- Indexes for geo queries and performance
+CREATE INDEX IF NOT EXISTS idx_world_resources_active ON world_resources(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_world_resources_expires ON world_resources(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_inventory_user ON user_inventory(user_id);
+CREATE INDEX IF NOT EXISTS idx_mining_log_user ON mining_log(user_id);
+
+-- Enable RLS on mining tables
+ALTER TABLE resource_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE world_resources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_inventory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mining_log ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for mining tables
+
+-- Resource types viewable by all authenticated users
+CREATE POLICY "Resource types viewable by all" ON resource_types 
+  FOR SELECT USING (true);
+
+-- Active world resources viewable by all
+CREATE POLICY "Active world resources viewable by all" ON world_resources 
+  FOR SELECT USING (is_active = true OR mined_by = auth.uid());
+
+-- Users can insert world resources (for spawning)
+CREATE POLICY "Users can spawn resources" ON world_resources 
+  FOR INSERT WITH CHECK (true);
+
+-- Users can update resources (for mining)
+CREATE POLICY "Users can mine resources" ON world_resources 
+  FOR UPDATE USING (is_active = true);
+
+-- Users view own inventory
+CREATE POLICY "Users view own inventory" ON user_inventory 
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Users can insert to own inventory
+CREATE POLICY "Users can add to inventory" ON user_inventory 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can update own inventory
+CREATE POLICY "Users can update own inventory" ON user_inventory 
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Users can delete from own inventory
+CREATE POLICY "Users can remove from inventory" ON user_inventory 
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Users view own mining log
+CREATE POLICY "Users view own mining log" ON mining_log 
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Users can insert mining log
+CREATE POLICY "Users can insert mining log" ON mining_log 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Seed initial resource types
+INSERT INTO resource_types (type, name, rarity, base_value, icon, description, spawn_weight) VALUES
+  ('crystal', 'Quartz Shard', 'common', 1, '💎', 'A common crystal fragment', 100),
+  ('crystal', 'Amethyst Cluster', 'uncommon', 3, '🔮', 'A beautiful purple crystal', 50),
+  ('crystal', 'Sapphire Core', 'rare', 10, '💠', 'A brilliant blue gemstone', 20),
+  ('ore', 'Iron Chunk', 'common', 1, '�ite', 'Basic iron ore', 100),
+  ('ore', 'Silver Vein', 'uncommon', 4, '⚪', 'Shiny silver ore', 45),
+  ('ore', 'Gold Nugget', 'rare', 12, '🌟', 'Precious gold ore', 15),
+  ('gem', 'Ruby Fragment', 'rare', 15, '❤️', 'A fiery red gem', 18),
+  ('gem', 'Emerald Prism', 'epic', 30, '💚', 'A perfectly cut emerald', 8),
+  ('gem', 'Diamond Heart', 'legendary', 100, '💎', 'An incredibly rare diamond', 2),
+  ('artifact', 'Ancient Coin', 'uncommon', 5, '🪙', 'A mysterious old coin', 40),
+  ('artifact', 'Mystic Scroll', 'rare', 20, '📜', 'Contains ancient knowledge', 12),
+  ('artifact', 'Lantern Essence', 'epic', 50, '🏮', 'Pure crystallized light', 5),
+  ('artifact', 'Phoenix Feather', 'legendary', 150, '🔥', 'From a mythical bird', 1),
+  ('energy', 'Light Mote', 'common', 2, '✨', 'A tiny spark of energy', 90),
+  ('energy', 'Power Cell', 'uncommon', 6, '⚡', 'Concentrated energy', 35),
+  ('energy', 'Cosmic Shard', 'legendary', 200, '🌌', 'Fragment of a star', 1)
+ON CONFLICT DO NOTHING;
+
+-- Enable realtime for mining tables
+ALTER PUBLICATION supabase_realtime ADD TABLE world_resources;
+ALTER PUBLICATION supabase_realtime ADD TABLE user_inventory;
