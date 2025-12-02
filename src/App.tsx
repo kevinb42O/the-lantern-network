@@ -53,6 +53,8 @@ interface FlareData {
   status: string
   created_at: string
   creator_name?: string
+  flare_type?: 'request' | 'offer'
+  is_free?: boolean
 }
 
 // Help request data from Supabase (using flare_participants table)
@@ -163,6 +165,8 @@ function App() {
     description: string
     category: string
     location: { lat: number; lng: number } | null
+    flare_type: 'request' | 'offer'
+    is_free: boolean
   }) => {
     if (!authUser) return
 
@@ -173,14 +177,16 @@ function App() {
       category: flareData.category,
       location: flareData.location,
       starts_at: new Date().toISOString(),
-      status: 'active'
+      status: 'active',
+      flare_type: flareData.flare_type,
+      is_free: flareData.is_free
     })
 
     if (error) {
       console.error('Error creating flare:', error)
       toast.error('Failed to create flare')
     } else {
-      toast.success('Flare posted!')
+      toast.success(flareData.flare_type === 'offer' ? 'Offer posted! 🎁' : 'Flare posted! 🔥')
       fetchFlares()
     }
   }
