@@ -119,3 +119,29 @@ export interface Report {
   reported_user_name?: string
   reported_user_avatar?: string | null
 }
+
+export interface Announcement {
+  id: string
+  sender_id: string
+  title: string
+  content: string
+  gift_amount: number
+  is_active: boolean
+  created_at: string
+  // Joined data
+  sender_name?: string
+  sender_avatar?: string | null
+  // Stats (computed)
+  read_count?: number
+  claimed_count?: number
+}
+
+export interface AnnouncementRecipient {
+  id: string
+  announcement_id: string
+  user_id: string
+  read_at: string | null
+  gift_claimed: boolean
+  gift_claimed_at: string | null
+  created_at: string
+}

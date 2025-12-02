@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react'
-import { ChatCircle, Check, X, PaperPlaneRight, Fire, Lamp, ArrowLeft, CheckCircle, Hourglass, XCircle, HandHeart, Sparkle, Coins } from '@phosphor-icons/react'
+import { useState, useEffect, useCallback } from 'react'
+import { ChatCircle, Check, X, PaperPlaneRight, Fire, Lamp, ArrowLeft, CheckCircle, Hourglass, XCircle, HandHeart, Sparkle, Coins, Megaphone, Gift, CheckFat } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import type { User, Flare, Message, HelpRequest } from '@/lib/types'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient } from '@/lib/types'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase'
 
 interface MessagesViewProps {
   user: User
@@ -33,13 +34,225 @@ export function MessagesView({
 }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<HelpRequest | null>(null)
   const [chatInput, setChatInput] = useState('')
+  
+  // Announcements state
+  const [announcements, setAnnouncements] = useState<(Announcement & { recipient?: AnnouncementRecipient })[]>([])
+  const [claimingGift, setClaimingGift] = useState<string | null>(null)
+
+  // Fetch announcements
+  const fetchAnnouncements = useCallback(async () => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) return
+
+      // Fetch active announcements
+      const { data: announcementsData, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching announcements:', error)
+        return
+      }
+
+      if (!announcementsData || announcementsData.length === 0) {
+        setAnnouncements([])
+        return
+      }
+
+      // Get sender names
+      const senderIds = [...new Set(announcementsData.map(a => a.sender_id))]
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', senderIds)
+
+      const profileMap: Record<string, { name: string; avatar: string | null }> = {}
+      profilesData?.forEach(p => {
+        profileMap[p.user_id] = { name: p.display_name, avatar: p.avatar_url }
+      })
+
+      // Get user's recipient records
+      const { data: recipientData } = await supabase
+        .from('announcement_recipients')
+        .select('*')
+        .eq('user_id', authUser.id)
+
+      const recipientMap: Record<string, AnnouncementRecipient> = {}
+      recipientData?.forEach(r => {
+        recipientMap[r.announcement_id] = r
+      })
+
+      const announcementsWithData = announcementsData.map(a => ({
+        ...a,
+        sender_name: profileMap[a.sender_id]?.name || 'Unknown',
+        sender_avatar: profileMap[a.sender_id]?.avatar || null,
+        recipient: recipientMap[a.id]
+      }))
+
+      setAnnouncements(announcementsWithData)
+    } catch (err) {
+      console.error('Error fetching announcements:', err)
+    }
+  }, [])
+
+  // Mark announcement as read
+  const markAnnouncementAsRead = async (announcementId: string) => {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) return
+
+      // Check if already has a recipient record
+      const announcement = announcements.find(a => a.id === announcementId)
+      if (announcement?.recipient?.read_at) return
+
+      if (announcement?.recipient) {
+        // Update existing record
+        await supabase
+          .from('announcement_recipients')
+          .update({ read_at: new Date().toISOString() })
+          .eq('id', announcement.recipient.id)
+      } else {
+        // Insert new record
+        await supabase
+          .from('announcement_recipients')
+          .insert({
+            announcement_id: announcementId,
+            user_id: authUser.id,
+            read_at: new Date().toISOString()
+          })
+      }
+
+      fetchAnnouncements()
+    } catch (err) {
+      console.error('Error marking announcement as read:', err)
+    }
+  }
+
+  // Claim gift from announcement
+  const claimAnnouncementGift = async (announcement: Announcement & { recipient?: AnnouncementRecipient }) => {
+    if (claimingGift) return
+    if (announcement.recipient?.gift_claimed) {
+      toast.error('Gift already claimed!')
+      return
+    }
+    if (announcement.gift_amount <= 0) return
+
+    setClaimingGift(announcement.id)
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (!authUser) {
+        toast.error('Not authenticated')
+        return
+      }
+
+      // Check if already claimed (server-side check for race conditions)
+      const { data: existingRecipient } = await supabase
+        .from('announcement_recipients')
+        .select('*')
+        .eq('announcement_id', announcement.id)
+        .eq('user_id', authUser.id)
+        .single()
+
+      if (existingRecipient?.gift_claimed) {
+        toast.error('Gift already claimed!')
+        fetchAnnouncements()
+        return
+      }
+
+      // Update or insert recipient record with gift claimed
+      if (existingRecipient) {
+        const { error: updateError } = await supabase
+          .from('announcement_recipients')
+          .update({
+            gift_claimed: true,
+            gift_claimed_at: new Date().toISOString(),
+            read_at: existingRecipient.read_at || new Date().toISOString()
+          })
+          .eq('id', existingRecipient.id)
+
+        if (updateError) {
+          console.error('Error updating recipient:', updateError)
+          toast.error('Failed to claim gift')
+          return
+        }
+      } else {
+        const { error: insertError } = await supabase
+          .from('announcement_recipients')
+          .insert({
+            announcement_id: announcement.id,
+            user_id: authUser.id,
+            read_at: new Date().toISOString(),
+            gift_claimed: true,
+            gift_claimed_at: new Date().toISOString()
+          })
+
+        if (insertError) {
+          console.error('Error inserting recipient:', insertError)
+          toast.error('Failed to claim gift')
+          return
+        }
+      }
+
+      // Get current user profile to update balance
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('lantern_balance')
+        .eq('user_id', authUser.id)
+        .single()
+
+      if (profileError || !profileData) {
+        console.error('Error fetching profile:', profileError)
+        toast.error('Failed to update balance')
+        return
+      }
+
+      // Update user's lantern balance
+      const { error: balanceError } = await supabase
+        .from('profiles')
+        .update({ lantern_balance: profileData.lantern_balance + announcement.gift_amount })
+        .eq('user_id', authUser.id)
+
+      if (balanceError) {
+        console.error('Error updating balance:', balanceError)
+        toast.error('Failed to update balance')
+        return
+      }
+
+      // Create transaction record
+      const { error: txError } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: authUser.id,
+          type: 'announcement_gift',
+          amount: announcement.gift_amount,
+          description: `Gift from announcement: ${announcement.title}`
+        })
+
+      if (txError) {
+        console.error('Error creating transaction:', txError)
+        // Not critical, gift was still claimed
+      }
+
+      toast.success(`🎁 You received ${announcement.gift_amount} lantern${announcement.gift_amount > 1 ? 's' : ''}!`)
+      fetchAnnouncements()
+    } catch (err) {
+      console.error('Error claiming gift:', err)
+      toast.error('Failed to claim gift')
+    } finally {
+      setClaimingGift(null)
+    }
+  }
 
   // Mark messages as read when component mounts
   useEffect(() => {
     if (onMarkAsRead) {
       onMarkAsRead()
     }
-  }, [onMarkAsRead])
+    fetchAnnouncements()
+  }, [onMarkAsRead, fetchAnnouncements])
 
   // Get help requests where user is involved (either as helper or flare owner)
   const myHelpRequests = helpRequests.filter(
@@ -143,6 +356,96 @@ export function MessagesView({
 
           <ScrollArea className="flex-1">
             <div className="p-5 space-y-6 max-w-2xl mx-auto">
+              {/* Announcements Section */}
+              {announcements.length > 0 && (
+                <div className="space-y-3">
+                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                    <Megaphone size={14} className="text-amber-400" />
+                    Announcements ({announcements.filter(a => !a.recipient?.read_at).length} unread)
+                  </h2>
+                  {announcements.map((announcement, index) => {
+                    const isUnread = !announcement.recipient?.read_at
+                    const hasGift = announcement.gift_amount > 0
+                    const giftClaimed = announcement.recipient?.gift_claimed
+                    
+                    return (
+                      <Card 
+                        key={announcement.id} 
+                        className={`p-4 card-hover fade-in-up ${
+                          hasGift && !giftClaimed 
+                            ? 'border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-500/5' 
+                            : isUnread 
+                              ? 'border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5'
+                              : 'bg-card/80 border-border/50'
+                        }`}
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                        onClick={() => markAnnouncementAsRead(announcement.id)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Avatar className={`h-12 w-12 ring-2 ${hasGift && !giftClaimed ? 'ring-amber-500/30' : isUnread ? 'ring-primary/30' : 'ring-border'}`}>
+                            <AvatarImage src={announcement.sender_avatar || undefined} />
+                            <AvatarFallback className={`font-semibold ${hasGift && !giftClaimed ? 'bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-amber-300' : 'bg-gradient-to-br from-primary/30 to-accent/20 text-foreground'}`}>
+                              {(announcement.sender_name || 'A').slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-foreground">
+                                  {announcement.title}
+                                </span>
+                                {isUnread && (
+                                  <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
+                                    New
+                                  </Badge>
+                                )}
+                                {hasGift && (
+                                  <Badge className={`text-xs ${giftClaimed ? 'bg-muted text-muted-foreground border-muted' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
+                                    <Gift size={10} className="mr-1" />
+                                    {giftClaimed ? 'Claimed' : `${announcement.gift_amount} 🏮`}
+                                  </Badge>
+                                )}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(announcement.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {announcement.content}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                              <span className="text-xs text-muted-foreground">
+                                from {announcement.sender_name}
+                              </span>
+                              {hasGift && !giftClaimed && (
+                                <Button 
+                                  size="sm"
+                                  className="gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white ml-auto"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    claimAnnouncementGift(announcement)
+                                  }}
+                                  disabled={claimingGift === announcement.id}
+                                >
+                                  <Gift size={14} />
+                                  {claimingGift === announcement.id ? 'Claiming...' : 'Claim Gift 🎁'}
+                                </Button>
+                              )}
+                              {hasGift && giftClaimed && (
+                                <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
+                                  <CheckFat size={12} className="text-green-500" />
+                                  Gift Claimed ✓
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              )}
+
               {/* Pending Help Requests ON MY FLARES Section */}
               {pendingRequestsForMe.length > 0 && (
                 <div className="space-y-3">

@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE TABLE IF NOT EXISTS transactions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type VARCHAR(30) NOT NULL CHECK (type IN ('welcome_bonus', 'flare_creation', 'transfer_in', 'transfer_out', 'bonus', 'invite_bonus', 'referral_bonus')),
+  type VARCHAR(30) NOT NULL CHECK (type IN ('welcome_bonus', 'flare_creation', 'transfer_in', 'transfer_out', 'bonus', 'invite_bonus', 'referral_bonus', 'announcement_gift')),
   amount INTEGER NOT NULL,
   description TEXT NOT NULL,
   flare_id UUID REFERENCES flares(id) ON DELETE SET NULL,
@@ -389,6 +389,130 @@ CREATE INDEX IF NOT EXISTS idx_invites_code ON invites(code);
 CREATE INDEX IF NOT EXISTS idx_reports_reporter_id ON reports(reporter_id);
 CREATE INDEX IF NOT EXISTS idx_reports_reported_user_id ON reports(reported_user_id);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+
+-- Announcements table (broadcast messages from admins/moderators)
+CREATE TABLE IF NOT EXISTS announcements (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  sender_id UUID REFERENCES auth.users(id) ON DELETE SET NULL NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  content TEXT NOT NULL,
+  gift_amount INTEGER DEFAULT 0 CHECK (gift_amount >= 0),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Announcement recipients table (tracks read status and gift claims)
+CREATE TABLE IF NOT EXISTS announcement_recipients (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  announcement_id UUID REFERENCES announcements(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  read_at TIMESTAMPTZ,
+  gift_claimed BOOLEAN DEFAULT FALSE,
+  gift_claimed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(announcement_id, user_id)
+);
+
+-- Enable RLS on announcements tables
+ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE announcement_recipients ENABLE ROW LEVEL SECURITY;
+
+-- Announcements policies
+-- Users can view active announcements
+CREATE POLICY "Users can view active announcements" ON announcements
+  FOR SELECT USING (is_active = true);
+
+-- Admins can view all announcements
+CREATE POLICY "Admins can view all announcements" ON announcements
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
+-- Moderators can view all announcements
+CREATE POLICY "Moderators can view all announcements" ON announcements
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_moderator = true
+    )
+  );
+
+-- Admins can create announcements
+CREATE POLICY "Admins can create announcements" ON announcements
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
+-- Moderators can create announcements
+CREATE POLICY "Moderators can create announcements" ON announcements
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_moderator = true
+    )
+  );
+
+-- Admins can update announcements
+CREATE POLICY "Admins can update announcements" ON announcements
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
+-- Moderators can update announcements
+CREATE POLICY "Moderators can update announcements" ON announcements
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_moderator = true
+    )
+  );
+
+-- Announcement recipients policies
+-- Users can view their own recipient records
+CREATE POLICY "Users can view their own announcement recipients" ON announcement_recipients
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Admins can view all recipient records (for analytics)
+CREATE POLICY "Admins can view all announcement recipients" ON announcement_recipients
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_admin = true
+    )
+  );
+
+-- Moderators can view all recipient records (for analytics)
+CREATE POLICY "Moderators can view all announcement recipients" ON announcement_recipients
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND is_moderator = true
+    )
+  );
+
+-- Users can insert their own recipient records (when viewing announcement)
+CREATE POLICY "Users can insert their own announcement recipients" ON announcement_recipients
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own recipient records (for marking read/claiming gift)
+CREATE POLICY "Users can update their own announcement recipients" ON announcement_recipients
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Create indexes for announcements
+CREATE INDEX IF NOT EXISTS idx_announcements_created_at ON announcements(created_at);
+CREATE INDEX IF NOT EXISTS idx_announcements_is_active ON announcements(is_active);
+CREATE INDEX IF NOT EXISTS idx_announcements_sender_id ON announcements(sender_id);
+CREATE INDEX IF NOT EXISTS idx_announcement_recipients_user_id ON announcement_recipients(user_id);
+CREATE INDEX IF NOT EXISTS idx_announcement_recipients_announcement_id ON announcement_recipients(announcement_id);
 
 -- Enable realtime for messages and flare_participants tables
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
