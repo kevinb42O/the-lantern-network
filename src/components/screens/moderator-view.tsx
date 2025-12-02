@@ -10,7 +10,13 @@ import {
   CaretDown,
   Sparkle,
   Warning,
-  ChartLine
+  ChartLine,
+  Flag,
+  Megaphone,
+  Gift,
+  Eye,
+  EyeSlash,
+  PaperPlaneRight
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -24,6 +30,7 @@ import { BADGES, getHighestBadge } from '@/lib/economy'
 import { toast } from 'sonner'
 import { ReportsView } from './reports-view'
 import { StatisticsView } from './statistics-view'
+import type { Announcement } from '@/lib/types'
 
 interface ProfileData {
   id: string
@@ -57,8 +64,8 @@ interface ModeratorViewProps {
   onClearCampfire: () => Promise<void>
 }
 
-export function ModeratorView({ user, onRemoveFlare, onClearCampfire }: ModeratorViewProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'statistics'>('users')
+export function ModeratorView({ onRemoveFlare, onClearCampfire }: ModeratorViewProps) {
+  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'statistics' | 'reports' | 'announcements'>('users')
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [flares, setFlares] = useState<FlareData[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,10 +82,18 @@ export function ModeratorView({ user, onRemoveFlare, onClearCampfire }: Moderato
   const [showClearCampfireConfirm, setShowClearCampfireConfirm] = useState(false)
   const [flareToDelete, setFlareToDelete] = useState<FlareData | null>(null)
 
+  // Announcements state
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+  const [announcementTitle, setAnnouncementTitle] = useState('')
+  const [announcementContent, setAnnouncementContent] = useState('')
+  const [announcementGiftAmount, setAnnouncementGiftAmount] = useState(0)
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false)
+
   useEffect(() => {
     fetchProfiles()
     fetchFlares()
     fetchPendingReportsCount()
+    fetchAnnouncements()
   }, [])
 
   const fetchPendingReportsCount = async () => {
@@ -150,6 +165,132 @@ export function ModeratorView({ user, onRemoveFlare, onClearCampfire }: Moderato
       setFlares(flaresWithNames)
     } catch (err) {
       console.error('Flares fetch error:', err)
+    }
+  }
+
+  const fetchAnnouncements = async () => {
+    try {
+      const { data: announcementsData, error } = await supabase
+        .from('announcements')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Error fetching announcements:', error)
+        return
+      }
+
+      if (!announcementsData || announcementsData.length === 0) {
+        setAnnouncements([])
+        return
+      }
+
+      // Get sender names
+      const senderIds = [...new Set(announcementsData.map(a => a.sender_id))]
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', senderIds)
+
+      const profileMap: Record<string, { name: string; avatar: string | null }> = {}
+      profilesData?.forEach(p => {
+        profileMap[p.user_id] = { name: p.display_name, avatar: p.avatar_url }
+      })
+
+      // Get read/claim statistics for each announcement
+      const { data: recipientsData } = await supabase
+        .from('announcement_recipients')
+        .select('announcement_id, read_at, gift_claimed')
+
+      const statsMap: Record<string, { read_count: number; claimed_count: number }> = {}
+      recipientsData?.forEach(r => {
+        if (!statsMap[r.announcement_id]) {
+          statsMap[r.announcement_id] = { read_count: 0, claimed_count: 0 }
+        }
+        if (r.read_at) statsMap[r.announcement_id].read_count++
+        if (r.gift_claimed) statsMap[r.announcement_id].claimed_count++
+      })
+
+      const announcementsWithData: Announcement[] = announcementsData.map(a => ({
+        ...a,
+        sender_name: profileMap[a.sender_id]?.name || 'Unknown',
+        sender_avatar: profileMap[a.sender_id]?.avatar || null,
+        read_count: statsMap[a.id]?.read_count || 0,
+        claimed_count: statsMap[a.id]?.claimed_count || 0
+      }))
+
+      setAnnouncements(announcementsWithData)
+    } catch (err) {
+      console.error('Announcements fetch error:', err)
+    }
+  }
+
+  const handleSendAnnouncement = async () => {
+    if (!announcementTitle.trim() || !announcementContent.trim()) {
+      toast.error('Please fill in both title and content')
+      return
+    }
+
+    if (announcementTitle.length > 100) {
+      toast.error('Title must be 100 characters or less')
+      return
+    }
+
+    setSendingAnnouncement(true)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error('Not authenticated')
+        return
+      }
+
+      const { error } = await supabase
+        .from('announcements')
+        .insert({
+          sender_id: user.id,
+          title: announcementTitle.trim(),
+          content: announcementContent.trim(),
+          gift_amount: announcementGiftAmount,
+          is_active: true
+        })
+
+      if (error) {
+        console.error('Error creating announcement:', error)
+        toast.error('Failed to send announcement')
+        return
+      }
+
+      toast.success('Announcement sent to all users!')
+      setAnnouncementTitle('')
+      setAnnouncementContent('')
+      setAnnouncementGiftAmount(0)
+      fetchAnnouncements()
+    } catch (err) {
+      console.error('Send announcement error:', err)
+      toast.error('Failed to send announcement')
+    } finally {
+      setSendingAnnouncement(false)
+    }
+  }
+
+  const handleToggleAnnouncementActive = async (announcement: Announcement) => {
+    try {
+      const { error } = await supabase
+        .from('announcements')
+        .update({ is_active: !announcement.is_active })
+        .eq('id', announcement.id)
+
+      if (error) {
+        console.error('Error updating announcement:', error)
+        toast.error('Failed to update announcement')
+        return
+      }
+
+      toast.success(announcement.is_active ? 'Announcement deactivated' : 'Announcement activated')
+      fetchAnnouncements()
+    } catch (err) {
+      console.error('Toggle announcement error:', err)
+      toast.error('Failed to update announcement')
     }
   }
 
@@ -302,6 +443,15 @@ export function ModeratorView({ user, onRemoveFlare, onClearCampfire }: Moderato
               <ChartLine size={16} />
               Statistics
             </Button>
+            <Button
+              variant={activeTab === 'announcements' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('announcements')}
+              className="gap-2 rounded-xl bg-amber-500/10 border-amber-500/30 text-amber-400 hover:bg-amber-500/20 hover:text-amber-300"
+            >
+              <Megaphone size={16} />
+              Announcements
+            </Button>
           </div>
         </div>
       </div>
@@ -453,7 +603,157 @@ export function ModeratorView({ user, onRemoveFlare, onClearCampfire }: Moderato
 
           {activeTab === 'statistics' && (
             <div className="-m-4">
-              <StatisticsView user={user} isAdmin={false} />
+              <StatisticsView isAdmin={false} />
+            </div>
+          )}
+
+          {activeTab === 'announcements' && (
+            <div className="space-y-6">
+              {/* Compose Announcement Form */}
+              <Card className="p-6 bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2.5 rounded-xl bg-amber-500/20">
+                    <Megaphone size={24} weight="duotone" className="text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">Compose Announcement</h3>
+                    <p className="text-sm text-muted-foreground">Send a message to all users</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Title (max 100 chars)</Label>
+                    <input
+                      type="text"
+                      placeholder="Announcement title..."
+                      value={announcementTitle}
+                      onChange={(e) => setAnnouncementTitle(e.target.value.slice(0, 100))}
+                      maxLength={100}
+                      className="w-full h-11 px-4 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all"
+                    />
+                    <p className="text-xs text-muted-foreground text-right">{announcementTitle.length}/100</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Content</Label>
+                    <textarea
+                      placeholder="Write your announcement message..."
+                      value={announcementContent}
+                      onChange={(e) => setAnnouncementContent(e.target.value)}
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Gift size={14} className="text-amber-400" />
+                      Gift Amount (optional)
+                    </Label>
+                    <div className="flex gap-2">
+                      {[0, 1, 5, 10].map((amount) => (
+                        <Button
+                          key={amount}
+                          variant={announcementGiftAmount === amount ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setAnnouncementGiftAmount(amount)}
+                          className={`flex-1 rounded-xl ${announcementGiftAmount === amount ? 'bg-amber-500 hover:bg-amber-600' : ''}`}
+                        >
+                          {amount === 0 ? 'None' : `🏮 ${amount}`}
+                        </Button>
+                      ))}
+                    </div>
+                    {announcementGiftAmount > 0 && (
+                      <p className="text-xs text-amber-400">
+                        Each user who claims will receive {announcementGiftAmount} lantern{announcementGiftAmount > 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={handleSendAnnouncement}
+                    disabled={sendingAnnouncement || !announcementTitle.trim() || !announcementContent.trim()}
+                    className="w-full gap-2 rounded-xl bg-amber-500 hover:bg-amber-600"
+                  >
+                    <PaperPlaneRight size={18} weight="fill" />
+                    {sendingAnnouncement ? 'Sending...' : 'Send to All Users'}
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Sent Announcements List */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                  <Megaphone size={14} />
+                  Sent Announcements ({announcements.length})
+                </h3>
+                
+                {announcements.length === 0 ? (
+                  <Card className="p-6 text-center bg-muted/20 border-dashed">
+                    <p className="text-sm text-muted-foreground">
+                      No announcements sent yet. Create your first announcement above!
+                    </p>
+                  </Card>
+                ) : (
+                  announcements.map((announcement) => (
+                    <Card 
+                      key={announcement.id} 
+                      className={`p-4 ${announcement.is_active ? 'bg-card/80 border-border/50' : 'bg-muted/20 border-muted opacity-60'}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h4 className="font-semibold text-foreground">{announcement.title}</h4>
+                            {announcement.gift_amount > 0 && (
+                              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs">
+                                <Gift size={10} className="mr-1" />
+                                {announcement.gift_amount} 🏮
+                              </Badge>
+                            )}
+                            {!announcement.is_active && (
+                              <Badge variant="outline" className="text-xs border-muted text-muted-foreground">
+                                Inactive
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                            {announcement.content}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                            <span>by {announcement.sender_name}</span>
+                            <span>•</span>
+                            <span>{new Date(announcement.created_at).toLocaleDateString()}</span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1">
+                              <Eye size={12} />
+                              {announcement.read_count || 0} read
+                            </span>
+                            {announcement.gift_amount > 0 && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1 text-amber-400">
+                                  <Gift size={12} />
+                                  {announcement.claimed_count || 0} claimed
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleAnnouncementActive(announcement)}
+                          className={`rounded-xl shrink-0 ${announcement.is_active ? 'text-muted-foreground hover:text-foreground' : 'text-primary hover:text-primary'}`}
+                          title={announcement.is_active ? 'Deactivate' : 'Activate'}
+                        >
+                          {announcement.is_active ? <EyeSlash size={18} /> : <Eye size={18} />}
+                        </Button>
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
             </div>
           )}
         </div>
