@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS flares (
   starts_at TIMESTAMPTZ NOT NULL,
   ends_at TIMESTAMPTZ,
   status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'accepted', 'completed', 'cancelled')),
+  flare_type VARCHAR(10) DEFAULT 'request' NOT NULL CHECK (flare_type IN ('request', 'offer')),
+  is_free BOOLEAN DEFAULT FALSE NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

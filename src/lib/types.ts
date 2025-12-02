@@ -40,6 +40,8 @@ export interface Flare {
   status: 'active' | 'accepted' | 'completed'
   createdAt: number
   acceptedBy?: string
+  flare_type: 'request' | 'offer'
+  is_free: boolean
 }
 
 export interface Message {
