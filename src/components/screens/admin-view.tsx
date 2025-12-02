@@ -640,7 +640,7 @@ export function AdminView({ onRemoveFlare, onClearCampfire }: AdminViewProps) {
 
           {activeTab === 'statistics' && (
             <div className="-m-4">
-              <StatisticsView user={user} isAdmin={true} />
+              <StatisticsView isAdmin={true} />
             </div>
           )}
 
