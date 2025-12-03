@@ -86,44 +86,49 @@ export function BadgeManagement({ onBack }: BadgeManagementProps) {
 
   const fetchSupporters = async () => {
     try {
-      const { data, error } = await supabase
+      // First get all supporter badges
+      const { data: badgesData, error: badgesError } = await supabase
         .from('supporter_badges')
-        .select(`
-          *,
-          profiles!supporter_badges_user_id_fkey (
-            display_name,
-            avatar_url
-          ),
-          granter:profiles!supporter_badges_granted_by_fkey (
-            display_name
-          )
-        `)
+        .select('*')
         .order('granted_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching supporters:', error)
+      if (badgesError || !badgesData) {
+        console.error('Error fetching supporters:', badgesError)
         return
       }
 
-      const formattedSupporters: SupporterWithProfile[] = (data || []).map((s: {
-        id: string
-        user_id: string
-        badge_type: SupporterBadgeTier
-        notes: string | null
-        granted_at: string
-        granted_by: string
-        profiles: { display_name: string; avatar_url: string | null } | null
-        granter: { display_name: string } | null
-      }) => ({
+      if (badgesData.length === 0) {
+        setSupporters([])
+        return
+      }
+
+      // Get all relevant user IDs (badge holders and granters)
+      const userIds = [...new Set([
+        ...badgesData.map(b => b.user_id),
+        ...badgesData.map(b => b.granted_by)
+      ])]
+
+      // Fetch profiles for all users
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds)
+
+      const profileMap: Record<string, { display_name: string; avatar_url: string | null }> = {}
+      profilesData?.forEach(p => {
+        profileMap[p.user_id] = { display_name: p.display_name, avatar_url: p.avatar_url }
+      })
+
+      const formattedSupporters: SupporterWithProfile[] = badgesData.map((s) => ({
         id: s.id,
         user_id: s.user_id,
         badge_type: s.badge_type as SupporterBadgeTier,
         notes: s.notes,
         granted_at: s.granted_at,
         granted_by: s.granted_by,
-        granted_by_name: s.granter?.display_name || 'Unknown',
-        display_name: s.profiles?.display_name || 'Unknown',
-        avatar_url: s.profiles?.avatar_url || null
+        granted_by_name: profileMap[s.granted_by]?.display_name || 'Unknown',
+        display_name: profileMap[s.user_id]?.display_name || 'Unknown',
+        avatar_url: profileMap[s.user_id]?.avatar_url || null
       }))
 
       setSupporters(formattedSupporters)

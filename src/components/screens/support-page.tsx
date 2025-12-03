@@ -75,34 +75,39 @@ export function SupportPage({ onBack }: SupportPageProps) {
 
   const fetchSupporters = async () => {
     try {
-      const { data, error } = await supabase
+      // First get supporter badges
+      const { data: badgesData, error: badgesError } = await supabase
         .from('supporter_badges')
-        .select(`
-          user_id,
-          badge_type,
-          granted_at,
-          profiles!supporter_badges_user_id_fkey (
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('user_id, badge_type, granted_at')
         .order('granted_at', { ascending: false })
         .limit(20)
 
-      if (error) {
-        console.error('Error fetching supporters:', error)
+      if (badgesError || !badgesData) {
+        console.error('Error fetching supporters:', badgesError)
         return
       }
 
-      const formattedSupporters: Supporter[] = (data || []).map((s: { 
-        user_id: string
-        badge_type: SupporterBadgeTier
-        granted_at: string
-        profiles: { display_name: string; avatar_url: string | null } | null 
-      }) => ({
+      if (badgesData.length === 0) {
+        setSupporters([])
+        return
+      }
+
+      // Get user profiles
+      const userIds = badgesData.map(b => b.user_id)
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', userIds)
+
+      const profileMap: Record<string, { display_name: string; avatar_url: string | null }> = {}
+      profilesData?.forEach(p => {
+        profileMap[p.user_id] = { display_name: p.display_name, avatar_url: p.avatar_url }
+      })
+
+      const formattedSupporters: Supporter[] = badgesData.map((s) => ({
         user_id: s.user_id,
-        display_name: s.profiles?.display_name || 'Anonymous',
-        avatar_url: s.profiles?.avatar_url || null,
+        display_name: profileMap[s.user_id]?.display_name || 'Anonymous',
+        avatar_url: profileMap[s.user_id]?.avatar_url || null,
         badge_type: s.badge_type as SupporterBadgeTier,
         granted_at: s.granted_at
       }))
