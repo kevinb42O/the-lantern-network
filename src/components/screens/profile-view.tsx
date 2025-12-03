@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy, Medal, BookOpen } from '@phosphor-icons/react'
+import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy, Medal, BookOpen, Heart } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { VibeCard } from '@/components/vibe-card'
 import { PhilosophyView } from './philosophy-view'
+import { SupportPage } from './support-page'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
@@ -39,6 +40,7 @@ export function ProfileView({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showBadges, setShowBadges] = useState(false)
   const [showPhilosophy, setShowPhilosophy] = useState(false)
+  const [showSupport, setShowSupport] = useState(false)
 
   const availableInvites = inviteCodes.filter(code => !code.usedBy)
 
@@ -71,6 +73,11 @@ export function ProfileView({
   // Calculate member duration
   const memberSince = user.createdAt ? new Date(user.createdAt) : new Date()
   const daysSinceJoined = Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))
+
+  // Show support page if requested
+  if (showSupport) {
+    return <SupportPage onBack={() => setShowSupport(false)} />;
+  }
 
   // Show philosophy page if requested
   if (showPhilosophy) {
@@ -208,6 +215,15 @@ export function ProfileView({
               Account
             </h3>
             <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full justify-start gap-3 rounded-xl h-12 border-rose-500/30 hover:bg-rose-500/10"
+                onClick={() => setShowSupport(true)}
+              >
+                <Heart size={18} weight="duotone" className="text-rose-400" />
+                <span className="flex-1 text-left">Support Us</span>
+                <span className="text-xs text-rose-400">❤️</span>
+              </Button>
               <Button
                 variant="outline"
                 className="w-full justify-start gap-3 rounded-xl h-12"

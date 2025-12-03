@@ -16,6 +16,7 @@ export interface User {
   }
   lastSeenMessagesAt?: number
   badges?: string[]
+  supporterBadge?: SupporterBadgeTier
 }
 
 export interface LanternTransaction {
@@ -146,4 +147,30 @@ export interface AnnouncementRecipient {
   gift_claimed: boolean
   gift_claimed_at: string | null
   created_at: string
+}
+
+// Supporter Badge Types
+export type SupporterBadgeTier = 'supporter' | 'flame_keeper' | 'beacon' | 'lighthouse'
+
+export interface SupporterBadge {
+  id: string
+  user_id: string
+  badge_type: SupporterBadgeTier
+  notes?: string | null
+  granted_at: string
+  granted_by: string
+  // Joined data
+  granted_by_name?: string
+}
+
+export interface SupporterBadgeInfo {
+  id: SupporterBadgeTier
+  name: string
+  emoji: string
+  description: string
+  minAmount: number
+  tier: number
+  color: string
+  bgColor: string
+  borderColor: string
 }

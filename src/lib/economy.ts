@@ -1,4 +1,4 @@
-import type { User, LanternTransaction } from './types'
+import type { User, LanternTransaction, SupporterBadgeInfo, SupporterBadgeTier } from './types'
 
 // Lantern economy constants
 export const HOARD_LIMIT = 10
@@ -239,4 +239,63 @@ export function mintUBI(): LanternTransaction[] {
     reason: 'Welcome to the neighborhood',
     timestamp: Date.now()
   }))
+}
+
+// Supporter Badge system - for users who donate to support the project
+export const SUPPORTER_BADGES: SupporterBadgeInfo[] = [
+  {
+    id: 'supporter',
+    name: 'Lantern Supporter',
+    emoji: '🌟',
+    description: 'Supporting the Lantern Network',
+    minAmount: 1,
+    tier: 1,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/30'
+  },
+  {
+    id: 'flame_keeper',
+    name: 'Flame Keeper',
+    emoji: '🔥',
+    description: 'Keeping the flame alive',
+    minAmount: 5,
+    tier: 2,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/10',
+    borderColor: 'border-orange-500/30'
+  },
+  {
+    id: 'beacon',
+    name: 'Beacon',
+    emoji: '✨',
+    description: 'A guiding light for the community',
+    minAmount: 15,
+    tier: 3,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/30'
+  },
+  {
+    id: 'lighthouse',
+    name: 'Lighthouse',
+    emoji: '🏆',
+    description: 'A pillar of support for the network',
+    minAmount: 50,
+    tier: 4,
+    color: 'text-yellow-300',
+    bgColor: 'bg-gradient-to-r from-yellow-500/10 to-amber-500/10',
+    borderColor: 'border-yellow-500/30'
+  }
+]
+
+// Get supporter badge info by tier ID
+export function getSupporterBadgeInfo(badgeType: SupporterBadgeTier): SupporterBadgeInfo {
+  return SUPPORTER_BADGES.find(b => b.id === badgeType) || SUPPORTER_BADGES[0]
+}
+
+// Get the highest supporter badge a user has based on badge type
+export function getHighestSupporterBadge(badgeType?: SupporterBadgeTier): SupporterBadgeInfo | null {
+  if (!badgeType) return null
+  return getSupporterBadgeInfo(badgeType)
 }

@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { SupporterBadge } from '@/components/ui/supporter-badge'
 import { supabase } from '@/lib/supabase'
 import { getHighestBadge, getEarnedBadges, getNextBadge, getAllUserBadges, BADGES } from '@/lib/economy'
 import { toast } from 'sonner'
-import type { ReportCategory } from '@/lib/types'
+import type { ReportCategory, SupporterBadgeTier } from '@/lib/types'
 
 const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
   { value: 'harassment', label: 'Harassment' },
@@ -32,6 +33,7 @@ export interface UserProfileData {
   badges: string[]
   completed_flares_count: number
   created_at: string
+  supporter_badge?: SupporterBadgeTier
 }
 
 interface UserProfileModalProps {
@@ -77,7 +79,17 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
         return
       }
 
-      setProfile(profileData as UserProfileData)
+      // Fetch supporter badge if any
+      const { data: supporterBadge } = await supabase
+        .from('supporter_badges')
+        .select('badge_type')
+        .eq('user_id', id)
+        .single()
+
+      setProfile({
+        ...profileData,
+        supporter_badge: supporterBadge?.badge_type as SupporterBadgeTier | undefined
+      } as UserProfileData)
 
       // Fetch completed help count
       const { count } = await supabase
@@ -221,6 +233,9 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
                 <div className="flex-1 pb-1">
                   <h2 className="text-xl font-bold text-foreground flex items-center gap-2 flex-wrap">
                     {profile.display_name}
+                    {profile.supporter_badge && (
+                      <SupporterBadge badgeType={profile.supporter_badge} size="sm" />
+                    )}
                     {profile.is_admin && (
                       <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
                         <Sparkle size={10} weight="fill" />

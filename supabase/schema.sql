@@ -516,6 +516,56 @@ CREATE INDEX IF NOT EXISTS idx_announcements_sender_id ON announcements(sender_i
 CREATE INDEX IF NOT EXISTS idx_announcement_recipients_user_id ON announcement_recipients(user_id);
 CREATE INDEX IF NOT EXISTS idx_announcement_recipients_announcement_id ON announcement_recipients(announcement_id);
 
+-- Supporter Badges table (donation recognition system)
+CREATE TABLE IF NOT EXISTS supporter_badges (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  badge_type VARCHAR(20) NOT NULL CHECK (badge_type IN ('supporter', 'flame_keeper', 'beacon', 'lighthouse')),
+  notes TEXT,
+  granted_at TIMESTAMPTZ DEFAULT NOW(),
+  granted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL NOT NULL
+);
+
+-- Enable RLS on supporter_badges table
+ALTER TABLE supporter_badges ENABLE ROW LEVEL SECURITY;
+
+-- Supporter badges policies
+-- Everyone can view supporter badges (for display on profiles)
+CREATE POLICY "Supporter badges are viewable by everyone" ON supporter_badges
+  FOR SELECT USING (true);
+
+-- Only admins and moderators can grant badges
+CREATE POLICY "Admins can manage supporter badges" ON supporter_badges
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND (is_admin = true OR is_moderator = true)
+    )
+  );
+
+-- Only admins and moderators can update badges
+CREATE POLICY "Admins can update supporter badges" ON supporter_badges
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND (is_admin = true OR is_moderator = true)
+    )
+  );
+
+-- Only admins and moderators can delete badges
+CREATE POLICY "Admins can delete supporter badges" ON supporter_badges
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND (is_admin = true OR is_moderator = true)
+    )
+  );
+
+-- Create indexes for supporter badges
+CREATE INDEX IF NOT EXISTS idx_supporter_badges_user_id ON supporter_badges(user_id);
+CREATE INDEX IF NOT EXISTS idx_supporter_badges_badge_type ON supporter_badges(badge_type);
+CREATE INDEX IF NOT EXISTS idx_supporter_badges_granted_at ON supporter_badges(granted_at);
+
 -- Enable realtime for messages and flare_participants tables
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE flare_participants;
