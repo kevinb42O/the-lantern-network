@@ -19,7 +19,8 @@ import {
   Gift,
   Eye,
   EyeSlash,
-  PaperPlaneRight
+  PaperPlaneRight,
+  Heart
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -33,6 +34,7 @@ import { BADGES, getHighestBadge } from '@/lib/economy'
 import { toast } from 'sonner'
 import { ReportsView } from './reports-view'
 import { StatisticsView } from './statistics-view'
+import { BadgeManagement } from './admin/badge-management'
 import type { Announcement } from '@/lib/types'
 
 interface ProfileData {
@@ -68,7 +70,7 @@ interface AdminViewProps {
 }
 
 export function AdminView({ onRemoveFlare, onClearCampfire }: AdminViewProps) {
-  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'reports' | 'statistics' | 'announcements'>('users')
+  const [activeTab, setActiveTab] = useState<'users' | 'flares' | 'campfire' | 'reports' | 'statistics' | 'announcements' | 'supporters'>('users')
   const [profiles, setProfiles] = useState<ProfileData[]>([])
   const [flares, setFlares] = useState<FlareData[]>([])
   const [loading, setLoading] = useState(true)
@@ -489,6 +491,15 @@ export function AdminView({ onRemoveFlare, onClearCampfire }: AdminViewProps) {
               <Megaphone size={16} />
               Announcements
             </Button>
+            <Button
+              variant={activeTab === 'supporters' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveTab('supporters')}
+              className="gap-2 rounded-xl bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300"
+            >
+              <Heart size={16} />
+              Supporters
+            </Button>
           </div>
         </div>
       </div>
@@ -498,6 +509,8 @@ export function AdminView({ onRemoveFlare, onClearCampfire }: AdminViewProps) {
         <ReportsView isAdmin />
       ) : activeTab === 'statistics' ? (
         <StatisticsView isAdmin />
+      ) : activeTab === 'supporters' ? (
+        <BadgeManagement onBack={() => setActiveTab('users')} />
       ) : (
       <ScrollArea className="flex-1">
         <div className="p-4 max-w-2xl mx-auto">

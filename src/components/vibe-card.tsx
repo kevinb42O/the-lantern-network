@@ -2,6 +2,7 @@ import { Star, Sparkle, HandHeart, Clock, ShieldCheck } from '@phosphor-icons/re
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
+import { SupporterBadge } from '@/components/ui/supporter-badge'
 import type { User } from '@/lib/types'
 import { getHighestBadge } from '@/lib/economy'
 
@@ -48,6 +49,9 @@ export function VibeCard({ user, helpCount = 0, isModerator = false }: VibeCardP
           <div className="flex-1 pb-1">
             <h2 className="text-xl font-bold text-foreground flex items-center gap-2 flex-wrap">
               {user.username}
+              {user.supporterBadge && (
+                <SupporterBadge badgeType={user.supporterBadge} size="sm" />
+              )}
               {user.isAdmin && (
                 <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
                   <Sparkle size={10} weight="fill" />
