@@ -142,7 +142,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => reject(new Error('Profile fetch timeout')), 5000);
       });
 
-      // Create the fetch promise
+      // Create the fetch promise for profile
       const fetchPromise = supabase
         .from('profiles')
         .select('*')
@@ -156,10 +156,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return data && data.length > 0 ? data[0] : null;
         });
 
+      // Also fetch supporter badge
+      const supporterBadgePromise = supabase
+        .from('supporter_badges')
+        .select('badge_type')
+        .eq('user_id', userId)
+        .single()
+        .then(({ data }) => data?.badge_type || null);
+
       // Race between fetch and timeout
-      const fetchedProfile = await Promise.race([fetchPromise, timeoutPromise]);
+      const [fetchedProfile, supporterBadge] = await Promise.all([
+        Promise.race([fetchPromise, timeoutPromise]),
+        supporterBadgePromise.catch(() => null) // Supporter badge is optional, don't fail if not found
+      ]);
       
       console.log('Profile fetched:', fetchedProfile ? 'found' : 'not found');
+      
+      // Add supporter badge to profile
+      if (fetchedProfile) {
+        fetchedProfile.supporter_badge = supporterBadge;
+      }
       
       // Sync admin status if user email matches an admin email
       if (fetchedProfile && userEmail) {

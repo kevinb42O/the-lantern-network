@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { SupporterBadge } from '@/components/ui/supporter-badge'
 import { supabase } from '@/lib/supabase'
-import { getHighestBadge, getEarnedBadges, getNextBadge, getAllUserBadges, BADGES } from '@/lib/economy'
+import { getHighestBadge, getEarnedBadges, getNextBadge, getAllUserBadges, BADGES, getSupporterBadgeInfo } from '@/lib/economy'
 import { toast } from 'sonner'
 import type { ReportCategory, SupporterBadgeTier } from '@/lib/types'
 
@@ -304,6 +304,27 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
                   <p className="text-xs text-muted-foreground">Badges</p>
                 </div>
               </div>
+
+              {/* Supporter Badge (highest priority) */}
+              {profile.supporter_badge && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-foreground mb-2">Supporter Badge</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const supporterBadgeInfo = getSupporterBadgeInfo(profile.supporter_badge)
+                      return (
+                        <div
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${supporterBadgeInfo.bgColor} ${supporterBadgeInfo.color} border-2 ${supporterBadgeInfo.borderColor} shadow-[0_0_10px_rgba(251,191,36,0.15)]`}
+                          title={supporterBadgeInfo.description}
+                        >
+                          <span className="animate-pulse">{supporterBadgeInfo.emoji}</span>
+                          <span>{supporterBadgeInfo.name}</span>
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </div>
+              )}
 
               {/* Earned Badges */}
               {earnedBadges.length > 1 && (

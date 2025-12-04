@@ -11,7 +11,7 @@ import { SupportPage } from './support-page'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
-import { getHighestBadge, getNextBadge, getEarnedBadges, getAllUserBadges, BADGES } from '@/lib/economy'
+import { getHighestBadge, getNextBadge, getEarnedBadges, getAllUserBadges, BADGES, getSupporterBadgeInfo } from '@/lib/economy'
 
 // Check if Supabase is configured
 const isSupabaseConfigured = 
@@ -381,6 +381,32 @@ export function ProfileView({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
+            {/* Supporter Badge (highest priority) */}
+            {user.supporterBadge && (() => {
+              const supporterBadgeInfo = getSupporterBadgeInfo(user.supporterBadge)
+              return (
+                <>
+                  <h4 className="text-sm font-medium text-foreground pt-1">Supporter Badge</h4>
+                  <Card 
+                    className={`p-4 ${supporterBadgeInfo.bgColor} border-2 ${supporterBadgeInfo.borderColor} shadow-[0_0_15px_rgba(251,191,36,0.15)]`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl animate-pulse">{supporterBadgeInfo.emoji}</span>
+                      <div className="flex-1">
+                        <h4 className={`font-semibold ${supporterBadgeInfo.color}`}>{supporterBadgeInfo.name}</h4>
+                        <p className="text-xs text-muted-foreground">{supporterBadgeInfo.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Thank you for supporting The Lantern Network!
+                        </p>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 font-medium">
+                        Supporter
+                      </span>
+                    </div>
+                  </Card>
+                </>
+              )
+            })()}
             {/* Custom Badges (assigned by admin) */}
             {customBadges.length > 0 && (
               <>
@@ -405,8 +431,11 @@ export function ProfileView({
                     </div>
                   </Card>
                 ))}
-                <h4 className="text-sm font-medium text-foreground pt-2">Earned Badges</h4>
               </>
+            )}
+            {/* Earned Badges Section Header - show if we have supporter/custom badges */}
+            {(user.supporterBadge || customBadges.length > 0) && (
+              <h4 className="text-sm font-medium text-foreground pt-2">Earned Badges</h4>
             )}
             {earnedBadges.map((badge) => (
               <Card 

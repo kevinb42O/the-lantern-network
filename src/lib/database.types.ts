@@ -295,7 +295,16 @@ export type Tables<T extends keyof Database['public']['Tables']> = Database['pub
 export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert'];
 export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update'];
 
-export type Profile = Tables<'profiles'>;
+// Base profile type from database
+export type ProfileRow = Tables<'profiles'>;
+
+// Supporter badge type
+export type SupporterBadgeTier = 'supporter' | 'flame_keeper' | 'beacon' | 'lighthouse';
+
+// Extended profile type with supporter badge (from separate table)
+export type Profile = ProfileRow & {
+  supporter_badge?: SupporterBadgeTier | null;
+};
 export type Flare = Tables<'flares'>;
 export type FlareParticipant = Tables<'flare_participants'>;
 export type Connection = Tables<'connections'>;
