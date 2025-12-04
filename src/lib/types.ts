@@ -194,3 +194,48 @@ export interface Story {
   }
   userReaction?: StoryReactionType | null
 }
+
+// Trust Circle Types
+export type ConnectionRequestStatus = 'pending' | 'accepted' | 'declined'
+
+export interface ConnectionRequest {
+  id: string
+  fromUserId: string
+  toUserId: string
+  message?: string | null
+  flareId?: string | null
+  status: ConnectionRequestStatus
+  createdAt: string
+  // Joined data for display
+  fromUserName?: string
+  fromUserAvatar?: string | null
+  toUserName?: string
+  toUserAvatar?: string | null
+  flareName?: string | null
+}
+
+export interface CircleConnection {
+  id: string
+  connectedUserId: string
+  connectedUserName: string
+  connectedUserAvatar?: string | null
+  trustLevel: number
+  metThroughFlareId?: string | null
+  metThroughFlareName?: string | null
+  createdAt: string
+  updatedAt: string
+  // Optional - last message preview for Circle list
+  lastMessage?: string | null
+  lastMessageAt?: string | null
+}
+
+export interface CircleMessage {
+  id: string
+  senderId: string
+  senderName: string
+  senderAvatar?: string | null
+  receiverId: string
+  content: string
+  createdAt: string
+  read: boolean
+}

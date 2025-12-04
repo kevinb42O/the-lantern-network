@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ChatCircle, Check, X, PaperPlaneRight, Fire, Lamp, ArrowLeft, CheckCircle, Hourglass, XCircle, HandHeart, Sparkle, Coins, Megaphone, Gift, CheckFat } from '@phosphor-icons/react'
+import { ChatCircle, Check, X, PaperPlaneRight, Fire, Lamp, ArrowLeft, CheckCircle, Hourglass, XCircle, HandHeart, Sparkle, Coins, Megaphone, Gift, CheckFat, UserCirclePlus } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient } from '@/lib/types'
+import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient, CircleConnection } from '@/lib/types'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { useCircleConnections, useConnectionRequests, useAcceptConnectionRequest, useDeclineConnectionRequest, useCircleMessages, useSendCircleMessage, useRemoveFromCircle } from '@/hooks/useCircle'
+
+type MessagesTab = 'conversations' | 'circle' | 'requests'
 
 interface MessagesViewProps {
   user: User
@@ -19,6 +22,8 @@ interface MessagesViewProps {
   onSendMessage: (helpRequestId: string, content: string) => void
   onCompleteFlare: (flareId: string, helperId: string) => void
   onMarkAsRead?: () => void
+  onUserClick?: (userId: string) => void
+  initialCircleChatUserId?: string | null
 }
 
 export function MessagesView({ 
@@ -30,14 +35,41 @@ export function MessagesView({
   onDenyHelp,
   onSendMessage,
   onCompleteFlare,
-  onMarkAsRead
+  onMarkAsRead,
+  onUserClick,
+  initialCircleChatUserId
 }: MessagesViewProps) {
   const [selectedConversation, setSelectedConversation] = useState<HelpRequest | null>(null)
   const [chatInput, setChatInput] = useState('')
+  const [activeTab, setActiveTab] = useState<MessagesTab>('conversations')
+  
+  // Circle chat state
+  const [selectedCircleMember, setSelectedCircleMember] = useState<CircleConnection | null>(null)
+  const [circleChatInput, setCircleChatInput] = useState('')
+  
+  // Circle hooks
+  const { data: circleConnections = [], refetch: refetchCircle } = useCircleConnections()
+  const { data: connectionRequests, refetch: refetchRequests } = useConnectionRequests()
+  const acceptRequest = useAcceptConnectionRequest()
+  const declineRequest = useDeclineConnectionRequest()
+  const { data: circleMessages = [], refetch: refetchCircleMessages } = useCircleMessages(selectedCircleMember?.connectedUserId || null)
+  const sendCircleMessage = useSendCircleMessage()
+  const removeFromCircle = useRemoveFromCircle()
   
   // Announcements state
   const [announcements, setAnnouncements] = useState<(Announcement & { recipient?: AnnouncementRecipient })[]>([])
   const [claimingGift, setClaimingGift] = useState<string | null>(null)
+
+  // Handle initial circle chat user ID (from profile modal)
+  useEffect(() => {
+    if (initialCircleChatUserId && circleConnections.length > 0) {
+      const member = circleConnections.find(c => c.connectedUserId === initialCircleChatUserId)
+      if (member) {
+        setSelectedCircleMember(member)
+        setActiveTab('circle')
+      }
+    }
+  }, [initialCircleChatUserId, circleConnections])
 
   // Fetch announcements
   const fetchAnnouncements = useCallback(async () => {
@@ -325,6 +357,10 @@ export function MessagesView({
     return `${Math.floor(seconds / 86400)}d ago`
   }
 
+  const getTimeAgoFromString = (dateString: string): string => {
+    return getTimeAgo(new Date(dateString).getTime())
+  }
+
   const getOtherParticipant = (hr: HelpRequest) => {
     if (hr.flareOwnerId === user.id) {
       return { id: hr.helperId, username: hr.helperUsername }
@@ -332,9 +368,185 @@ export function MessagesView({
     return { id: hr.flareOwnerId, username: hr.flareOwnerUsername }
   }
 
+  // Trust level to flame icons
+  const getTrustFlames = (level: number): string => {
+    return '🔥'.repeat(Math.min(level, 5))
+  }
+
+  // Handle Circle message send
+  const handleSendCircleMessage = async () => {
+    if (!circleChatInput.trim() || !selectedCircleMember) return
+    try {
+      await sendCircleMessage.mutateAsync({
+        receiverId: selectedCircleMember.connectedUserId,
+        content: circleChatInput.trim()
+      })
+      setCircleChatInput('')
+      refetchCircleMessages()
+    } catch {
+      toast.error('Failed to send message')
+    }
+  }
+
+  const handleCircleChatKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendCircleMessage()
+    }
+  }
+
+  // Handle accept/decline connection request
+  const handleAcceptConnectionRequest = async (requestId: string) => {
+    try {
+      await acceptRequest.mutateAsync(requestId)
+      toast.success("You're connected! 🔥")
+      refetchRequests()
+      refetchCircle()
+    } catch {
+      toast.error('Failed to accept request')
+    }
+  }
+
+  const handleDeclineConnectionRequest = async (requestId: string) => {
+    try {
+      await declineRequest.mutateAsync(requestId)
+      toast.info('Request declined')
+      refetchRequests()
+    } catch {
+      toast.error('Failed to decline request')
+    }
+  }
+
+  // Handle remove from circle
+  const handleRemoveFromCircle = async (connectedUserId: string) => {
+    if (!confirm('Remove from your circle? You can always add them back later.')) return
+    try {
+      await removeFromCircle.mutateAsync(connectedUserId)
+      toast.info('Removed from circle')
+      setSelectedCircleMember(null)
+      refetchCircle()
+    } catch {
+      toast.error('Failed to remove from circle')
+    }
+  }
+
+  // Count pending incoming requests
+  const pendingRequestCount = connectionRequests?.incoming.length || 0
+
   return (
     <div className="flex flex-col h-full bg-background">
-      {!selectedConversation ? (
+      {/* Circle Chat View */}
+      {selectedCircleMember ? (
+        <div className="flex flex-col h-full">
+          {/* Circle Chat Header */}
+          <div className="p-4 border-b border-border bg-card">
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={() => setSelectedCircleMember(null)}
+              >
+                <ArrowLeft size={20} />
+              </Button>
+              <button
+                onClick={() => onUserClick?.(selectedCircleMember.connectedUserId)}
+                className="focus:outline-none"
+              >
+                <Avatar className="h-10 w-10 ring-2 ring-amber-500/30">
+                  <AvatarImage src={selectedCircleMember.connectedUserAvatar || undefined} />
+                  <AvatarFallback className="bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-foreground font-semibold">
+                    {selectedCircleMember.connectedUserName.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">
+                  {selectedCircleMember.connectedUserName}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-400 border-0">
+                    {getTrustFlames(selectedCircleMember.trustLevel)} Trust
+                  </Badge>
+                  {selectedCircleMember.metThroughFlareName && (
+                    <span className="text-xs text-muted-foreground">
+                      Met via: {selectedCircleMember.metThroughFlareName}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-red-400"
+                onClick={() => handleRemoveFromCircle(selectedCircleMember.connectedUserId)}
+              >
+                Remove
+              </Button>
+            </div>
+          </div>
+          
+          {/* Circle Chat Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {circleMessages.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">Start a conversation with {selectedCircleMember.connectedUserName}!</p>
+              </div>
+            ) : (
+              circleMessages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`flex gap-2 ${msg.senderId === user.id ? 'flex-row-reverse' : ''}`}
+                >
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarImage src={msg.senderAvatar || undefined} />
+                    <AvatarFallback className="text-xs bg-amber-500/20 text-amber-400">
+                      {msg.senderName.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className={`max-w-[75%] ${msg.senderId === user.id ? 'text-right' : ''}`}>
+                    <div className="flex items-baseline gap-2 mb-0.5">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {msg.senderId === user.id ? 'You' : msg.senderName}
+                      </span>
+                    </div>
+                    <div
+                      className={`inline-block px-3 py-2 rounded-2xl text-sm ${
+                        msg.senderId === user.id
+                          ? 'bg-amber-500 text-white rounded-br-md'
+                          : 'bg-muted text-foreground rounded-bl-md'
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {/* Circle Chat Input */}
+          <div className="p-4 border-t border-border bg-card">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                value={circleChatInput}
+                onChange={(e) => setCircleChatInput(e.target.value)}
+                onKeyDown={handleCircleChatKeyDown}
+                className="flex-1 h-10 px-4 rounded-full border border-amber-500/30 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+              />
+              <Button
+                size="icon"
+                className="rounded-full h-10 w-10 bg-amber-500 hover:bg-amber-600"
+                onClick={handleSendCircleMessage}
+                disabled={!circleChatInput.trim() || sendCircleMessage.isPending}
+              >
+                <PaperPlaneRight size={18} weight="fill" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : !selectedConversation ? (
         <>
           {/* Header */}
           <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
@@ -345,17 +557,270 @@ export function MessagesView({
               <div>
                 <h1 className="text-2xl font-bold text-foreground">Messages</h1>
                 <p className="text-sm text-muted-foreground">
-                  {myHelpRequests.length === 0 
-                    ? 'No conversations yet' 
-                    : `${pendingRequestsForMe.length} pending request${pendingRequestsForMe.length !== 1 ? 's' : ''}`
+                  {activeTab === 'circle' 
+                    ? `${circleConnections.length} in your circle`
+                    : activeTab === 'requests'
+                      ? `${pendingRequestCount} pending request${pendingRequestCount !== 1 ? 's' : ''}`
+                      : myHelpRequests.length === 0 
+                        ? 'No conversations yet' 
+                        : `${pendingRequestsForMe.length} pending request${pendingRequestsForMe.length !== 1 ? 's' : ''}`
                   }
                 </p>
               </div>
             </div>
           </div>
 
+          {/* Tabs */}
+          <div className="px-4 pt-4 max-w-2xl mx-auto w-full">
+            <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/50">
+              <button
+                onClick={() => setActiveTab('conversations')}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'conversations'
+                    ? 'bg-card text-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+                }`}
+              >
+                <ChatCircle size={14} weight={activeTab === 'conversations' ? 'duotone' : 'regular'} />
+                Chats
+                {pendingRequestsForMe.length > 0 && (
+                  <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                    {pendingRequestsForMe.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('circle')}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  activeTab === 'circle'
+                    ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 shadow-md border border-amber-500/20'
+                    : 'text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10'
+                }`}
+              >
+                <Fire size={14} weight={activeTab === 'circle' ? 'duotone' : 'regular'} />
+                Circle
+                {circleConnections.length > 0 && (
+                  <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">
+                    {circleConnections.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('requests')}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative ${
+                  activeTab === 'requests'
+                    ? 'bg-card text-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
+                }`}
+              >
+                <UserCirclePlus size={14} weight={activeTab === 'requests' ? 'duotone' : 'regular'} />
+                Requests
+                {pendingRequestCount > 0 && (
+                  <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full animate-pulse">
+                    {pendingRequestCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+
           <ScrollArea className="flex-1">
             <div className="p-5 space-y-6 max-w-2xl mx-auto">
+              {/* Tab Content */}
+              {activeTab === 'circle' ? (
+                /* Circle Tab */
+                <div className="space-y-3">
+                  {circleConnections.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/10 mb-6">
+                        <Fire size={48} weight="duotone" className="text-amber-400 bounce-subtle" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground mb-3">
+                        Your Circle is Empty
+                      </h3>
+                      <p className="text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                        Add neighbors to your Trust Circle to message them anytime - no flare needed!
+                      </p>
+                    </div>
+                  ) : (
+                    circleConnections.map((connection, index) => (
+                      <Card
+                        key={connection.id}
+                        className="p-4 cursor-pointer card-hover border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent fade-in-up"
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                        onClick={() => setSelectedCircleMember(connection)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onUserClick?.(connection.connectedUserId)
+                            }}
+                            className="focus:outline-none"
+                          >
+                            <Avatar className="h-12 w-12 ring-2 ring-amber-500/30">
+                              <AvatarImage src={connection.connectedUserAvatar || undefined} />
+                              <AvatarFallback className="bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-foreground font-semibold">
+                                {connection.connectedUserName.slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-foreground">
+                                {connection.connectedUserName}
+                              </span>
+                              <span className="text-sm">{getTrustFlames(connection.trustLevel)}</span>
+                            </div>
+                            {connection.metThroughFlareName && (
+                              <p className="text-xs text-muted-foreground">
+                                Met through: {connection.metThroughFlareName}
+                              </p>
+                            )}
+                            {connection.lastMessage && (
+                              <p className="text-sm text-muted-foreground truncate mt-1">
+                                {connection.lastMessage}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              ) : activeTab === 'requests' ? (
+                /* Requests Tab */
+                <div className="space-y-6">
+                  {/* Incoming Requests */}
+                  <div className="space-y-3">
+                    <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                      <UserCirclePlus size={14} className="text-amber-400" />
+                      Incoming Requests ({connectionRequests?.incoming.length || 0})
+                    </h2>
+                    {connectionRequests?.incoming.length === 0 ? (
+                      <Card className="p-6 text-center bg-muted/20 border-dashed">
+                        <p className="text-sm text-muted-foreground">
+                          No pending requests
+                        </p>
+                      </Card>
+                    ) : (
+                      connectionRequests?.incoming.map((request, index) => (
+                        <Card
+                          key={request.id}
+                          className="p-4 border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-amber-500/5 fade-in-up"
+                          style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                          <div className="flex items-start gap-3">
+                            <button
+                              onClick={() => onUserClick?.(request.fromUserId)}
+                              className="focus:outline-none"
+                            >
+                              <Avatar className="h-12 w-12 ring-2 ring-amber-500/30">
+                                <AvatarImage src={request.fromUserAvatar || undefined} />
+                                <AvatarFallback className="bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-foreground font-semibold">
+                                  {(request.fromUserName || 'A').slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            </button>
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-foreground">
+                                  {request.fromUserName}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  {getTimeAgoFromString(request.createdAt)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                wants to add you to their circle
+                              </p>
+                              {request.flareName && (
+                                <div className="flex items-center gap-2 text-xs bg-muted/30 px-2 py-1 rounded-md w-fit">
+                                  <Fire size={14} className="text-amber-400" />
+                                  <span className="text-foreground">Met via: {request.flareName}</span>
+                                </div>
+                              )}
+                              {request.message && (
+                                <div className="bg-card/80 rounded-xl p-3 mt-2 border border-border/50">
+                                  <p className="text-sm text-foreground italic">
+                                    "{request.message}"
+                                  </p>
+                                </div>
+                              )}
+                              <div className="flex gap-2 mt-3">
+                                <Button
+                                  size="sm"
+                                  className="gap-2 rounded-xl flex-1 bg-amber-500 hover:bg-amber-600"
+                                  onClick={() => handleAcceptConnectionRequest(request.id)}
+                                  disabled={acceptRequest.isPending}
+                                >
+                                  <Check size={16} weight="bold" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-2 rounded-xl"
+                                  onClick={() => handleDeclineConnectionRequest(request.id)}
+                                  disabled={declineRequest.isPending}
+                                >
+                                  <X size={16} weight="bold" />
+                                  Decline
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Outgoing Requests */}
+                  {(connectionRequests?.outgoing.length || 0) > 0 && (
+                    <div className="space-y-3">
+                      <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                        <Hourglass size={14} className="text-muted-foreground" />
+                        Sent Requests ({connectionRequests?.outgoing.filter(r => r.status === 'pending').length || 0})
+                      </h2>
+                      {connectionRequests?.outgoing.filter(r => r.status === 'pending').map((request, index) => (
+                        <Card
+                          key={request.id}
+                          className="p-4 border-border/50 bg-muted/20 fade-in-up"
+                          style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => onUserClick?.(request.toUserId)}
+                              className="focus:outline-none"
+                            >
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={request.toUserAvatar || undefined} />
+                                <AvatarFallback className="bg-muted text-muted-foreground font-semibold">
+                                  {(request.toUserName || 'A').slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                            </button>
+                            <div className="flex-1">
+                              <span className="font-medium text-foreground">
+                                {request.toUserName}
+                              </span>
+                              <p className="text-xs text-muted-foreground">
+                                Waiting for response...
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="text-xs border-muted text-muted-foreground">
+                              <Hourglass size={12} className="mr-1" />
+                              Pending
+                            </Badge>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Conversations Tab - Original Content */
+                <>
               {/* Announcements Section */}
               {announcements.length > 0 && (
                 <div className="space-y-3">
@@ -714,6 +1179,8 @@ export function MessagesView({
                   })
                 )}
               </div>
+                </>
+              )}
             </div>
           </ScrollArea>
         </>

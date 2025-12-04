@@ -27,6 +27,7 @@ import {
   REPUTATION_GAIN_HELPER,
   REPUTATION_GAIN_OWNER
 } from '@/lib/economy'
+import { useCircleMemberIds, useIncrementTrustLevel } from '@/hooks/useCircle'
 
 // Admin configuration
 const ADMIN_EMAILS = [
@@ -61,6 +62,7 @@ interface FlareData {
   creator_name?: string
   flare_type?: 'request' | 'offer'
   is_free?: boolean
+  circle_only?: boolean
 }
 
 // Help request data from Supabase (using flare_participants table)
@@ -112,10 +114,23 @@ function App() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [showUserProfile, setShowUserProfile] = useState(false)
 
+  // Circle chat state (for navigating from profile modal to circle chat)
+  const [circleChatUserId, setCircleChatUserId] = useState<string | null>(null)
+
+  // Circle hooks
+  const { data: circleMemberIds = [] } = useCircleMemberIds()
+  const incrementTrustLevel = useIncrementTrustLevel()
+
   // Handle user click (for viewing profile)
   const handleUserClick = (userId: string) => {
     setSelectedUserId(userId)
     setShowUserProfile(true)
+  }
+
+  // Handle starting a circle chat from profile modal
+  const handleStartCircleChat = (userId: string) => {
+    setCircleChatUserId(userId)
+    setCurrentView('messages')
   }
 
   // Fetch unread message count
@@ -176,6 +191,7 @@ function App() {
     location: { lat: number; lng: number } | null
     flare_type: 'request' | 'offer'
     is_free: boolean
+    circle_only: boolean
   }) => {
     if (!authUser) return
 
@@ -188,14 +204,18 @@ function App() {
       starts_at: new Date().toISOString(),
       status: 'active',
       flare_type: flareData.flare_type,
-      is_free: flareData.is_free
+      is_free: flareData.is_free,
+      circle_only: flareData.circle_only
     })
 
     if (error) {
       console.error('Error creating flare:', error)
       toast.error('Failed to create flare')
     } else {
-      toast.success(flareData.flare_type === 'offer' ? 'Offer posted! 🎁' : 'Flare posted! 🔥')
+      const message = flareData.circle_only 
+        ? (flareData.flare_type === 'offer' ? 'Circle-only offer posted! 🔥🎁' : 'Circle-only flare posted! 🔥')
+        : (flareData.flare_type === 'offer' ? 'Offer posted! 🎁' : 'Flare posted! 🔥')
+      toast.success(message)
       fetchFlares()
     }
   }
@@ -502,6 +522,13 @@ function App() {
       
       // Check for elder promotion
       checkElderPromotion(helperId)
+
+      // Increment trust level for circle connections
+      try {
+        await incrementTrustLevel.mutateAsync(helperId)
+      } catch {
+        // Silently fail - this is optional enhancement
+      }
     } catch (err) {
       console.error('Error completing flare:', err)
       toast.error('Failed to complete task')
@@ -1282,6 +1309,7 @@ function App() {
             flares={flares}
             helpRequests={helpRequests}
             stories={stories}
+            circleMemberIds={circleMemberIds}
             onCreateFlare={handleCreateFlare}
             onJoinFlare={handleJoinFlare}
             onCreateStory={handleCreateStory}
@@ -1322,6 +1350,8 @@ function App() {
             onSendMessage={handleSendChatMessage}
             onCompleteFlare={handleCompleteFlare}
             onMarkAsRead={handleMarkAsRead}
+            onUserClick={handleUserClick}
+            initialCircleChatUserId={circleChatUserId}
           />
         )}
         {currentView === 'profile' && (
@@ -1352,6 +1382,7 @@ function App() {
         userId={selectedUserId}
         isOpen={showUserProfile}
         onClose={() => setShowUserProfile(false)}
+        onStartCircleChat={handleStartCircleChat}
       />
 
       {/* Enhanced Bottom Navigation */}

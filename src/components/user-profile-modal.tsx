@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Star, HandHeart, Clock, Sparkle, Shield, ShieldCheck, Flag } from '@phosphor-icons/react'
+import { X, Star, HandHeart, Clock, Sparkle, Shield, ShieldCheck, Flag, UserCirclePlus, CheckCircle, Fire, ChatCircle } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { getHighestBadge, getEarnedBadges, getNextBadge, getAllUserBadges, BADGES, getSupporterBadgeInfo } from '@/lib/economy'
 import { toast } from 'sonner'
 import type { ReportCategory, SupporterBadgeTier } from '@/lib/types'
+import { useConnectionStatus, useSendConnectionRequest, useAcceptConnectionRequest } from '@/hooks/useCircle'
 
 const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
   { value: 'harassment', label: 'Harassment' },
@@ -40,9 +41,10 @@ interface UserProfileModalProps {
   userId: string | null
   isOpen: boolean
   onClose: () => void
+  onStartCircleChat?: (userId: string) => void
 }
 
-export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalProps) {
+export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }: UserProfileModalProps) {
   const [profile, setProfile] = useState<UserProfileData | null>(null)
   const [loading, setLoading] = useState(false)
   const [helpCount, setHelpCount] = useState(0)
@@ -51,6 +53,11 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
   const [reportDescription, setReportDescription] = useState('')
   const [submittingReport, setSubmittingReport] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  // Circle connection hooks
+  const { data: connectionStatus, refetch: refetchConnectionStatus } = useConnectionStatus(userId)
+  const sendConnectionRequest = useSendConnectionRequest()
+  const acceptConnectionRequest = useAcceptConnectionRequest()
 
   useEffect(() => {
     if (userId && isOpen) {
@@ -150,6 +157,48 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
     } finally {
       setSubmittingReport(false)
     }
+  }
+
+  // Handle Add to Circle
+  const handleAddToCircle = async () => {
+    if (!userId) return
+    
+    try {
+      const result = await sendConnectionRequest.mutateAsync({ toUserId: userId })
+      if (result.autoAccepted) {
+        toast.success('You\'re connected! 🔥')
+      } else {
+        toast.success('Request sent! They\'ll see it in their Messages.')
+      }
+      refetchConnectionStatus()
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Failed to send request'
+      if (errMsg === 'Already in your circle' || errMsg === 'Request already sent') {
+        toast.info(errMsg)
+      } else {
+        toast.error(errMsg)
+      }
+    }
+  }
+
+  // Handle Accept Connection Request
+  const handleAcceptRequest = async () => {
+    if (!connectionStatus?.requestId) return
+    
+    try {
+      await acceptConnectionRequest.mutateAsync(connectionStatus.requestId)
+      toast.success('You\'re connected! 🔥')
+      refetchConnectionStatus()
+    } catch {
+      toast.error('Failed to accept request')
+    }
+  }
+
+  // Handle Message Circle Member
+  const handleMessageCircleMember = () => {
+    if (!userId) return
+    onStartCircleChat?.(userId)
+    onClose()
   }
 
   if (!isOpen) return null
@@ -378,6 +427,68 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
                       </Badge>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Add to Circle / Connection Status - only show for other users */}
+              {currentUserId && currentUserId !== profile.user_id && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  {connectionStatus?.isConnected ? (
+                    <div className="flex gap-2">
+                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1.5 py-1.5 px-3 flex-1 justify-center">
+                        <Fire size={14} weight="fill" />
+                        In Your Circle
+                      </Badge>
+                      {onStartCircleChat && (
+                        <Button
+                          size="sm"
+                          className="gap-2 rounded-xl"
+                          onClick={handleMessageCircleMember}
+                        >
+                          <ChatCircle size={16} weight="duotone" />
+                          Message
+                        </Button>
+                      )}
+                    </div>
+                  ) : connectionStatus?.requestSent ? (
+                    <Badge variant="outline" className="text-muted-foreground border-muted gap-1.5 py-1.5 px-3 w-full justify-center">
+                      <CheckCircle size={14} />
+                      Request Sent
+                    </Badge>
+                  ) : connectionStatus?.requestReceived ? (
+                    <div className="space-y-2">
+                      <p className="text-xs text-amber-400 text-center">They want to connect with you!</p>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="gap-2 rounded-xl flex-1 bg-amber-500 hover:bg-amber-600"
+                          onClick={handleAcceptRequest}
+                          disabled={acceptConnectionRequest.isPending}
+                        >
+                          <CheckCircle size={16} weight="fill" />
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2 rounded-xl flex-1"
+                          onClick={onClose}
+                        >
+                          Later
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="gap-2 rounded-xl w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                      onClick={handleAddToCircle}
+                      disabled={sendConnectionRequest.isPending}
+                    >
+                      <UserCirclePlus size={18} weight="duotone" />
+                      {sendConnectionRequest.isPending ? 'Sending...' : 'Add to Circle'}
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
