@@ -92,23 +92,30 @@ export function FireflyBackground({
       createParticle(canvas)
     )
 
+    // Draw static particles once for reduced motion
+    const drawStaticParticles = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      particlesRef.current.forEach(particle => {
+        // Position particles statically across the canvas
+        particle.y = Math.random() * canvas.height
+        ctx.beginPath()
+        const gradient = ctx.createRadialGradient(
+          particle.x, particle.y, 0,
+          particle.x, particle.y, particle.size * 2
+        )
+        gradient.addColorStop(0, `hsla(${particle.hue}, 80%, 60%, 0.3)`)
+        gradient.addColorStop(1, `hsla(${particle.hue}, 80%, 60%, 0)`)
+        ctx.fillStyle = gradient
+        ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2)
+        ctx.fill()
+      })
+    }
+
     // Animation loop
     const animate = () => {
       if (prefersReducedMotion.current) {
-        // If reduced motion is preferred, draw static particles
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        particlesRef.current.forEach(particle => {
-          ctx.beginPath()
-          const gradient = ctx.createRadialGradient(
-            particle.x, particle.y, 0,
-            particle.x, particle.y, particle.size * 2
-          )
-          gradient.addColorStop(0, `hsla(${particle.hue}, 80%, 60%, 0.3)`)
-          gradient.addColorStop(1, `hsla(${particle.hue}, 80%, 60%, 0)`)
-          ctx.fillStyle = gradient
-          ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2)
-          ctx.fill()
-        })
+        // Draw static particles only once, then stop
+        drawStaticParticles()
         return
       }
 
