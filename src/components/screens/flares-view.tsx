@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { AmbientBackground } from '@/components/ui/ambient-background'
 import { toast } from 'sonner'
 import type { User, HelpRequest, Story, StoryReactionType } from '@/lib/types'
 import { StoryCard } from '@/components/story-card'
@@ -372,8 +373,9 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
       </div>
 
       {/* Flares List */}
-      <div className="flex-1 overflow-y-auto p-4 pb-8">
-        <div className="space-y-4 max-w-2xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 pb-8 relative">
+        <AmbientBackground variant="flares" />
+        <div className="space-y-4 max-w-2xl mx-auto relative z-10">
           {/* Stories Tab - show only stories */}
           {activeFilter === 'stories' ? (
             stories.length === 0 ? (
