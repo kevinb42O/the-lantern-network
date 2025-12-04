@@ -1,5 +1,8 @@
 import type { User, LanternTransaction, SupporterBadgeInfo, SupporterBadgeTier } from './types'
 
+// Default location fallback (Null Island) - used when user denies location permissions
+export const DEFAULT_LOCATION = { lat: 0, lng: 0 }
+
 // Lantern economy constants
 export const HOARD_LIMIT = 10
 export const INITIAL_LANTERNS = 3
