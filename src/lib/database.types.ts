@@ -298,8 +298,8 @@ export type UpdateTables<T extends keyof Database['public']['Tables']> = Databas
 // Base profile type from database
 export type ProfileRow = Tables<'profiles'>;
 
-// Supporter badge type
-export type SupporterBadgeTier = 'supporter' | 'flame_keeper' | 'beacon' | 'lighthouse';
+// Import SupporterBadgeTier from types.ts to avoid duplication
+import type { SupporterBadgeTier } from './types';
 
 // Extended profile type with supporter badge (from separate table)
 export type Profile = ProfileRow & {

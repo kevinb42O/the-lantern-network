@@ -173,8 +173,11 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
     ? BADGES.filter(b => adminBadges.includes(b.id) && !earnedBadges.some(eb => eb.id === b.id))
     : []
   
-  // Total badge count is the unique badges the user has
-  const totalBadgeCount = allUserBadges.length
+  // Get supporter badge info if user has one
+  const supporterBadgeInfo = profile?.supporter_badge ? getSupporterBadgeInfo(profile.supporter_badge) : null
+  
+  // Total badge count is the unique badges the user has (+ supporter badge if present)
+  const totalBadgeCount = allUserBadges.length + (profile?.supporter_badge ? 1 : 0)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -306,22 +309,17 @@ export function UserProfileModal({ userId, isOpen, onClose }: UserProfileModalPr
               </div>
 
               {/* Supporter Badge (highest priority) */}
-              {profile.supporter_badge && (
+              {supporterBadgeInfo && (
                 <div className="mb-4">
                   <h4 className="text-sm font-medium text-foreground mb-2">Supporter Badge</h4>
                   <div className="flex flex-wrap gap-2">
-                    {(() => {
-                      const supporterBadgeInfo = getSupporterBadgeInfo(profile.supporter_badge)
-                      return (
-                        <div
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${supporterBadgeInfo.bgColor} ${supporterBadgeInfo.color} border-2 ${supporterBadgeInfo.borderColor} shadow-[0_0_10px_rgba(251,191,36,0.15)]`}
-                          title={supporterBadgeInfo.description}
-                        >
-                          <span className="animate-pulse">{supporterBadgeInfo.emoji}</span>
-                          <span>{supporterBadgeInfo.name}</span>
-                        </div>
-                      )
-                    })()}
+                    <div
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${supporterBadgeInfo.bgColor} ${supporterBadgeInfo.color} border-2 ${supporterBadgeInfo.borderColor} shadow-[0_0_10px_rgba(251,191,36,0.15)]`}
+                      title={supporterBadgeInfo.description}
+                    >
+                      <span className="animate-pulse">{supporterBadgeInfo.emoji}</span>
+                      <span>{supporterBadgeInfo.name}</span>
+                    </div>
                   </div>
                 </div>
               )}

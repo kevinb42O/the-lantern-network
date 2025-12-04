@@ -167,7 +167,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Race between fetch and timeout
       const [fetchedProfile, supporterBadge] = await Promise.all([
         Promise.race([fetchPromise, timeoutPromise]),
-        supporterBadgePromise.catch(() => null) // Supporter badge is optional, don't fail if not found
+        supporterBadgePromise.catch((error) => {
+          // Not having a supporter badge is normal - only log unexpected errors
+          if (error?.code !== 'PGRST116') { // PGRST116 = no rows found
+            console.warn('Failed to fetch supporter badge:', error);
+          }
+          return null;
+        })
       ]);
       
       console.log('Profile fetched:', fetchedProfile ? 'found' : 'not found');
