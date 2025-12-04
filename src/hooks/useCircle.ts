@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ConnectionRequest, CircleConnection, CircleMessage } from '@/lib/types';
 
+// Maximum trust level for circle connections
+export const MAX_TRUST_LEVEL = 5;
+
 // Get user's circle connections with trust levels
 export function useCircleConnections() {
   const { user } = useAuth();
@@ -47,19 +50,27 @@ export function useCircleConnections() {
         });
       }
 
-      // Get last messages for each connection
+      // Get last messages for all connections in parallel
       const lastMessages: Record<string, { content: string; created_at: string }> = {};
-      for (const conn of data) {
-        const { data: msgData } = await supabase
+      if (connectedUserIds.length > 0) {
+        // Fetch all recent messages for circle members in one query
+        const { data: allMessages } = await supabase
           .from('messages')
-          .select('content, created_at')
+          .select('sender_id, receiver_id, content, created_at')
           .is('flare_id', null)
-          .or(`and(sender_id.eq.${user.id},receiver_id.eq.${conn.connected_user_id}),and(sender_id.eq.${conn.connected_user_id},receiver_id.eq.${user.id})`)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        if (msgData) {
-          lastMessages[conn.connected_user_id] = msgData;
+          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+          .in('sender_id', [user.id, ...connectedUserIds])
+          .in('receiver_id', [user.id, ...connectedUserIds])
+          .order('created_at', { ascending: false });
+
+        // Group by conversation partner and take the most recent
+        if (allMessages) {
+          for (const msg of allMessages) {
+            const partnerId = msg.sender_id === user.id ? msg.receiver_id : msg.sender_id;
+            if (connectedUserIds.includes(partnerId) && !lastMessages[partnerId]) {
+              lastMessages[partnerId] = { content: msg.content, created_at: msg.created_at };
+            }
+          }
         }
       }
 
@@ -314,13 +325,23 @@ export function useRemoveFromCircle() {
     mutationFn: async (connectedUserId: string) => {
       if (!user) throw new Error('Must be logged in');
 
-      // Remove both directions of the connection
-      const { error } = await supabase
-        .from('connections')
-        .delete()
-        .or(`and(user_id.eq.${user.id},connected_user_id.eq.${connectedUserId}),and(user_id.eq.${connectedUserId},connected_user_id.eq.${user.id})`);
+      // Remove both directions of the connection using separate queries
+      // This avoids string interpolation in the .or() clause
+      const [result1, result2] = await Promise.all([
+        supabase
+          .from('connections')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('connected_user_id', connectedUserId),
+        supabase
+          .from('connections')
+          .delete()
+          .eq('user_id', connectedUserId)
+          .eq('connected_user_id', user.id)
+      ]);
 
-      if (error) throw error;
+      if (result1.error) throw result1.error;
+      if (result2.error) throw result2.error;
       return { success: true };
     },
     onSuccess: () => {
@@ -398,18 +419,35 @@ export function useCircleMessages(partnerId: string | null) {
     queryFn: async (): Promise<CircleMessage[]> => {
       if (!user || !partnerId) return [];
 
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .is('flare_id', null)
-        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`)
-        .order('created_at', { ascending: true });
+      // Fetch messages in both directions separately and combine
+      const [sentResult, receivedResult] = await Promise.all([
+        supabase
+          .from('messages')
+          .select('*')
+          .is('flare_id', null)
+          .eq('sender_id', user.id)
+          .eq('receiver_id', partnerId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('messages')
+          .select('*')
+          .is('flare_id', null)
+          .eq('sender_id', partnerId)
+          .eq('receiver_id', user.id)
+          .order('created_at', { ascending: true })
+      ]);
 
-      if (error) throw error;
-      if (!data) return [];
+      if (sentResult.error) throw sentResult.error;
+      if (receivedResult.error) throw receivedResult.error;
+
+      // Combine and sort by created_at
+      const allMessages = [...(sentResult.data || []), ...(receivedResult.data || [])]
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      if (allMessages.length === 0) return [];
 
       // Get sender profiles
-      const senderIds = [...new Set(data.map(m => m.sender_id))];
+      const senderIds = [...new Set(allMessages.map(m => m.sender_id))];
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
@@ -429,7 +467,7 @@ export function useCircleMessages(partnerId: string | null) {
         .is('flare_id', null)
         .eq('read', false);
 
-      return data.map(m => ({
+      return allMessages.map(m => ({
         id: m.id,
         senderId: m.sender_id,
         senderName: profileMap[m.sender_id]?.name || 'Anonymous',
@@ -549,18 +587,27 @@ export function useIncrementTrustLevel() {
         return { updated: false };
       }
 
-      const newTrustLevel = Math.min(connection.trust_level + 1, 5);
+      const newTrustLevel = Math.min(connection.trust_level + 1, MAX_TRUST_LEVEL);
       if (newTrustLevel === connection.trust_level) {
         return { updated: false }; // Already at max
       }
 
-      // Update both directions
-      const { error } = await supabase
-        .from('connections')
-        .update({ trust_level: newTrustLevel, updated_at: new Date().toISOString() })
-        .or(`and(user_id.eq.${user.id},connected_user_id.eq.${connectedUserId}),and(user_id.eq.${connectedUserId},connected_user_id.eq.${user.id})`);
+      // Update both directions using separate queries
+      const [result1, result2] = await Promise.all([
+        supabase
+          .from('connections')
+          .update({ trust_level: newTrustLevel, updated_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+          .eq('connected_user_id', connectedUserId),
+        supabase
+          .from('connections')
+          .update({ trust_level: newTrustLevel, updated_at: new Date().toISOString() })
+          .eq('user_id', connectedUserId)
+          .eq('connected_user_id', user.id)
+      ]);
 
-      if (error) throw error;
+      if (result1.error) throw result1.error;
+      if (result2.error) throw result2.error;
       return { updated: true, newLevel: newTrustLevel };
     },
     onSuccess: () => {

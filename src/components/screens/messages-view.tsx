@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient, CircleConnection } from '@/lib/types'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import { useCircleConnections, useConnectionRequests, useAcceptConnectionRequest, useDeclineConnectionRequest, useCircleMessages, useSendCircleMessage, useRemoveFromCircle } from '@/hooks/useCircle'
+import { useCircleConnections, useConnectionRequests, useAcceptConnectionRequest, useDeclineConnectionRequest, useCircleMessages, useSendCircleMessage, useRemoveFromCircle, MAX_TRUST_LEVEL } from '@/hooks/useCircle'
 
 type MessagesTab = 'conversations' | 'circle' | 'requests'
 
@@ -370,7 +370,7 @@ export function MessagesView({
 
   // Trust level to flame icons
   const getTrustFlames = (level: number): string => {
-    return '🔥'.repeat(Math.min(level, 5))
+    return '🔥'.repeat(Math.min(level, MAX_TRUST_LEVEL))
   }
 
   // Handle Circle message send

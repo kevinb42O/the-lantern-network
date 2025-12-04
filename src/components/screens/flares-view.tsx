@@ -243,13 +243,16 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
     return seconds < 300
   }
 
+  // Convert circleMemberIds to a Set for O(1) lookup performance
+  const circleMemberSet = new Set(circleMemberIds)
+
   // Filter out circle-only flares that user shouldn't see
   const visibleFlares = flares.filter(f => {
     // Always show user's own flares
     if (f.creator_id === user.id) return true
     // If flare is circle_only, only show if creator is in user's circle
     if (f.circle_only) {
-      return circleMemberIds.includes(f.creator_id)
+      return circleMemberSet.has(f.creator_id)
     }
     return true
   })
