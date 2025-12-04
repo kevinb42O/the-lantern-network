@@ -174,3 +174,23 @@ export interface SupporterBadgeInfo {
   bgColor: string
   borderColor: string
 }
+
+// Story Types
+export type StoryReactionType = 'heart' | 'celebrate' | 'home'
+
+export interface Story {
+  id: string
+  creatorId: string
+  creatorName: string
+  creatorAvatar?: string | null
+  content: string
+  photoUrl?: string | null
+  createdAt: number
+  expiresAt: number
+  reactions: {
+    heart: number
+    celebrate: number
+    home: number
+  }
+  userReaction?: StoryReactionType | null
+}

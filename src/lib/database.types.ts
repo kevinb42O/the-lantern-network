@@ -267,6 +267,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      stories: {
+        Row: {
+          id: string;
+          creator_id: string;
+          content: string;
+          photo_url: string | null;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          creator_id: string;
+          content: string;
+          photo_url?: string | null;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          creator_id?: string;
+          content?: string;
+          photo_url?: string | null;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
+      story_reactions: {
+        Row: {
+          id: string;
+          story_id: string;
+          user_id: string;
+          reaction: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          story_id: string;
+          user_id: string;
+          reaction: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          story_id?: string;
+          user_id?: string;
+          reaction?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -302,3 +353,5 @@ export type Connection = Tables<'connections'>;
 export type Message = Tables<'messages'>;
 export type Transaction = Tables<'transactions'>;
 export type Invite = Tables<'invites'>;
+export type StoryRow = Tables<'stories'>;
+export type StoryReaction = Tables<'story_reactions'>;
