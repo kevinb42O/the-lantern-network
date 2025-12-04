@@ -7,7 +7,7 @@ interface SplashScreenProps {
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   return (
     <motion.div
-      className="min-h-screen flex flex-col items-center justify-center bg-[#0f1729] px-6"
+      className="min-h-screen flex flex-col items-center justify-center bg-background px-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -23,13 +23,13 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       >
         {/* Glow effect layers */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-64 h-64 rounded-full bg-amber-500/20 blur-3xl animate-pulse" />
+          <div className="w-64 h-64 rounded-full bg-amber-500/15 blur-3xl animate-pulse" />
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-48 h-48 rounded-full bg-orange-400/30 blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+          <div className="w-48 h-48 rounded-full bg-amber-400/20 blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
         </div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-32 h-32 rounded-full bg-yellow-300/40 blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="w-32 h-32 rounded-full bg-yellow-200/25 blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
         
         {/* The lantern image - bigger */}

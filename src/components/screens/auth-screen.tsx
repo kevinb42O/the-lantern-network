@@ -58,24 +58,24 @@ export function AuthScreen() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-orange-950/40 via-background to-background overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-amber-950/30 via-background to-background overflow-hidden">
       {/* Ambient background effects */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-orange-500/10 blur-[100px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-amber-500/10 blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-amber-500/8 blur-[100px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-amber-400/8 blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
       {/* Logo with enhanced glow */}
       <div className="mb-10 text-center relative z-10">
         {/* Glow layers */}
         <div className="absolute inset-0 flex items-center justify-center -top-12">
-          <div className="w-56 h-56 rounded-full bg-amber-500/20 blur-3xl animate-pulse" />
+          <div className="w-56 h-56 rounded-full bg-amber-500/15 blur-3xl animate-pulse" />
         </div>
         <div className="absolute inset-0 flex items-center justify-center -top-12">
-          <div className="w-40 h-40 rounded-full bg-orange-400/30 blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+          <div className="w-40 h-40 rounded-full bg-amber-400/20 blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
         </div>
         <div className="absolute inset-0 flex items-center justify-center -top-12">
-          <div className="w-28 h-28 rounded-full bg-yellow-300/30 blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="w-28 h-28 rounded-full bg-yellow-200/20 blur-xl animate-pulse" style={{ animationDelay: '1s' }} />
         </div>
         
         <img
