@@ -259,3 +259,118 @@
               0 0 40px rgba(251, 191, 36, 0.05),
               inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
+
+/* Ambient Background Animations */
+@keyframes ember-float {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+@keyframes gentle-drift {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes soft-pulse-glow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes wandering-glow {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translate(30px, -20px) scale(1.1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(-20px, -40px) scale(0.95);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(10px, -10px) scale(1.05);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.4;
+  }
+}
+
+/* Ambient orb base class */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+  animation: wandering-glow 20s ease-in-out infinite;
+}
+
+.ambient-orb-orange {
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.4) 0%, transparent 70%);
+}
+
+.ambient-orb-amber {
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.35) 0%, transparent 70%);
+}
+
+.ambient-orb-emerald {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.3) 0%, transparent 70%);
+}
+
+/* Background gradients for ambient effects */
+.campfire-ambient {
+  background: radial-gradient(ellipse at 50% 100%, rgba(251, 146, 60, 0.08) 0%, transparent 50%),
+              radial-gradient(ellipse at 20% 80%, rgba(251, 191, 36, 0.05) 0%, transparent 40%),
+              radial-gradient(ellipse at 80% 90%, rgba(245, 158, 11, 0.06) 0%, transparent 45%);
+}
+
+.flares-ambient {
+  background: radial-gradient(ellipse at 30% 70%, rgba(251, 146, 60, 0.06) 0%, transparent 45%),
+              radial-gradient(ellipse at 70% 80%, rgba(52, 211, 153, 0.05) 0%, transparent 40%),
+              radial-gradient(ellipse at 50% 100%, rgba(251, 191, 36, 0.04) 0%, transparent 50%);
+}
+
+/* Empty state glow animation */
+.empty-state-glow {
+  animation: soft-pulse-glow 4s ease-in-out infinite;
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.15);
+}
+
+/* Subtle dot pattern */
+.dots-pattern {
+  background-image: radial-gradient(circle, rgba(251, 191, 36, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .ambient-orb,
+  .empty-state-glow {
+    animation: none;
+  }
+}
