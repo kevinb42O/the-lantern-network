@@ -1269,7 +1269,8 @@ function App() {
     location: profile.location as { lat: number; lng: number } | undefined,
     isAdmin,
     isModerator,
-    badges: profile.badges || []
+    badges: profile.badges || [],
+    supporterBadge: profile.supporter_badge
   }
 
   return (
