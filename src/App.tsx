@@ -17,7 +17,7 @@ import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode } from '@/lib/types'
+import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode, Story, StoryReactionType } from '@/lib/types'
 import { 
   generateInviteCode, 
   ELDER_HELP_THRESHOLD, 
@@ -32,6 +32,12 @@ import {
 const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ]
+
+// Valid story reaction types
+const VALID_STORY_REACTIONS: StoryReactionType[] = ['heart', 'celebrate', 'home']
+function isValidStoryReaction(reaction: string | null): reaction is StoryReactionType {
+  return reaction !== null && VALID_STORY_REACTIONS.includes(reaction as StoryReactionType)
+}
 
 type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
 
@@ -86,6 +92,9 @@ function App() {
 
   // Help requests state
   const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([])
+
+  // Stories state
+  const [stories, setStories] = useState<Story[]>([])
 
   // Transactions state
   const [transactions, setTransactions] = useState<LanternTransaction[]>([])
@@ -580,6 +589,154 @@ function App() {
     setInviteCodes(formatted)
   }
 
+  // Fetch stories
+  const fetchStories = async () => {
+    const now = new Date().toISOString()
+
+    // Fetch non-expired stories
+    const { data: storiesData, error } = await supabase
+      .from('stories')
+      .select('*')
+      .gt('expires_at', now)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error || !storiesData) {
+      console.error('Error fetching stories:', error)
+      return
+    }
+
+    if (storiesData.length === 0) {
+      setStories([])
+      return
+    }
+
+    const storyIds = storiesData.map(s => s.id)
+    const creatorIds = [...new Set(storiesData.map(s => s.creator_id))]
+
+    // Fetch profiles for creators
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', creatorIds)
+
+    const profileMap: Record<string, { name: string; avatar: string | null }> = {}
+    profilesData?.forEach(p => {
+      profileMap[p.user_id] = { name: p.display_name, avatar: p.avatar_url }
+    })
+
+    // Fetch all reactions for these stories
+    const { data: reactionsData } = await supabase
+      .from('story_reactions')
+      .select('story_id, reaction')
+      .in('story_id', storyIds)
+
+    // Count reactions per story
+    const reactionCounts: Record<string, { heart: number; celebrate: number; home: number }> = {}
+    storyIds.forEach(id => {
+      reactionCounts[id] = { heart: 0, celebrate: 0, home: 0 }
+    })
+    reactionsData?.forEach(r => {
+      if (r.reaction === 'heart' || r.reaction === 'celebrate' || r.reaction === 'home') {
+        reactionCounts[r.story_id][r.reaction]++
+      }
+    })
+
+    // Get user's reactions if logged in
+    const userReactions: Record<string, string | null> = {}
+    if (authUser) {
+      const { data: userReactionsData } = await supabase
+        .from('story_reactions')
+        .select('story_id, reaction')
+        .eq('user_id', authUser.id)
+        .in('story_id', storyIds)
+
+      userReactionsData?.forEach(r => {
+        userReactions[r.story_id] = r.reaction
+      })
+    }
+
+    // Transform to Story type
+    const formattedStories: Story[] = storiesData.map(s => {
+      const userReaction = userReactions[s.id]
+      return {
+        id: s.id,
+        creatorId: s.creator_id,
+        creatorName: profileMap[s.creator_id]?.name || 'Anonymous',
+        creatorAvatar: profileMap[s.creator_id]?.avatar || null,
+        content: s.content,
+        photoUrl: s.photo_url,
+        createdAt: new Date(s.created_at).getTime(),
+        expiresAt: new Date(s.expires_at).getTime(),
+        reactions: reactionCounts[s.id],
+        userReaction: isValidStoryReaction(userReaction) ? userReaction : null
+      }
+    })
+
+    setStories(formattedStories)
+  }
+
+  // Create a new story
+  const handleCreateStory = async (content: string, photoUrl?: string) => {
+    if (!authUser) return
+
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 48)
+
+    const { error } = await supabase.from('stories').insert({
+      creator_id: authUser.id,
+      content,
+      photo_url: photoUrl || null,
+      expires_at: expiresAt.toISOString()
+    })
+
+    if (error) {
+      console.error('Error creating story:', error)
+      toast.error('Failed to share story')
+    } else {
+      fetchStories()
+    }
+  }
+
+  // Toggle reaction on a story
+  const handleStoryReaction = async (storyId: string, reaction: StoryReactionType) => {
+    if (!authUser) return
+
+    // Check existing reaction
+    const { data: existing } = await supabase
+      .from('story_reactions')
+      .select('id, reaction')
+      .eq('story_id', storyId)
+      .eq('user_id', authUser.id)
+      .single()
+
+    if (existing) {
+      if (existing.reaction === reaction) {
+        // Same reaction - remove it
+        await supabase
+          .from('story_reactions')
+          .delete()
+          .eq('id', existing.id)
+      } else {
+        // Different reaction - update it
+        await supabase
+          .from('story_reactions')
+          .update({ reaction })
+          .eq('id', existing.id)
+      }
+    } else {
+      // No existing reaction - add new one
+      await supabase.from('story_reactions').insert({
+        story_id: storyId,
+        user_id: authUser.id,
+        reaction
+      })
+    }
+
+    // Refresh stories to update counts
+    fetchStories()
+  }
+
   // Generate a new invite code
   const handleGenerateInvite = async () => {
     if (!authUser) return
@@ -638,6 +795,7 @@ function App() {
     fetchHelpCount()
     fetchInviteCodes()
     fetchUnreadCount()
+    fetchStories()
 
     const channel = supabase
       .channel('flares-changes')
@@ -667,6 +825,38 @@ function App() {
         () => {
           fetchHelpRequests()
           fetchHelpCount()
+        }
+      )
+      .subscribe()
+
+    // Subscribe to stories changes
+    const storiesChannel = supabase
+      .channel('stories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stories'
+        },
+        () => {
+          fetchStories()
+        }
+      )
+      .subscribe()
+
+    // Subscribe to story_reactions changes
+    const reactionsChannel = supabase
+      .channel('story-reactions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'story_reactions'
+        },
+        () => {
+          fetchStories()
         }
       )
       .subscribe()
@@ -705,6 +895,8 @@ function App() {
       supabase.removeChannel(channel)
       supabase.removeChannel(participantsChannel)
       supabase.removeChannel(messagesChannel)
+      supabase.removeChannel(storiesChannel)
+      supabase.removeChannel(reactionsChannel)
     }
   }, [authUser])
 
@@ -1088,8 +1280,11 @@ function App() {
             user={userData}
             flares={flares}
             helpRequests={helpRequests}
+            stories={stories}
             onCreateFlare={handleCreateFlare}
             onJoinFlare={handleJoinFlare}
+            onCreateStory={handleCreateStory}
+            onStoryReaction={handleStoryReaction}
             onUserClick={handleUserClick}
           />
         )}

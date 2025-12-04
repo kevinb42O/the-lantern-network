@@ -566,6 +566,75 @@ CREATE INDEX IF NOT EXISTS idx_supporter_badges_user_id ON supporter_badges(user
 CREATE INDEX IF NOT EXISTS idx_supporter_badges_badge_type ON supporter_badges(badge_type);
 CREATE INDEX IF NOT EXISTS idx_supporter_badges_granted_at ON supporter_badges(granted_at);
 
+-- Stories table (neighborhood moments)
+CREATE TABLE IF NOT EXISTS stories (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  creator_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  photo_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '48 hours')
+);
+
+-- Story reactions table
+CREATE TABLE IF NOT EXISTS story_reactions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  story_id UUID REFERENCES stories(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  reaction VARCHAR(20) NOT NULL CHECK (reaction IN ('heart', 'celebrate', 'home')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(story_id, user_id)
+);
+
+-- Enable RLS on stories tables
+ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE story_reactions ENABLE ROW LEVEL SECURITY;
+
+-- Stories policies
+-- Non-expired stories are viewable by everyone
+CREATE POLICY "Non-expired stories are viewable by everyone" ON stories
+  FOR SELECT USING (expires_at > NOW());
+
+-- Users can view their own stories even if expired
+CREATE POLICY "Users can view their own stories" ON stories
+  FOR SELECT USING (auth.uid() = creator_id);
+
+-- Authenticated users can create stories
+CREATE POLICY "Authenticated users can create stories" ON stories
+  FOR INSERT WITH CHECK (auth.uid() = creator_id);
+
+-- Creators can delete their own stories
+CREATE POLICY "Creators can delete their own stories" ON stories
+  FOR DELETE USING (auth.uid() = creator_id);
+
+-- Story reactions policies
+-- Reactions are viewable by everyone (for counting)
+CREATE POLICY "Story reactions are viewable by everyone" ON story_reactions
+  FOR SELECT USING (true);
+
+-- Users can add their own reactions
+CREATE POLICY "Users can add their own reactions" ON story_reactions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own reactions
+CREATE POLICY "Users can update their own reactions" ON story_reactions
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Users can delete their own reactions
+CREATE POLICY "Users can delete their own reactions" ON story_reactions
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Create indexes for stories
+CREATE INDEX IF NOT EXISTS idx_stories_creator_id ON stories(creator_id);
+CREATE INDEX IF NOT EXISTS idx_stories_created_at ON stories(created_at);
+CREATE INDEX IF NOT EXISTS idx_stories_expires_at ON stories(expires_at);
+CREATE INDEX IF NOT EXISTS idx_story_reactions_story_id ON story_reactions(story_id);
+CREATE INDEX IF NOT EXISTS idx_story_reactions_user_id ON story_reactions(user_id);
+
+-- Enable realtime for stories
+ALTER PUBLICATION supabase_realtime ADD TABLE stories;
+ALTER PUBLICATION supabase_realtime ADD TABLE story_reactions;
+
 -- Enable realtime for messages and flare_participants tables
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE flare_participants;
