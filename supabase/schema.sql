@@ -639,3 +639,53 @@ ALTER PUBLICATION supabase_realtime ADD TABLE story_reactions;
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE flare_participants;
 ALTER PUBLICATION supabase_realtime ADD TABLE flares;
+
+-- Connection Requests table (for Trust Circle system)
+CREATE TABLE IF NOT EXISTS connection_requests (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  from_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  to_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  message TEXT,
+  flare_id UUID REFERENCES flares(id) ON DELETE SET NULL,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(from_user_id, to_user_id)
+);
+
+-- Enable RLS on connection_requests table
+ALTER TABLE connection_requests ENABLE ROW LEVEL SECURITY;
+
+-- Connection requests policies
+-- Users can view requests they sent or received
+CREATE POLICY "Users can view their own connection requests" ON connection_requests
+  FOR SELECT USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
+
+-- Users can create connection requests
+CREATE POLICY "Users can create connection requests" ON connection_requests
+  FOR INSERT WITH CHECK (auth.uid() = from_user_id);
+
+-- Users can update requests they received (to accept/decline)
+CREATE POLICY "Users can update received connection requests" ON connection_requests
+  FOR UPDATE USING (auth.uid() = to_user_id);
+
+-- Users can delete their own requests
+CREATE POLICY "Users can delete their own connection requests" ON connection_requests
+  FOR DELETE USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
+
+-- Create indexes for connection requests
+CREATE INDEX IF NOT EXISTS idx_connection_requests_from_user_id ON connection_requests(from_user_id);
+CREATE INDEX IF NOT EXISTS idx_connection_requests_to_user_id ON connection_requests(to_user_id);
+CREATE INDEX IF NOT EXISTS idx_connection_requests_status ON connection_requests(status);
+
+-- Enable realtime for connection_requests and connections
+ALTER PUBLICATION supabase_realtime ADD TABLE connection_requests;
+ALTER PUBLICATION supabase_realtime ADD TABLE connections;
+
+-- Add circle_only column to flares table (if not exists)
+-- Note: ALTER TABLE ADD COLUMN IF NOT EXISTS is PostgreSQL 9.6+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'flares' AND column_name = 'circle_only') THEN
+    ALTER TABLE flares ADD COLUMN circle_only BOOLEAN DEFAULT FALSE;
+  END IF;
+END $$;

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, MapPin, Clock, Users, Wrench, Hamburger, Chat, Lightbulb, HandWaving, Sparkle, Fire, Hourglass, CheckCircle, XCircle, Gift, Coin, Heart, Camera, PaperPlaneTilt } from '@phosphor-icons/react'
+import { Plus, MapPin, Clock, Users, Wrench, Hamburger, Chat, Lightbulb, HandWaving, Sparkle, Fire, Hourglass, CheckCircle, XCircle, Gift, Coin, Heart, Camera, PaperPlaneTilt, Lock } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +32,7 @@ interface FlareData {
   creator_name?: string
   flare_type?: 'request' | 'offer'
   is_free?: boolean
+  circle_only?: boolean
 }
 
 type FilterTab = 'all' | 'requests' | 'offers' | 'stories'
@@ -41,6 +42,7 @@ interface FlaresViewProps {
   flares: FlareData[]
   helpRequests: HelpRequest[]
   stories?: Story[]
+  circleMemberIds?: string[]
   onCreateFlare: (flare: {
     title: string
     description: string
@@ -48,6 +50,7 @@ interface FlaresViewProps {
     location: { lat: number; lng: number } | null
     flare_type: 'request' | 'offer'
     is_free: boolean
+    circle_only: boolean
   }) => Promise<void>
   onJoinFlare: (flareId: string, message: string) => Promise<void>
   onCreateStory?: (content: string, photoUrl?: string) => Promise<void>
@@ -92,7 +95,7 @@ const categoryConfig: Record<string, { icon: React.ElementType; color: string; b
 
 const categories = ['Mechanical', 'Food', 'Talk', 'Other']
 
-export function FlaresView({ user, flares, helpRequests, stories = [], onCreateFlare, onJoinFlare, onCreateStory, onStoryReaction, onUserClick }: FlaresViewProps) {
+export function FlaresView({ user, flares, helpRequests, stories = [], circleMemberIds = [], onCreateFlare, onJoinFlare, onCreateStory, onStoryReaction, onUserClick }: FlaresViewProps) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
   const [category, setCategory] = useState('Other')
@@ -104,6 +107,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], onCreateF
   // New state for flare type and offers
   const [flareType, setFlareType] = useState<'request' | 'offer'>('request')
   const [isFree, setIsFree] = useState(false)
+  const [circleOnly, setCircleOnly] = useState(false)
   const [createStep, setCreateStep] = useState<'type' | 'details' | 'story'>('type')
   
   // Story creation state
@@ -157,7 +161,8 @@ export function FlaresView({ user, flares, helpRequests, stories = [], onCreateF
         category,
         location: useLocation ? userLocation : null,
         flare_type: flareType,
-        is_free: isFree
+        is_free: isFree,
+        circle_only: circleOnly
       })
       setShowCreateModal(false)
       setTitle('')
@@ -165,6 +170,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], onCreateF
       setCategory('Other')
       setFlareType('request')
       setIsFree(false)
+      setCircleOnly(false)
       setCreateStep('type')
     } finally {
       setCreating(false)
@@ -237,7 +243,21 @@ export function FlaresView({ user, flares, helpRequests, stories = [], onCreateF
     return seconds < 300
   }
 
-  const activeFlares = flares.filter(f => f.status === 'active')
+  // Convert circleMemberIds to a Set for O(1) lookup performance
+  const circleMemberSet = new Set(circleMemberIds)
+
+  // Filter out circle-only flares that user shouldn't see
+  const visibleFlares = flares.filter(f => {
+    // Always show user's own flares
+    if (f.creator_id === user.id) return true
+    // If flare is circle_only, only show if creator is in user's circle
+    if (f.circle_only) {
+      return circleMemberSet.has(f.creator_id)
+    }
+    return true
+  })
+
+  const activeFlares = visibleFlares.filter(f => f.status === 'active')
   
   // Filter flares based on active tab
   const filteredFlares = activeFilter === 'stories' ? [] : activeFlares.filter(flare => {
@@ -434,6 +454,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], onCreateF
               const isOwner = flare.creator_id === user.id
               const isOffer = flare.flare_type === 'offer'
               const isFreefree = flare.is_free === true
+              const isCircleOnly = flare.circle_only === true
               const recentPost = isRecent(flare.created_at)
 
               return (
@@ -447,7 +468,16 @@ export function FlaresView({ user, flares, helpRequests, stories = [], onCreateF
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   {/* Flare Type Badge - Top Right */}
-                  <div className="absolute top-3 right-3 z-10">
+                  <div className="absolute top-3 right-3 z-10 flex gap-1">
+                    {isCircleOnly && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs font-semibold bg-amber-500/15 text-amber-400 border-amber-500/30"
+                      >
+                        <Lock size={10} className="mr-1" />
+                        Circle
+                      </Badge>
+                    )}
                     <Badge 
                       variant="outline" 
                       className={`text-xs font-semibold ${
@@ -1117,6 +1147,32 @@ export function FlaresView({ user, flares, helpRequests, stories = [], onCreateF
                     id="location-toggle"
                     checked={useLocation}
                     onCheckedChange={setUseLocation}
+                  />
+                </div>
+
+                {/* Circle Only Toggle */}
+                <div className={`flex items-center justify-between p-4 rounded-xl border ${
+                  circleOnly 
+                    ? 'bg-amber-500/10 border-amber-500/30' 
+                    : 'bg-muted/30 border-border/50'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${circleOnly ? 'bg-amber-500/20' : 'bg-muted'}`}>
+                      <Lock size={18} className={circleOnly ? 'text-amber-400' : 'text-muted-foreground'} />
+                    </div>
+                    <div className="space-y-0.5">
+                      <Label htmlFor="circle-toggle" className="text-sm font-medium cursor-pointer">
+                        Circle only
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Only your Trust Circle will see this
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="circle-toggle"
+                    checked={circleOnly}
+                    onCheckedChange={setCircleOnly}
                   />
                 </div>
 
