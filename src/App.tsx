@@ -33,6 +33,12 @@ const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ]
 
+// Valid story reaction types
+const VALID_STORY_REACTIONS: StoryReactionType[] = ['heart', 'celebrate', 'home']
+function isValidStoryReaction(reaction: string | null): reaction is StoryReactionType {
+  return reaction !== null && VALID_STORY_REACTIONS.includes(reaction as StoryReactionType)
+}
+
 type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
 
 // Flare data from Supabase
@@ -651,18 +657,21 @@ function App() {
     }
 
     // Transform to Story type
-    const formattedStories: Story[] = storiesData.map(s => ({
-      id: s.id,
-      creatorId: s.creator_id,
-      creatorName: profileMap[s.creator_id]?.name || 'Anonymous',
-      creatorAvatar: profileMap[s.creator_id]?.avatar || null,
-      content: s.content,
-      photoUrl: s.photo_url,
-      createdAt: new Date(s.created_at).getTime(),
-      expiresAt: new Date(s.expires_at).getTime(),
-      reactions: reactionCounts[s.id],
-      userReaction: (userReactions[s.id] as StoryReactionType) || null
-    }))
+    const formattedStories: Story[] = storiesData.map(s => {
+      const userReaction = userReactions[s.id]
+      return {
+        id: s.id,
+        creatorId: s.creator_id,
+        creatorName: profileMap[s.creator_id]?.name || 'Anonymous',
+        creatorAvatar: profileMap[s.creator_id]?.avatar || null,
+        content: s.content,
+        photoUrl: s.photo_url,
+        createdAt: new Date(s.created_at).getTime(),
+        expiresAt: new Date(s.expires_at).getTime(),
+        reactions: reactionCounts[s.id],
+        userReaction: isValidStoryReaction(userReaction) ? userReaction : null
+      }
+    })
 
     setStories(formattedStories)
   }

@@ -3,17 +3,11 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Story, StoryReactionType } from '@/lib/types';
 
-interface StoryData {
-  id: string;
-  creator_id: string;
-  content: string;
-  photo_url: string | null;
-  created_at: string;
-  expires_at: string;
-  profiles: {
-    display_name: string;
-    avatar_url: string | null;
-  } | null;
+// Valid reaction types
+const VALID_REACTIONS: StoryReactionType[] = ['heart', 'celebrate', 'home'];
+
+function isValidReaction(reaction: string): reaction is StoryReactionType {
+  return VALID_REACTIONS.includes(reaction as StoryReactionType);
 }
 
 interface ReactionCount {
@@ -23,7 +17,15 @@ interface ReactionCount {
 
 // Transform database story to Story type
 function transformStory(
-  storyData: StoryData,
+  storyData: {
+    id: string;
+    creator_id: string;
+    content: string;
+    photo_url: string | null;
+    created_at: string;
+    expires_at: string;
+    profiles: { display_name: string; avatar_url: string | null } | null;
+  },
   reactionCounts: ReactionCount[],
   userReaction: string | null
 ): Story {
@@ -34,7 +36,7 @@ function transformStory(
   };
 
   reactionCounts.forEach((r) => {
-    if (r.reaction === 'heart' || r.reaction === 'celebrate' || r.reaction === 'home') {
+    if (isValidReaction(r.reaction)) {
       reactions[r.reaction] = r.count;
     }
   });
@@ -49,7 +51,7 @@ function transformStory(
     createdAt: new Date(storyData.created_at).getTime(),
     expiresAt: new Date(storyData.expires_at).getTime(),
     reactions,
-    userReaction: userReaction as StoryReactionType | null,
+    userReaction: userReaction && isValidReaction(userReaction) ? userReaction : null,
   };
 }
 
@@ -62,10 +64,10 @@ export function useStories() {
     queryFn: async () => {
       const now = new Date().toISOString();
 
-      // Fetch stories that haven't expired
+      // Fetch stories that haven't expired with explicit field selection
       const { data: storiesData, error: storiesError } = await supabase
         .from('stories')
-        .select('*, profiles:creator_id(display_name, avatar_url)')
+        .select('id, creator_id, content, photo_url, created_at, expires_at, profiles:creator_id(display_name, avatar_url)')
         .gt('expires_at', now)
         .order('created_at', { ascending: false });
 
@@ -124,14 +126,25 @@ export function useStories() {
         userReactionLookup[id] = userReaction?.reaction || null;
       });
 
-      // Transform all stories
-      return storiesData.map((story) =>
-        transformStory(
-          story as unknown as StoryData,
+      // Transform all stories - Supabase returns properly typed data matching our query
+      return storiesData.map((story) => {
+        // Extract the profile data which may be an object or null
+        const profileData = story.profiles as { display_name: string; avatar_url: string | null } | null;
+        
+        return transformStory(
+          {
+            id: story.id,
+            creator_id: story.creator_id,
+            content: story.content,
+            photo_url: story.photo_url,
+            created_at: story.created_at,
+            expires_at: story.expires_at,
+            profiles: profileData,
+          },
           reactionsByStory[story.id] || [],
           userReactionLookup[story.id]
-        )
-      );
+        );
+      });
     },
   });
 }
