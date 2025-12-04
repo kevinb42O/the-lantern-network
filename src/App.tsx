@@ -25,7 +25,8 @@ import {
   HOARD_LIMIT,
   LANTERN_TRANSFER_AMOUNT,
   REPUTATION_GAIN_HELPER,
-  REPUTATION_GAIN_OWNER
+  REPUTATION_GAIN_OWNER,
+  DEFAULT_LOCATION
 } from '@/lib/economy'
 import { useCircleMemberIds, useIncrementTrustLevel } from '@/hooks/useCircle'
 
@@ -200,7 +201,7 @@ function App() {
       title: flareData.title,
       description: flareData.description,
       category: flareData.category,
-      location: flareData.location,
+      location: flareData.location || DEFAULT_LOCATION,
       starts_at: new Date().toISOString(),
       status: 'active',
       flare_type: flareData.flare_type,
@@ -209,8 +210,8 @@ function App() {
     })
 
     if (error) {
-      console.error('Error creating flare:', error)
-      toast.error('Failed to create flare')
+      console.error('Error creating flare:', error.message, error.details ?? '', error.hint ?? '')
+      toast.error(`Failed to create flare: ${error.message}`)
     } else {
       const message = flareData.circle_only 
         ? (flareData.flare_type === 'offer' ? 'Circle-only offer posted! 🔥🎁' : 'Circle-only flare posted! 🔥')
