@@ -38,8 +38,6 @@ export function LanternBackground({
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage: `url('${imagePath}')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
           filter: `blur(${blurAmount}px)`,
           transform: 'scale(1.1)', // Slightly scale up to avoid blur edge artifacts
           opacity: opacity,

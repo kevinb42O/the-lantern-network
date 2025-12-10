@@ -64,7 +64,7 @@ export function AuthScreen() {
       <LanternBackground />
       
       {/* Ambient background effects - layered on top */}
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }}>
+      <div className="fixed inset-0 pointer-events-none z-[1]">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-amber-500/8 blur-[100px] animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-amber-400/8 blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
