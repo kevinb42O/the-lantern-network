@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { EnvelopeSimple, Key, Eye, EyeSlash, Sparkle, ArrowRight, MagicWand, BookOpen } from '@phosphor-icons/react';
 import { PhilosophyView } from './philosophy-view';
+import { LanternBackground } from '@/components/ui/lantern-background';
 
 type AuthMode = 'sign-in' | 'sign-up' | 'magic-link';
 
@@ -58,9 +59,12 @@ export function AuthScreen() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-amber-950/30 via-background to-background overflow-hidden">
-      {/* Ambient background effects */}
-      <div className="fixed inset-0 pointer-events-none">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-b from-amber-950/30 via-background to-background overflow-hidden relative">
+      {/* Lantern mascot background - base layer */}
+      <LanternBackground />
+      
+      {/* Ambient background effects - layered on top */}
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1 }}>
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-amber-500/8 blur-[100px] animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full bg-amber-400/8 blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
