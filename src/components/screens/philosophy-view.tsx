@@ -21,6 +21,7 @@ import {
   ELDER_HELP_THRESHOLD, 
   ELDER_TRUST_THRESHOLD 
 } from '@/lib/economy'
+import { LanternBackground } from '@/components/ui/lantern-background'
 
 interface PhilosophyViewProps {
   onBack: () => void
@@ -28,9 +29,12 @@ interface PhilosophyViewProps {
 
 export function PhilosophyView({ onBack }: PhilosophyViewProps) {
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen flex flex-col bg-background overflow-hidden relative">
+      {/* Lantern mascot background */}
+      <LanternBackground opacity={0.3} />
+      
       {/* Header */}
-      <div className="p-5 border-b border-border/50 bg-gradient-to-b from-orange-950/20 to-transparent">
+      <div className="p-5 border-b border-border/50 bg-gradient-to-b from-orange-950/20 to-transparent relative z-10">
         <div className="max-w-2xl mx-auto flex items-center gap-4">
           <Button
             variant="ghost"
@@ -47,7 +51,7 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 relative z-10">
         <div className="p-5 max-w-2xl mx-auto space-y-8 pb-12">
           
           {/* Hero Section */}

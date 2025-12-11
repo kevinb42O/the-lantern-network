@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { LanternBackground } from '@/components/ui/lantern-background'
 
 interface SplashScreenProps {
   onComplete: () => void
@@ -7,7 +8,7 @@ interface SplashScreenProps {
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   return (
     <motion.div
-      className="min-h-screen flex flex-col items-center justify-center bg-background px-6"
+      className="min-h-screen flex flex-col items-center justify-center bg-background px-6 relative overflow-hidden"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -15,6 +16,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         setTimeout(onComplete, 2000)
       }}
     >
+      {/* Lantern mascot background */}
+      <LanternBackground opacity={0.35} />
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

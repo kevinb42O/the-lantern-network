@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { X } from '@phosphor-icons/react';
 import { INITIAL_LANTERNS } from '@/lib/economy';
+import { LanternBackground } from '@/components/ui/lantern-background';
 
 const SUGGESTED_TAGS = [
   'Cooking', 'Gardening', 'Tech Support', 'Pet Care', 'Tutoring',
@@ -91,8 +92,11 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-amber-950 via-background to-background">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-amber-950 via-background to-background relative overflow-hidden">
+      {/* Lantern mascot background */}
+      <LanternBackground opacity={0.35} />
+      
+      <Card className="w-full max-w-md relative z-10">
         <CardHeader>
           <CardTitle>Create Your Profile</CardTitle>
           <CardDescription>

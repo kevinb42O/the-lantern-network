@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { toast } from 'sonner'
+import { LanternBackground } from '@/components/ui/lantern-background'
 
 interface ProfileCreationProps {
   onComplete: (username: string, skillTags: string[]) => void
@@ -47,8 +48,11 @@ export function ProfileCreation({ onComplete }: ProfileCreationProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background px-6 py-12">
-      <div className="max-w-2xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background px-6 py-12 relative overflow-hidden">
+      {/* Lantern mascot background */}
+      <LanternBackground opacity={0.35} />
+      
+      <div className="max-w-2xl mx-auto space-y-8 relative z-10">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-semibold text-foreground">
             Create Your Vibe
