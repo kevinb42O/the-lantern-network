@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface CampfireEffectsProps {
   className?: string
@@ -21,20 +22,8 @@ export function CampfireEffects({ className }: CampfireEffectsProps) {
   const embersRef = useRef<Ember[]>([])
   const animationRef = useRef<number | null>(null)
   const prefersReducedMotion = useRef(false)
-  const [isMobile, setIsMobile] = useState(false)
+  const isMobile = useIsMobile()
   const flickerPhase = useRef(0)
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768 || 
-                     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      setIsMobile(mobile)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   // Reduce ember count on mobile
   const emberCount = isMobile ? 8 : 15
@@ -64,12 +53,12 @@ export function CampfireEffects({ className }: CampfireEffectsProps) {
     resizeCanvas()
     
     // Throttled resize handler
-    let resizeTimeout: number | undefined
+    let resizeTimeout: ReturnType<typeof setTimeout> | undefined
     const handleResize = () => {
       if (resizeTimeout) {
         clearTimeout(resizeTimeout)
       }
-      resizeTimeout = window.setTimeout(resizeCanvas, 100) as unknown as number
+      resizeTimeout = setTimeout(resizeCanvas, 100)
     }
     
     window.addEventListener('resize', handleResize)

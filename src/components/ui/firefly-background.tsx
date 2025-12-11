@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface FireflyBackgroundProps {
   variant: 'campfire' | 'flares' | 'messages' | 'wallet'
@@ -28,19 +29,7 @@ export function FireflyBackground({
   const particlesRef = useRef<Particle[]>([])
   const animationRef = useRef<number | null>(null)
   const prefersReducedMotion = useRef(false)
-  const [isMobile, setIsMobile] = useState(false)
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768 || 
-                     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      setIsMobile(mobile)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+  const isMobile = useIsMobile()
 
   // Adjust particle count for mobile
   const effectiveParticleCount = isMobile ? Math.max(5, Math.floor(particleCount * 0.4)) : particleCount
@@ -105,23 +94,15 @@ export function FireflyBackground({
     resizeCanvas()
     
     // Throttled resize handler for better performance
-    let resizeTimeout: number | undefined
+    let resizeTimeout: ReturnType<typeof setTimeout> | undefined
     const handleResize = () => {
       if (resizeTimeout) {
         clearTimeout(resizeTimeout)
       }
-      resizeTimeout = window.setTimeout(resizeCanvas, 100) as unknown as number
+      resizeTimeout = setTimeout(resizeCanvas, 100)
     }
     
     window.addEventListener('resize', handleResize)
-    
-    // Use ResizeObserver as fallback
-    const resizeObserver = new ResizeObserver(() => {
-      if (!resizeTimeout) {
-        resizeCanvas()
-      }
-    })
-    resizeObserver.observe(document.documentElement)
 
     // Initialize particles
     particlesRef.current = Array.from({ length: effectiveParticleCount }, () => 
@@ -211,7 +192,6 @@ export function FireflyBackground({
         clearTimeout(resizeTimeout)
       }
       window.removeEventListener('resize', handleResize)
-      resizeObserver.disconnect()
       mediaQuery.removeEventListener('change', handleMotionChange)
     }
   }, [variant, effectiveParticleCount, createParticle])
