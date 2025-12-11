@@ -163,24 +163,28 @@ export class CampfirePage {
    * Scroll to bottom of messages
    */
   async scrollToBottom() {
-    await this.page.evaluate(() => {
-      const messageContainer = document.querySelector('[class*="message"]')?.parentElement;
-      if (messageContainer) {
-        messageContainer.scrollTop = messageContainer.scrollHeight;
-      }
-    });
+    // Try to find the last message and scroll to it
+    const messages = this.page.locator(SELECTORS.MESSAGE_ITEM);
+    const count = await messages.count();
+    
+    if (count > 0) {
+      const lastMessage = messages.last();
+      await lastMessage.scrollIntoViewIfNeeded();
+    }
   }
 
   /**
    * Scroll to top of messages
    */
   async scrollToTop() {
-    await this.page.evaluate(() => {
-      const messageContainer = document.querySelector('[class*="message"]')?.parentElement;
-      if (messageContainer) {
-        messageContainer.scrollTop = 0;
-      }
-    });
+    // Try to find the first message and scroll to it
+    const messages = this.page.locator(SELECTORS.MESSAGE_ITEM);
+    const count = await messages.count();
+    
+    if (count > 0) {
+      const firstMessage = messages.first();
+      await firstMessage.scrollIntoViewIfNeeded();
+    }
   }
 
   /**

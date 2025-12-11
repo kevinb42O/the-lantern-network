@@ -67,11 +67,7 @@ export async function waitForToast(page: Page, messagePattern?: string | RegExp,
   
   if (messagePattern) {
     const toast = page.locator(toastSelector);
-    if (typeof messagePattern === 'string') {
-      await expect(toast).toContainText(messagePattern);
-    } else {
-      await expect(toast).toContainText(messagePattern);
-    }
+    await expect(toast).toContainText(messagePattern);
   }
 }
 

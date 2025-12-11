@@ -159,13 +159,10 @@ export const SUPABASE_TABLES = [
 ] as const;
 
 /**
- * Admin email for testing admin features
- */
-export const ADMIN_EMAIL = 'kevinb42O@hotmail.com';
-
-/**
  * Helper to check if email is admin
+ * Uses environment variable for flexibility
  */
 export function isAdminEmail(email: string): boolean {
-  return email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const adminEmail = process.env.ADMIN_EMAIL || 'kevinb42O@hotmail.com';
+  return email.toLowerCase() === adminEmail.toLowerCase();
 }
