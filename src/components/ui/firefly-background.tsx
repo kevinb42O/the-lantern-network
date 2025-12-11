@@ -1,8 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface FireflyBackgroundProps {
-  variant: 'campfire' | 'flares'
+  variant: 'campfire' | 'flares' | 'messages' | 'wallet'
   particleCount?: number
   className?: string
 }
@@ -28,17 +29,29 @@ export function FireflyBackground({
   const particlesRef = useRef<Particle[]>([])
   const animationRef = useRef<number | null>(null)
   const prefersReducedMotion = useRef(false)
+  const isMobile = useIsMobile()
+
+  // Adjust particle count for mobile
+  const effectiveParticleCount = isMobile ? Math.max(5, Math.floor(particleCount * 0.4)) : particleCount
 
   // Get hue range based on variant
   const getHue = useCallback(() => {
-    if (variant === 'campfire') {
-      // Warm orange/amber hues (25-45)
-      return 25 + Math.random() * 20
-    } else {
-      // Mix of orange (30-45) and emerald (140-160) for flares
-      return Math.random() > 0.5 
-        ? 30 + Math.random() * 15 // Orange
-        : 140 + Math.random() * 20 // Emerald
+    switch (variant) {
+      case 'campfire':
+        // Warm orange/amber hues (25-45)
+        return 25 + Math.random() * 20
+      case 'wallet':
+        // Golden/amber hues (35-55)
+        return 35 + Math.random() * 20
+      case 'messages':
+        // Soft amber hues (40-50)
+        return 40 + Math.random() * 10
+      case 'flares':
+      default:
+        // Mix of orange (30-45) and emerald (140-160) for flares
+        return Math.random() > 0.5 
+          ? 30 + Math.random() * 15 // Orange
+          : 140 + Math.random() * 20 // Emerald
     }
   }, [variant])
 
@@ -72,23 +85,27 @@ export function FireflyBackground({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Handle resize
+    // Handle resize with viewport-based sizing
     const resizeCanvas = () => {
-      const parent = canvas.parentElement
-      if (parent) {
-        canvas.width = parent.clientWidth
-        canvas.height = parent.clientHeight
-      }
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
     }
 
     resizeCanvas()
-    const resizeObserver = new ResizeObserver(resizeCanvas)
-    if (canvas.parentElement) {
-      resizeObserver.observe(canvas.parentElement)
+    
+    // Throttled resize handler for better performance
+    let resizeTimeout: ReturnType<typeof setTimeout> | undefined
+    const handleResize = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout)
+      }
+      resizeTimeout = setTimeout(resizeCanvas, 100)
     }
+    
+    window.addEventListener('resize', handleResize)
 
     // Initialize particles
-    particlesRef.current = Array.from({ length: particleCount }, () => 
+    particlesRef.current = Array.from({ length: effectiveParticleCount }, () => 
       createParticle(canvas)
     )
 
@@ -171,16 +188,22 @@ export function FireflyBackground({
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
-      resizeObserver.disconnect()
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout)
+      }
+      window.removeEventListener('resize', handleResize)
       mediaQuery.removeEventListener('change', handleMotionChange)
     }
-  }, [variant, particleCount, createParticle])
+  }, [variant, effectiveParticleCount, createParticle])
 
   return (
     <canvas
       ref={canvasRef}
-      className={cn('absolute inset-0 pointer-events-none', className)}
-      style={{ opacity: 0.55 }}
+      className={cn('fixed inset-0 pointer-events-none', className)}
+      style={{ 
+        opacity: variant === 'messages' ? 0.35 : variant === 'wallet' ? 0.45 : 0.55,
+        willChange: 'transform'
+      }}
     />
   )
 }

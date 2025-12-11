@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { AmbientBackground } from '@/components/ui/ambient-background'
 import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient, CircleConnection } from '@/lib/types'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -434,10 +435,10 @@ export function MessagesView({
   const pendingRequestCount = connectionRequests?.incoming.length || 0
 
   return (
-    <div className="flex flex-col h-full bg-background">
+    <div className="flex flex-col h-full bg-background relative">
       {/* Circle Chat View */}
       {selectedCircleMember ? (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative z-10">
           {/* Circle Chat Header */}
           <div className="p-4 border-b border-border bg-card">
             <div className="flex items-center gap-3">
@@ -548,8 +549,11 @@ export function MessagesView({
         </div>
       ) : !selectedConversation ? (
         <>
+          {/* Ambient Background */}
+          <AmbientBackground variant="messages" />
+          
           {/* Header */}
-          <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
+          <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent relative z-10">
             <div className="max-w-2xl mx-auto flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-primary/15">
                 <ChatCircle size={24} weight="duotone" className="text-primary" />
@@ -571,7 +575,7 @@ export function MessagesView({
           </div>
 
           {/* Tabs */}
-          <div className="px-4 pt-4 max-w-2xl mx-auto w-full">
+          <div className="px-4 pt-4 max-w-2xl mx-auto w-full relative z-10">
             <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/50">
               <button
                 onClick={() => setActiveTab('conversations')}
@@ -625,7 +629,7 @@ export function MessagesView({
           </div>
 
           <ScrollArea className="flex-1">
-            <div className="p-5 space-y-6 max-w-2xl mx-auto">
+            <div className="p-5 space-y-6 max-w-2xl mx-auto relative z-10">
               {/* Tab Content */}
               {activeTab === 'circle' ? (
                 /* Circle Tab */
@@ -1186,7 +1190,7 @@ export function MessagesView({
         </>
       ) : (
         // Chat View
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative z-10">
           {/* Chat Header */}
           <div className="p-4 border-b border-border bg-card">
             <div className="flex items-center gap-3">

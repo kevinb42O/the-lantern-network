@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { AmbientBackground } from '@/components/ui/ambient-background'
+import { CampfireEffects } from '@/components/ui/campfire-effects'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { Message, User, ReportCategory } from '@/lib/types'
@@ -139,6 +140,7 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4 relative" ref={scrollRef}>
+        <CampfireEffects />
         <AmbientBackground variant="campfire" />
         <div className="space-y-4 max-w-2xl mx-auto pb-4 relative z-10">
           {campfireMessages.length === 0 ? (
