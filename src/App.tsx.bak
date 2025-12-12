@@ -211,11 +211,11 @@ function App() {
 
     if (error) {
       console.error('Error creating flare:', error.message, error.details ?? '', error.hint ?? '')
-      toast.error(`Lichtje aanmaken mislukt: ${error.message}`)
+      toast.error(`Failed to create flare: ${error.message}`)
     } else {
       const message = flareData.circle_only 
-        ? (flareData.flare_type === 'offer' ? 'Aanbod voor buurt geplaatst! 🔥🎁' : 'Lichtje voor buurt geplaatst! 🔥')
-        : (flareData.flare_type === 'offer' ? 'Aanbod geplaatst! 🎁' : 'Lichtje geplaatst! 🔥')
+        ? (flareData.flare_type === 'offer' ? 'Circle-only offer posted! 🔥🎁' : 'Circle-only flare posted! 🔥')
+        : (flareData.flare_type === 'offer' ? 'Offer posted! 🎁' : 'Flare posted! 🔥')
       toast.success(message)
       fetchFlares()
     }
@@ -228,7 +228,7 @@ function App() {
     // Find the flare to get owner info
     const flare = flares.find(f => f.id === flareId)
     if (!flare) {
-      toast.error('Lichtje niet gevonden')
+      toast.error('Flare not found')
       return
     }
 
@@ -241,7 +241,7 @@ function App() {
       .limit(1)
 
     if (existing && existing.length > 0) {
-      toast.error('Je hebt al aangeboden om te helpen')
+      toast.error('You already offered to help with this flare')
       return
     }
 
@@ -256,7 +256,7 @@ function App() {
     if (error) {
       console.error('Error offering help:', error)
       const errorDetail = error.message || error.code || JSON.stringify(error).slice(0, 100)
-      toast.error(`Hulpaanbod versturen mislukt: ${errorDetail}`)
+      toast.error(`Failed to send help offer: ${errorDetail}`)
       return
     }
 
@@ -264,7 +264,7 @@ function App() {
     // Validate that we have valid UUIDs before inserting
     if (!flare.creator_id || flare.creator_id === authUser.id) {
       // Can't send message to yourself or invalid creator
-      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
+      toast.success('Help offer sent! Waiting for response...')
       fetchHelpRequests()
       return
     }
@@ -281,9 +281,9 @@ function App() {
       console.error('Error sending notification message:', messageError)
       console.error('Message error details:', JSON.stringify(messageError, null, 2))
       // Help request was created, the message in flare_participants serves as backup
-      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
+      toast.success('Help offer sent! Waiting for response...')
     } else {
-      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
+      toast.success('Help offer sent! Waiting for response...')
     }
     
     fetchHelpRequests()
@@ -380,9 +380,9 @@ function App() {
 
     if (error) {
       console.error('Error accepting help:', error)
-      toast.error('Hulpaanbod accepteren mislukt')
+      toast.error('Failed to accept help offer')
     } else {
-      toast.success('Hulpaanbod geaccepteerd! Je kan nu chatten.')
+      toast.success('Help offer accepted! You can now chat.')
       fetchHelpRequests()
     }
   }
@@ -398,9 +398,9 @@ function App() {
 
     if (error) {
       console.error('Error denying help:', error)
-      toast.error('Hulpaanbod weigeren mislukt')
+      toast.error('Failed to decline help offer')
     } else {
-      toast.info('Hulpaanbod geweigerd')
+      toast.info('Help offer declined')
       fetchHelpRequests()
     }
   }
@@ -412,7 +412,7 @@ function App() {
     // Find the help request to get the other participant
     const helpRequest = helpRequests.find(hr => hr.id === helpRequestId)
     if (!helpRequest) {
-      toast.error('Gesprek niet gevonden. Herlaad de pagina en probeer opnieuw.')
+      toast.error('Conversation not found. Please refresh and try again.')
       return
     }
 
@@ -424,7 +424,7 @@ function App() {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!receiverId || !uuidRegex.test(receiverId)) {
       console.error('Invalid receiver ID:', receiverId)
-      toast.error('Bericht versturen niet mogelijk. Herlaad de pagina en probeer opnieuw.')
+      toast.error('Unable to send message. Please refresh and try again.')
       fetchHelpRequests() // Refresh data to fix the issue
       return
     }
@@ -440,7 +440,7 @@ function App() {
     if (error) {
       console.error('Error sending message:', error)
       console.error('Error details:', JSON.stringify(error, null, 2))
-      toast.error('Bericht versturen mislukt. Probeer opnieuw.')
+      toast.error('Failed to send message. Please try again.')
     }
   }
 
@@ -450,7 +450,7 @@ function App() {
 
     // Check if user has enough lanterns
     if (profile.lantern_balance < LANTERN_TRANSFER_AMOUNT) {
-      toast.error('Niet genoeg lichtpuntjes om deze taak af te ronden')
+      toast.error('Not enough lanterns to complete this task')
       return
     }
 
@@ -513,7 +513,7 @@ function App() {
         }
       ])
 
-      toast.success(`🏮 Taak voltooid! ${LANTERN_TRANSFER_AMOUNT} Lichtpuntje verzonden als bedankje!`)
+      toast.success(`🏮 Task completed! ${LANTERN_TRANSFER_AMOUNT} Lantern sent as thanks!`)
       
       // Refresh data
       fetchFlares()
@@ -532,7 +532,7 @@ function App() {
       }
     } catch (err) {
       console.error('Error completing flare:', err)
-      toast.error('Taak afronden mislukt')
+      toast.error('Failed to complete task')
     }
   }
 
@@ -720,7 +720,7 @@ function App() {
 
     if (error) {
       console.error('Error creating story:', error)
-      toast.error('Verhaal delen mislukt')
+      toast.error('Failed to share story')
     } else {
       fetchStories()
     }
@@ -781,9 +781,9 @@ function App() {
 
     if (error) {
       console.error('Error generating invite:', error)
-      toast.error('Uitnodigingscode aanmaken mislukt')
+      toast.error('Failed to generate invite code')
     } else {
-      toast.success('Nieuwe uitnodigingscode aangemaakt!')
+      toast.success('New invite code generated!')
       fetchInviteCodes()
     }
   }
@@ -808,7 +808,7 @@ function App() {
       // If they've reached elder threshold, their trust_score should be high enough
       // The Elder badge is shown when trust_score >= ELDER_TRUST_THRESHOLD
       if ((userProfile?.trust_score || 0) >= ELDER_TRUST_THRESHOLD) {
-        toast.success('🌟 Proficiat! Je bent nu een Buurheld!')
+        toast.success('🌟 Congratulations! You\'ve earned Elder status!')
       }
     }
   }
@@ -1266,12 +1266,12 @@ function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-muted-foreground text-center">Je profiel laden...</p>
+        <p className="text-muted-foreground text-center">Loading your profile...</p>
         <button 
           onClick={refreshProfile}
           className="text-primary hover:underline text-sm"
         >
-          Klik om opnieuw te proberen
+          Tap to retry
         </button>
       </div>
     )
