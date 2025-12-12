@@ -20,11 +20,11 @@ interface CampfireViewProps {
 }
 
 const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
-  { value: 'harassment', label: 'Harassment' },
+  { value: 'harassment', label: 'Intimidatie' },
   { value: 'spam', label: 'Spam' },
-  { value: 'inappropriate_content', label: 'Inappropriate Content' },
-  { value: 'safety_concern', label: 'Safety Concern' },
-  { value: 'other', label: 'Other' }
+  { value: 'inappropriate_content', label: 'Ongepaste inhoud' },
+  { value: 'safety_concern', label: 'Veiligheidsprobleem' },
+  { value: 'other', label: 'Overig' }
 ]
 
 export function CampfireView({ user, messages, onSendMessage, adminUserIds = [], moderatorUserIds = [], onUserClick }: CampfireViewProps) {
