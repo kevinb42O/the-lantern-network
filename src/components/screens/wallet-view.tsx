@@ -37,6 +37,7 @@ export function WalletView({ user, transactions }: WalletViewProps) {
 
   return (
     <div className="flex flex-col h-full bg-background">
+<<<<<<< Updated upstream
       {/* Header with Balance */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
         <div className="max-w-lg mx-auto space-y-5">
@@ -70,6 +71,13 @@ export function WalletView({ user, transactions }: WalletViewProps) {
             </div>
           </div>
         </div>
+=======
+      <div className="p-4 border-b border-border">
+        <h1 className="text-2xl font-semibold text-foreground mb-4">
+          Lantern Wallet
+        </h1>
+        <LanternBalance balance={user.lanternBalance} />
+>>>>>>> Stashed changes
       </div>
 
       {/* Transactions */}

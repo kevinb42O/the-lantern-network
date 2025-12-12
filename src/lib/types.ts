@@ -51,7 +51,7 @@ export interface Message {
   vibePhoto?: string
   content: string
   timestamp: number
-  type: 'campfire' | 'mission'
+  type: 'campfire' | 'dm'
   chatId?: string
 }
 
@@ -66,7 +66,14 @@ export interface InviteCode {
 export interface Chat {
   id: string
   flareId: string
-  participants: string[]
+  flareDescription: string
+  flareCategory: 'Mechanical' | 'Food' | 'Talk' | 'Other'
+  participants: {
+    ownerId: string
+    ownerName: string
+    helperId: string
+    helperName: string
+  }
   createdAt: number
   lastActivity: number
 }
