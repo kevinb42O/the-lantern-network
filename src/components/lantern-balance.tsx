@@ -80,7 +80,7 @@ export function LanternBalance({
             </div>
             <div>
               <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-                Your Lanterns
+                Je Lichtpuntjes
               </p>
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl font-bold text-foreground">
@@ -92,12 +92,12 @@ export function LanternBalance({
           </div>
           {isAtLimit && (
             <span className="text-xs font-semibold text-accent px-3 py-1.5 rounded-full bg-accent/15 border border-accent/20">
-              ✨ Full
+              ✨ Vol
             </span>
           )}
           {isLow && !isAtLimit && (
             <span className="text-xs font-medium text-amber-400 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-              Low
+              Laag
             </span>
           )}
         </div>
@@ -138,17 +138,17 @@ export function LanternBalance({
           {isAtLimit ? (
             <>
               <span className="text-accent">✦</span>
-              <span>At hoard limit — share the light with neighbors!</span>
+              <span>Je hebt je maximum bereikt — deel het licht met je buren!</span>
             </>
           ) : isLow ? (
             <>
               <span className="text-amber-400">💡</span>
-              <span>Help a neighbor to earn more lanterns</span>
+              <span>Help een buur om meer lichtpuntjes te verdienen</span>
             </>
           ) : (
             <>
               <span className="text-primary/70">🏮</span>
-              <span>{max - balance} more until hoard limit</span>
+              <span>Nog {max - balance} tot je maximum</span>
             </>
           )}
         </p>

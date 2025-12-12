@@ -97,7 +97,7 @@ export class AdminPage {
     await removeButton.click();
     
     // Confirm removal
-    const confirmButton = this.page.locator('button:has-text("Confirm"), button:has-text("Yes")').first();
+    const confirmButton = this.page.locator('button:has-text("Bevestigen"), button:has-text("Ja")').first();
     try {
       if (await confirmButton.isVisible({ timeout: 2000 })) {
         await confirmButton.click();
@@ -113,14 +113,14 @@ export class AdminPage {
    * Clear campfire (delete all messages)
    */
   async clearCampfire() {
-    const clearButton = this.page.locator('button:has-text("Clear Campfire"), button:has-text("Clear Messages")').first();
+    const clearButton = this.page.locator('button:has-text("\'t Kampvuur wissen"), button:has-text("Berichten wissen")').first();
     
     try {
       if (await clearButton.isVisible({ timeout: 2000 })) {
         await clearButton.click();
         
         // Confirm
-        const confirmButton = this.page.locator('button:has-text("Confirm"), button:has-text("Yes")').first();
+        const confirmButton = this.page.locator('button:has-text("Bevestigen"), button:has-text("Ja")').first();
         if (await confirmButton.isVisible({ timeout: 2000 })) {
           await confirmButton.click();
         }
@@ -194,7 +194,7 @@ export class AdminPage {
         await actionButton.click();
         
         // Confirm if needed
-        const confirmButton = this.page.locator('button:has-text("Confirm"), button:has-text("Yes")').first();
+        const confirmButton = this.page.locator('button:has-text("Bevestigen"), button:has-text("Ja")').first();
         if (await confirmButton.isVisible({ timeout: 2000 })) {
           await confirmButton.click();
         }

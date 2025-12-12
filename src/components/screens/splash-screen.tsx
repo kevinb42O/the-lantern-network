@@ -49,7 +49,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.6 }}
       >
-        Lantern
+        De Lantaarn
       </motion.h1>
       
       <motion.p
@@ -58,7 +58,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.6, duration: 0.6 }}
       >
-        The Neighborhood That Moves With You
+        Verbondenheid in Blankenberge
       </motion.p>
     </motion.div>
   )

@@ -31,7 +31,7 @@ export class MessagesPage {
   /**
    * Switch to tab
    */
-  async switchToTab(tab: 'Chats' | 'Circle' | 'Requests') {
+  async switchToTab(tab: 'Gesprekken' | 'Buurtkring' | 'Aanvragen') {
     const tabButton = this.page.locator(`button:has-text("${tab}")`).first();
     await tabButton.click();
     await this.page.waitForTimeout(500);
@@ -41,7 +41,7 @@ export class MessagesPage {
    * Verify tabs exist
    */
   async verifyTabsExist() {
-    const tabs = ['Chats', 'Circle', 'Requests'];
+    const tabs = ['Gesprekken', 'Buurtkring', 'Aanvragen'];
     
     for (const tab of tabs) {
       const tabButton = this.page.locator(`button:has-text("${tab}")`);
@@ -88,7 +88,7 @@ export class MessagesPage {
    * Accept help offer
    */
   async acceptHelpOffer() {
-    const acceptButton = this.page.locator('button:has-text("Accept")').first();
+    const acceptButton = this.page.locator('button:has-text("Accepteren")').first();
     await acceptButton.click();
     await waitForRealtimeUpdate(this.page);
   }
@@ -97,7 +97,7 @@ export class MessagesPage {
    * Deny help offer
    */
   async denyHelpOffer() {
-    const denyButton = this.page.locator('button:has-text("Deny"), button:has-text("Decline")').first();
+    const denyButton = this.page.locator('button:has-text("Weigeren")').first();
     await denyButton.click();
     await waitForRealtimeUpdate(this.page);
   }

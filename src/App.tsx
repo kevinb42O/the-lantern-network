@@ -178,7 +178,7 @@ function App() {
     const flaresWithNames: FlareData[] = flaresData.map(f => ({
       ...f,
       location: f.location as { lat: number; lng: number } | null,
-      creator_name: profileMap[f.creator_id] || 'Anonymous'
+      creator_name: profileMap[f.creator_id] || 'Onbekende buur'
     }))
     
     setFlares(flaresWithNames)
@@ -211,11 +211,11 @@ function App() {
 
     if (error) {
       console.error('Error creating flare:', error.message, error.details ?? '', error.hint ?? '')
-      toast.error(`Failed to create flare: ${error.message}`)
+      toast.error(`Lichtje aanmaken mislukt: ${error.message}`)
     } else {
       const message = flareData.circle_only 
-        ? (flareData.flare_type === 'offer' ? 'Circle-only offer posted! 🔥🎁' : 'Circle-only flare posted! 🔥')
-        : (flareData.flare_type === 'offer' ? 'Offer posted! 🎁' : 'Flare posted! 🔥')
+        ? (flareData.flare_type === 'offer' ? 'Aanbod voor buurt geplaatst! 🔥🎁' : 'Lichtje voor buurt geplaatst! 🔥')
+        : (flareData.flare_type === 'offer' ? 'Aanbod geplaatst! 🎁' : 'Lichtje geplaatst! 🔥')
       toast.success(message)
       fetchFlares()
     }
@@ -228,7 +228,7 @@ function App() {
     // Find the flare to get owner info
     const flare = flares.find(f => f.id === flareId)
     if (!flare) {
-      toast.error('Flare not found')
+      toast.error('Lichtje niet gevonden')
       return
     }
 
@@ -241,7 +241,7 @@ function App() {
       .limit(1)
 
     if (existing && existing.length > 0) {
-      toast.error('You already offered to help with this flare')
+      toast.error('Je hebt al aangeboden om te helpen')
       return
     }
 
@@ -256,7 +256,7 @@ function App() {
     if (error) {
       console.error('Error offering help:', error)
       const errorDetail = error.message || error.code || JSON.stringify(error).slice(0, 100)
-      toast.error(`Failed to send help offer: ${errorDetail}`)
+      toast.error(`Hulpaanbod versturen mislukt: ${errorDetail}`)
       return
     }
 
@@ -264,7 +264,7 @@ function App() {
     // Validate that we have valid UUIDs before inserting
     if (!flare.creator_id || flare.creator_id === authUser.id) {
       // Can't send message to yourself or invalid creator
-      toast.success('Help offer sent! Waiting for response...')
+      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
       fetchHelpRequests()
       return
     }
@@ -281,9 +281,9 @@ function App() {
       console.error('Error sending notification message:', messageError)
       console.error('Message error details:', JSON.stringify(messageError, null, 2))
       // Help request was created, the message in flare_participants serves as backup
-      toast.success('Help offer sent! Waiting for response...')
+      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
     } else {
-      toast.success('Help offer sent! Waiting for response...')
+      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
     }
     
     fetchHelpRequests()
@@ -354,9 +354,9 @@ function App() {
             id: p.id,
             flareId: p.flare_id,
             helperId: p.user_id,
-            helperUsername: profileMap[p.user_id] || 'Anonymous',
+            helperUsername: profileMap[p.user_id] || 'Onbekende buur',
             flareOwnerId: flare!.creator_id,  // Safe because of filter above
-            flareOwnerUsername: profileMap[flare!.creator_id] || 'Anonymous',
+            flareOwnerUsername: profileMap[flare!.creator_id] || 'Onbekende buur',
             message: p.message || '',
             status: p.status as 'pending' | 'accepted' | 'denied',
             createdAt: new Date(p.joined_at).getTime()
@@ -380,9 +380,9 @@ function App() {
 
     if (error) {
       console.error('Error accepting help:', error)
-      toast.error('Failed to accept help offer')
+      toast.error('Hulpaanbod accepteren mislukt')
     } else {
-      toast.success('Help offer accepted! You can now chat.')
+      toast.success('Hulpaanbod geaccepteerd! Je kan nu chatten.')
       fetchHelpRequests()
     }
   }
@@ -398,9 +398,9 @@ function App() {
 
     if (error) {
       console.error('Error denying help:', error)
-      toast.error('Failed to decline help offer')
+      toast.error('Hulpaanbod weigeren mislukt')
     } else {
-      toast.info('Help offer declined')
+      toast.info('Hulpaanbod geweigerd')
       fetchHelpRequests()
     }
   }
@@ -412,7 +412,7 @@ function App() {
     // Find the help request to get the other participant
     const helpRequest = helpRequests.find(hr => hr.id === helpRequestId)
     if (!helpRequest) {
-      toast.error('Conversation not found. Please refresh and try again.')
+      toast.error('Gesprek niet gevonden. Herlaad de pagina en probeer opnieuw.')
       return
     }
 
@@ -424,7 +424,7 @@ function App() {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!receiverId || !uuidRegex.test(receiverId)) {
       console.error('Invalid receiver ID:', receiverId)
-      toast.error('Unable to send message. Please refresh and try again.')
+      toast.error('Bericht versturen niet mogelijk. Herlaad de pagina en probeer opnieuw.')
       fetchHelpRequests() // Refresh data to fix the issue
       return
     }
@@ -440,7 +440,7 @@ function App() {
     if (error) {
       console.error('Error sending message:', error)
       console.error('Error details:', JSON.stringify(error, null, 2))
-      toast.error('Failed to send message. Please try again.')
+      toast.error('Bericht versturen mislukt. Probeer opnieuw.')
     }
   }
 
@@ -450,7 +450,7 @@ function App() {
 
     // Check if user has enough lanterns
     if (profile.lantern_balance < LANTERN_TRANSFER_AMOUNT) {
-      toast.error('Not enough lanterns to complete this task')
+      toast.error('Niet genoeg lichtpuntjes om deze taak af te ronden')
       return
     }
 
@@ -513,7 +513,7 @@ function App() {
         }
       ])
 
-      toast.success(`🏮 Task completed! ${LANTERN_TRANSFER_AMOUNT} Lantern sent as thanks!`)
+      toast.success(`🏮 Taak voltooid! ${LANTERN_TRANSFER_AMOUNT} Lichtpuntje verzonden als bedankje!`)
       
       // Refresh data
       fetchFlares()
@@ -532,7 +532,7 @@ function App() {
       }
     } catch (err) {
       console.error('Error completing flare:', err)
-      toast.error('Failed to complete task')
+      toast.error('Taak afronden mislukt')
     }
   }
 
@@ -690,7 +690,7 @@ function App() {
       return {
         id: s.id,
         creatorId: s.creator_id,
-        creatorName: profileMap[s.creator_id]?.name || 'Anonymous',
+        creatorName: profileMap[s.creator_id]?.name || 'Onbekende buur',
         creatorAvatar: profileMap[s.creator_id]?.avatar || null,
         content: s.content,
         photoUrl: s.photo_url,
@@ -720,7 +720,7 @@ function App() {
 
     if (error) {
       console.error('Error creating story:', error)
-      toast.error('Failed to share story')
+      toast.error('Verhaal delen mislukt')
     } else {
       fetchStories()
     }
@@ -781,9 +781,9 @@ function App() {
 
     if (error) {
       console.error('Error generating invite:', error)
-      toast.error('Failed to generate invite code')
+      toast.error('Uitnodigingscode aanmaken mislukt')
     } else {
-      toast.success('New invite code generated!')
+      toast.success('Nieuwe uitnodigingscode aangemaakt!')
       fetchInviteCodes()
     }
   }
@@ -808,7 +808,7 @@ function App() {
       // If they've reached elder threshold, their trust_score should be high enough
       // The Elder badge is shown when trust_score >= ELDER_TRUST_THRESHOLD
       if ((userProfile?.trust_score || 0) >= ELDER_TRUST_THRESHOLD) {
-        toast.success('🌟 Congratulations! You\'ve earned Elder status!')
+        toast.success('🌟 Proficiat! Je bent nu een Buurheld!')
       }
     }
   }
@@ -1003,7 +1003,7 @@ function App() {
       const formattedMessages: Message[] = messagesData.map(m => ({
         id: m.id,
         userId: m.sender_id,
-        username: profileMap[m.sender_id] || 'Anonymous',
+        username: profileMap[m.sender_id] || 'Onbekende buur',
         content: m.content,
         timestamp: new Date(m.created_at).getTime(),
         type: 'campfire' as const
@@ -1089,7 +1089,7 @@ function App() {
         return {
           id: m.id,
           userId: m.sender_id,
-          username: profileMap[m.sender_id] || 'Anonymous',
+          username: profileMap[m.sender_id] || 'Onbekende buur',
           content: m.content,
           timestamp: new Date(m.created_at).getTime(),
           type: 'mission' as const,
@@ -1266,12 +1266,12 @@ function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-muted-foreground text-center">Loading your profile...</p>
+        <p className="text-muted-foreground text-center">Je profiel laden...</p>
         <button 
           onClick={refreshProfile}
           className="text-primary hover:underline text-sm"
         >
-          Tap to retry
+          Klik om opnieuw te proberen
         </button>
       </div>
     )
@@ -1337,7 +1337,7 @@ function App() {
             flares={flares.map(f => ({
               id: f.id,
               userId: f.creator_id,
-              username: f.creator_name || 'Anonymous',
+              username: f.creator_name || 'Onbekende buur',
               category: f.category as 'Mechanical' | 'Food' | 'Talk' | 'Other',
               description: f.description,
               location: f.location || { lat: 0, lng: 0 },
@@ -1391,39 +1391,39 @@ function App() {
         <div className="flex items-center justify-around p-1.5 max-w-lg mx-auto">
           <NavButton
             icon={Flame}
-            label="Flares"
+            label="Lichtjes"
             active={currentView === 'flares'}
             onClick={() => setCurrentView('flares')}
           />
           <NavButton
             icon={Fire}
-            label="Campfire"
+            label="'t Kampvuur"
             active={currentView === 'campfire'}
             onClick={() => setCurrentView('campfire')}
           />
           <NavButton
             icon={Wallet}
-            label="Wallet"
+            label="Portemonnee"
             active={currentView === 'wallet'}
             onClick={() => setCurrentView('wallet')}
           />
           <NavButton
             icon={ChatCircleDots}
-            label="Messages"
+            label="Gesprekken"
             active={currentView === 'messages'}
             onClick={() => setCurrentView('messages')}
             badge={unreadCount}
           />
           <NavButton
             icon={UserCircle}
-            label="Profile"
+            label="Profiel"
             active={currentView === 'profile'}
             onClick={() => setCurrentView('profile')}
           />
           {isModerator && !isAdmin && (
             <NavButton
               icon={ShieldCheck}
-              label="Mod"
+              label="Moderator"
               active={currentView === 'moderator'}
               onClick={() => setCurrentView('moderator')}
               isModeratorButton
@@ -1432,7 +1432,7 @@ function App() {
           {isAdmin && (
             <NavButton
               icon={ShieldCheck}
-              label="Admin"
+              label="Beheer"
               active={currentView === 'admin'}
               onClick={() => setCurrentView('admin')}
               isAdminButton

@@ -20,11 +20,11 @@ interface CampfireViewProps {
 }
 
 const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
-  { value: 'harassment', label: 'Harassment' },
+  { value: 'harassment', label: 'Intimidatie' },
   { value: 'spam', label: 'Spam' },
-  { value: 'inappropriate_content', label: 'Inappropriate Content' },
-  { value: 'safety_concern', label: 'Safety Concern' },
-  { value: 'other', label: 'Other' }
+  { value: 'inappropriate_content', label: 'Ongepaste inhoud' },
+  { value: 'safety_concern', label: 'Veiligheidsprobleem' },
+  { value: 'other', label: 'Overig' }
 ]
 
 export function CampfireView({ user, messages, onSendMessage, adminUserIds = [], moderatorUserIds = [], onUserClick }: CampfireViewProps) {
@@ -124,11 +124,11 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
           </div>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              The Campfire
+              't Kampvuur
               <span className="text-orange-400">🔥</span>
             </h1>
             <p className="text-sm text-muted-foreground">
-              Gather with your neighbors • Messages fade after 24h
+              Kom samen met je buren • Berichten verdwijnen na 24u
             </p>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20">
@@ -149,10 +149,10 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
                 <Fire size={48} weight="duotone" className="text-orange-400 bounce-subtle" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                The campfire is quiet
+                't Kampvuur is rustig
               </h3>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                Be the first to share something with the neighborhood!
+                Wees de eerste om iets te delen met de buurt!
               </p>
             </div>
           ) : (
@@ -179,7 +179,7 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
             <div className="flex-1 relative">
               <input
                 type="text"
-                placeholder="Share something with the neighborhood..."
+                placeholder="Deel iets met de buurt..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -199,9 +199,9 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 px-1">
             <span className="flex items-center gap-1">
-              Press Enter to send
+              Druk Enter om te versturen
             </span>
-            <span>{campfireMessages.length} messages around the fire</span>
+            <span>{campfireMessages.length} berichten rond het vuur</span>
           </div>
         </div>
       </div>
@@ -212,10 +212,10 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Flag size={24} weight="duotone" className="text-red-400" />
-              Report Message
+              Bericht melden
             </DialogTitle>
-            <DialogDescription>
-              Help us keep the community safe by reporting inappropriate content
+            <DialogDescription">
+              Help ons de gemeenschap veilig te houden door ongepaste inhoud te melden
             </DialogDescription>
           </DialogHeader>
 
@@ -223,13 +223,13 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
             <div className="space-y-4 py-2">
               {/* Message preview */}
               <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
-                <p className="text-xs text-muted-foreground mb-1">Message from {reportingMessage.username}:</p>
+                <p className="text-xs text-muted-foreground mb-1">Bericht van {reportingMessage.username}:</p>
                 <p className="text-sm text-foreground line-clamp-3">{reportingMessage.content}</p>
               </div>
 
               {/* Category selection */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Category</Label>
+                <Label className="text-sm font-medium">Categorie</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {REPORT_CATEGORIES.map((cat) => (
                     <Button
@@ -248,12 +248,12 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
               {/* Description */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
-                  Description <span className="text-red-400">*</span>
+                  Beschrijving <span className="text-red-400">*</span>
                 </Label>
                 <textarea
                   value={reportDescription}
                   onChange={(e) => setReportDescription(e.target.value)}
-                  placeholder="Please describe what's wrong with this message..."
+                  placeholder="Beschrijf wat er mis is met dit bericht..."
                   className="w-full h-24 px-3 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
                 />
               </div>
@@ -265,14 +265,14 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
                   className="flex-1 rounded-xl"
                   onClick={() => setShowReportModal(false)}
                 >
-                  Cancel
+                  Annuleren
                 </Button>
                 <Button
                   className="flex-1 rounded-xl bg-red-500 hover:bg-red-600"
                   onClick={handleSubmitReport}
                   disabled={submittingReport || !reportDescription.trim()}
                 >
-                  {submittingReport ? 'Submitting...' : 'Submit Report'}
+                  {submittingReport ? 'Versturen...' : 'Melding versturen'}
                 </Button>
               </div>
             </div>

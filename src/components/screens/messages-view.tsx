@@ -466,11 +466,11 @@ export function MessagesView({
                 </h3>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs bg-amber-500/20 text-amber-400 border-0">
-                    {getTrustFlames(selectedCircleMember.trustLevel)} Trust
+                    {getTrustFlames(selectedCircleMember.trustLevel)} Vertrouwen
                   </Badge>
                   {selectedCircleMember.metThroughFlareName && (
                     <span className="text-xs text-muted-foreground">
-                      Met via: {selectedCircleMember.metThroughFlareName}
+                      Gekend via: {selectedCircleMember.metThroughFlareName}
                     </span>
                   )}
                 </div>
@@ -481,7 +481,7 @@ export function MessagesView({
                 className="text-xs text-muted-foreground hover:text-red-400"
                 onClick={() => handleRemoveFromCircle(selectedCircleMember.connectedUserId)}
               >
-                Remove
+                Verwijderen
               </Button>
             </div>
           </div>
@@ -490,7 +490,7 @@ export function MessagesView({
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {circleMessages.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p className="text-sm">Start a conversation with {selectedCircleMember.connectedUserName}!</p>
+                <p className="text-sm">Start een gesprek met {selectedCircleMember.connectedUserName}!</p>
               </div>
             ) : (
               circleMessages.map(msg => (
@@ -507,7 +507,7 @@ export function MessagesView({
                   <div className={`max-w-[75%] ${msg.senderId === user.id ? 'text-right' : ''}`}>
                     <div className="flex items-baseline gap-2 mb-0.5">
                       <span className="text-xs font-medium text-muted-foreground">
-                        {msg.senderId === user.id ? 'You' : msg.senderName}
+                        {msg.senderId === user.id ? 'Jij' : msg.senderName}
                       </span>
                     </div>
                     <div
@@ -530,7 +530,7 @@ export function MessagesView({
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Type a message..."
+                placeholder="Typ een bericht..."
                 value={circleChatInput}
                 onChange={(e) => setCircleChatInput(e.target.value)}
                 onKeyDown={handleCircleChatKeyDown}
@@ -559,15 +559,15 @@ export function MessagesView({
                 <ChatCircle size={24} weight="duotone" className="text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+                <h1 className="text-2xl font-bold text-foreground">Gesprekken</h1>
                 <p className="text-sm text-muted-foreground">
                   {activeTab === 'circle' 
-                    ? `${circleConnections.length} in your circle`
+                    ? `${circleConnections.length} in je buurtkring`
                     : activeTab === 'requests'
-                      ? `${pendingRequestCount} pending request${pendingRequestCount !== 1 ? 's' : ''}`
+                      ? `${pendingRequestCount} openstaande aanvra${pendingRequestCount !== 1 ? 'gen' : 'ag'}`
                       : myHelpRequests.length === 0 
-                        ? 'No conversations yet' 
-                        : `${pendingRequestsForMe.length} pending request${pendingRequestsForMe.length !== 1 ? 's' : ''}`
+                        ? 'Nog geen gesprekken' 
+                        : `${pendingRequestsForMe.length} openstaande aanvra${pendingRequestsForMe.length !== 1 ? 'gen' : 'ag'}`
                   }
                 </p>
               </div>
@@ -586,7 +586,7 @@ export function MessagesView({
                 }`}
               >
                 <ChatCircle size={14} weight={activeTab === 'conversations' ? 'duotone' : 'regular'} />
-                Chats
+                Gesprekken
                 {pendingRequestsForMe.length > 0 && (
                   <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
                     {pendingRequestsForMe.length}
@@ -602,7 +602,7 @@ export function MessagesView({
                 }`}
               >
                 <Fire size={14} weight={activeTab === 'circle' ? 'duotone' : 'regular'} />
-                Circle
+                Buurtkring
                 {circleConnections.length > 0 && (
                   <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">
                     {circleConnections.length}
@@ -618,7 +618,7 @@ export function MessagesView({
                 }`}
               >
                 <UserCirclePlus size={14} weight={activeTab === 'requests' ? 'duotone' : 'regular'} />
-                Requests
+                Aanvragen
                 {pendingRequestCount > 0 && (
                   <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full animate-pulse">
                     {pendingRequestCount}
@@ -640,10 +640,10 @@ export function MessagesView({
                         <Fire size={48} weight="duotone" className="text-amber-400 bounce-subtle" />
                       </div>
                       <h3 className="text-xl font-semibold text-foreground mb-3">
-                        Your Circle is Empty
+                        Je buurtkring is leeg
                       </h3>
                       <p className="text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                        Add neighbors to your Trust Circle to message them anytime - no flare needed!
+                        Voeg buren toe aan je vertrouwenskring om hen altijd te kunnen bereiken - geen lichtje nodig!
                       </p>
                     </div>
                   ) : (
@@ -759,7 +759,7 @@ export function MessagesView({
                                   disabled={acceptRequest.isPending}
                                 >
                                   <Check size={16} weight="bold" />
-                                  Accept
+                                  Accepteren
                                 </Button>
                                 <Button
                                   size="sm"
@@ -769,7 +769,7 @@ export function MessagesView({
                                   disabled={declineRequest.isPending}
                                 >
                                   <X size={16} weight="bold" />
-                                  Decline
+                                  Weigeren
                                 </Button>
                               </div>
                             </div>
@@ -784,7 +784,7 @@ export function MessagesView({
                     <div className="space-y-3">
                       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                         <Hourglass size={14} className="text-muted-foreground" />
-                        Sent Requests ({connectionRequests?.outgoing.filter(r => r.status === 'pending').length || 0})
+                        Verstuurde aanvragen ({connectionRequests?.outgoing.filter(r => r.status === 'pending').length || 0})
                       </h2>
                       {connectionRequests?.outgoing.filter(r => r.status === 'pending').map((request, index) => (
                         <Card
@@ -809,12 +809,12 @@ export function MessagesView({
                                 {request.toUserName}
                               </span>
                               <p className="text-xs text-muted-foreground">
-                                Waiting for response...
+                                Wachten op antwoord...
                               </p>
                             </div>
                             <Badge variant="outline" className="text-xs border-muted text-muted-foreground">
                               <Hourglass size={12} className="mr-1" />
-                              Pending
+                              In afwachting
                             </Badge>
                           </div>
                         </Card>
@@ -830,7 +830,7 @@ export function MessagesView({
                 <div className="space-y-3">
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                     <Megaphone size={14} className="text-amber-400" />
-                    Announcements ({announcements.filter(a => !a.recipient?.read_at).length} unread)
+                    Aankondigingen ({announcements.filter(a => !a.recipient?.read_at).length} ongelezen)
                   </h2>
                   {announcements.map((announcement, index) => {
                     const isUnread = !announcement.recipient?.read_at
@@ -972,7 +972,7 @@ export function MessagesView({
                                 onClick={() => onAcceptHelp(hr.id)}
                               >
                                 <Check size={16} weight="bold" />
-                                Accept Help
+                                Hulp accepteren
                               </Button>
                               <Button 
                                 size="sm" 
@@ -981,12 +981,12 @@ export function MessagesView({
                                 onClick={() => onDenyHelp(hr.id)}
                               >
                                 <X size={16} weight="bold" />
-                                Decline
+                                Weigeren
                               </Button>
                             </div>
                             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
                               <Lamp size={12} />
-                              1 Lantern will be sent when task is complete
+                              1 Lichtpuntje wordt verstuurd wanneer de taak voltooid is
                             </p>
                           </div>
                         </div>
@@ -1001,7 +1001,7 @@ export function MessagesView({
                 <div className="space-y-3">
                   <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                     <Hourglass size={14} className="text-amber-400" />
-                    Your Pending Offers ({myPendingOffers.length})
+                    Je openstaande aanbiedingen ({myPendingOffers.length})
                   </h2>
                   {myPendingOffers.map(hr => {
                     const flare = getFlareForRequest(hr)
@@ -1020,11 +1020,11 @@ export function MessagesView({
                               </span>
                               <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-500">
                                 <Hourglass size={12} className="mr-1" />
-                                Pending
+                                In afwachting
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              You offered to help with:
+                              Je hebt hulp aangeboden voor:
                             </p>
                             {flare && (
                               <div className="flex items-center gap-2 text-xs">
@@ -1038,12 +1038,12 @@ export function MessagesView({
                             {hr.message && (
                               <div className="bg-muted/50 rounded-lg p-3 mt-2">
                                 <p className="text-sm text-foreground italic">
-                                  Your message: "{hr.message}"
+                                  Je bericht: "{hr.message}"
                                 </p>
                               </div>
                             )}
                             <p className="text-xs text-muted-foreground mt-2">
-                              Waiting for {hr.flareOwnerUsername} to respond...
+                              Wachten op antwoord van {hr.flareOwnerUsername}...
                             </p>
                           </div>
                         </div>
@@ -1246,7 +1246,7 @@ export function MessagesView({
                       onClick={handleCompleteTask}
                     >
                       <CheckCircle size={16} weight="fill" />
-                      Mark Complete
+                      Voltooien
                       <Coins size={14} className="text-yellow-300" />
                     </Button>
                   </div>
@@ -1268,14 +1268,14 @@ export function MessagesView({
               <div className="max-w-[75%]">
                 <div className="flex items-baseline gap-2 mb-0.5">
                   <span className="text-xs font-medium text-muted-foreground">
-                    {selectedConversation.helperId === user.id ? 'You' : selectedConversation.helperUsername}
+                    {selectedConversation.helperId === user.id ? 'Jij' : selectedConversation.helperUsername}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {getTimeAgo(selectedConversation.createdAt)}
                   </span>
                 </div>
                 <div className="inline-block px-3 py-2 rounded-2xl text-sm bg-muted text-foreground rounded-bl-md">
-                  {selectedConversation.message || "I'd like to help!"}
+                  {selectedConversation.message || "Ik wil graag helpen!"}
                 </div>
               </div>
             </div>
@@ -1293,7 +1293,7 @@ export function MessagesView({
                 <div className={`max-w-[75%] ${msg.userId === user.id ? 'text-right' : ''}`}>
                   <div className="flex items-baseline gap-2 mb-0.5">
                     <span className="text-xs font-medium text-muted-foreground">
-                      {msg.userId === user.id ? 'You' : msg.username}
+                      {msg.userId === user.id ? 'Jij' : msg.username}
                     </span>
                   </div>
                   <div
@@ -1317,7 +1317,7 @@ export function MessagesView({
               if (flare?.status === 'completed') {
                 return (
                   <div className="text-center py-2 text-muted-foreground text-sm">
-                    ✅ This task has been completed
+                    ✅ Deze taak is voltooid
                   </div>
                 )
               }
@@ -1325,7 +1325,7 @@ export function MessagesView({
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Type a message..."
+                    placeholder="Typ een bericht..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={handleChatKeyDown}

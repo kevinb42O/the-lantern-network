@@ -33,14 +33,14 @@ export function AuthScreen() {
         if (error) {
           setError(error.message);
         } else {
-          setMessage('Check your email for the magic link!');
+          setMessage('Kijk in je e-mail voor de magische link!');
         }
       } else if (mode === 'sign-up') {
         const { error } = await signUp(email, password);
         if (error) {
           setError(error.message);
         } else {
-          setMessage('Check your email to confirm your account!');
+          setMessage('Kijk in je e-mail om je account te bevestigen!');
         }
       } else {
         const { error } = await signIn(email, password);
@@ -84,11 +84,11 @@ export function AuthScreen() {
         
         <img
           src="/lantern-logo.png"
-          alt="The Lantern Network"
+          alt="De Lantaarn"
           className="w-36 h-36 mx-auto mb-6 relative z-10 drop-shadow-[0_0_30px_rgba(251,191,36,0.5)]"
         />
-        <h1 className="text-4xl font-bold gradient-text relative z-10">The Lantern Network</h1>
-        <p className="text-muted-foreground mt-3 relative z-10 text-lg">Light the way for your neighbors</p>
+        <h1 className="text-4xl font-bold gradient-text relative z-10">De Lantaarn</h1>
+        <p className="text-muted-foreground mt-3 relative z-10 text-lg">Verbondenheid in Blankenberge</p>
       </div>
 
       <Card className="w-full max-w-md relative z-10 bg-card/90 backdrop-blur-sm border-border/50 shadow-2xl rounded-2xl overflow-hidden">
@@ -99,33 +99,33 @@ export function AuthScreen() {
           <CardTitle className="text-2xl flex items-center gap-2">
             {mode === 'sign-in' && (
               <>
-                Welcome Back
+                Welkom terug
                 <span className="text-primary">👋</span>
               </>
             )}
             {mode === 'sign-up' && (
               <>
-                Join the Network
+                Word lid
                 <Sparkle size={24} weight="duotone" className="text-primary" />
               </>
             )}
             {mode === 'magic-link' && (
               <>
-                Magic Link
+                Magische link
                 <MagicWand size={24} weight="duotone" className="text-primary" />
               </>
             )}
           </CardTitle>
           <CardDescription className="text-base">
-            {mode === 'sign-in' && 'Sign in to continue helping your neighbors'}
-            {mode === 'sign-up' && 'Create your account and start making a difference'}
-            {mode === 'magic-link' && "We'll send you a secure link to sign in"}
+            {mode === 'sign-in' && 'Aanmelden om je buren te blijven helpen'}
+            {mode === 'sign-up' && 'Maak je account aan en begin met helpen'}
+            {mode === 'magic-link' && "We sturen je een veilige link om aan te melden"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">E-mailadres</Label>
               <div className="relative">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1 rounded bg-muted/50">
                   <EnvelopeSimple className="text-muted-foreground" size={16} />
@@ -133,7 +133,7 @@ export function AuthScreen() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="jij@voorbeeld.be"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-12 h-12 rounded-xl"
@@ -144,7 +144,7 @@ export function AuthScreen() {
 
             {mode !== 'magic-link' && (
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <Label htmlFor="password" className="text-sm font-medium">Wachtwoord</Label>
                 <div className="relative">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1 rounded bg-muted/50">
                     <Key className="text-muted-foreground" size={16} />
@@ -210,15 +210,15 @@ export function AuthScreen() {
                   onClick={() => setMode('magic-link')}
                 >
                   <MagicWand size={16} />
-                  Sign in with magic link instead
+                  Aanmelden met magische link
                 </Button>
                 <div className="text-center text-sm text-muted-foreground">
-                  Don't have an account?{' '}
+                  Nog geen account?{' '}
                   <button
                     onClick={() => setMode('sign-up')}
                     className="text-primary hover:underline font-medium"
                   >
-                    Sign up
+                    Registreer je hier
                   </button>
                 </div>
               </>
@@ -226,12 +226,12 @@ export function AuthScreen() {
 
             {mode === 'sign-up' && (
               <div className="text-center text-sm text-muted-foreground">
-                Already have an account?{' '}
+                Al een account?{' '}
                 <button
                   onClick={() => setMode('sign-in')}
                   className="text-primary hover:underline font-medium"
                 >
-                  Sign in
+                  Aanmelden
                 </button>
               </div>
             )}
@@ -243,7 +243,7 @@ export function AuthScreen() {
                 onClick={() => setMode('sign-in')}
               >
                 <Key size={16} />
-                Sign in with password instead
+                Aanmelden met wachtwoord
               </Button>
             )}
           </div>
@@ -256,12 +256,12 @@ export function AuthScreen() {
         className="mt-8 flex items-center gap-2 text-sm text-muted-foreground/80 hover:text-primary transition-colors relative z-10"
       >
         <BookOpen size={16} />
-        <span>Learn about our philosophy</span>
+        <span>Leer meer over De Lantaarn</span>
       </button>
 
       {/* Footer text */}
       <p className="mt-4 text-sm text-muted-foreground/60 text-center relative z-10">
-        Join thousands of neighbors helping each other
+        Word deel van een warme buurtgemeenschap
       </p>
     </div>
   );
