@@ -267,6 +267,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      stories: {
+        Row: {
+          id: string;
+          creator_id: string;
+          content: string;
+          photo_url: string | null;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          creator_id: string;
+          content: string;
+          photo_url?: string | null;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          creator_id?: string;
+          content?: string;
+          photo_url?: string | null;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
+      story_reactions: {
+        Row: {
+          id: string;
+          story_id: string;
+          user_id: string;
+          reaction: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          story_id: string;
+          user_id: string;
+          reaction: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          story_id?: string;
+          user_id?: string;
+          reaction?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -295,10 +346,21 @@ export type Tables<T extends keyof Database['public']['Tables']> = Database['pub
 export type InsertTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert'];
 export type UpdateTables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update'];
 
-export type Profile = Tables<'profiles'>;
+// Base profile type from database
+export type ProfileRow = Tables<'profiles'>;
+
+// Import SupporterBadgeTier from types.ts to avoid duplication
+import type { SupporterBadgeTier } from './types';
+
+// Extended profile type with supporter badge (from separate table)
+export type Profile = ProfileRow & {
+  supporter_badge?: SupporterBadgeTier | null;
+};
 export type Flare = Tables<'flares'>;
 export type FlareParticipant = Tables<'flare_participants'>;
 export type Connection = Tables<'connections'>;
 export type Message = Tables<'messages'>;
 export type Transaction = Tables<'transactions'>;
 export type Invite = Tables<'invites'>;
+export type StoryRow = Tables<'stories'>;
+export type StoryReaction = Tables<'story_reactions'>;

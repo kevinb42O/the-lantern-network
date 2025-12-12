@@ -23,7 +23,7 @@ import { INITIAL_LANTERNS, checkElderStatus, generateInviteCode } from '@/lib/ec
 >>>>>>> Stashed changes
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode } from '@/lib/types'
+import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode, Story, StoryReactionType } from '@/lib/types'
 import { 
   generateInviteCode, 
   ELDER_HELP_THRESHOLD, 
@@ -31,13 +31,21 @@ import {
   HOARD_LIMIT,
   LANTERN_TRANSFER_AMOUNT,
   REPUTATION_GAIN_HELPER,
-  REPUTATION_GAIN_OWNER
+  REPUTATION_GAIN_OWNER,
+  DEFAULT_LOCATION
 } from '@/lib/economy'
+import { useCircleMemberIds, useIncrementTrustLevel } from '@/hooks/useCircle'
 
 // Admin configuration
 const ADMIN_EMAILS = [
   'kevinb42O@hotmail.com',
 ]
+
+// Valid story reaction types
+const VALID_STORY_REACTIONS: StoryReactionType[] = ['heart', 'celebrate', 'home']
+function isValidStoryReaction(reaction: string | null): reaction is StoryReactionType {
+  return reaction !== null && VALID_STORY_REACTIONS.includes(reaction as StoryReactionType)
+}
 
 type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
 
@@ -61,6 +69,7 @@ interface FlareData {
   creator_name?: string
   flare_type?: 'request' | 'offer'
   is_free?: boolean
+  circle_only?: boolean
 }
 
 // Help request data from Supabase (using flare_participants table)
@@ -106,6 +115,9 @@ function App() {
   // Help requests state
   const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([])
 
+  // Stories state
+  const [stories, setStories] = useState<Story[]>([])
+
   // Transactions state
   const [transactions, setTransactions] = useState<LanternTransaction[]>([])
 
@@ -122,10 +134,23 @@ function App() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [showUserProfile, setShowUserProfile] = useState(false)
 
+  // Circle chat state (for navigating from profile modal to circle chat)
+  const [circleChatUserId, setCircleChatUserId] = useState<string | null>(null)
+
+  // Circle hooks
+  const { data: circleMemberIds = [] } = useCircleMemberIds()
+  const incrementTrustLevel = useIncrementTrustLevel()
+
   // Handle user click (for viewing profile)
   const handleUserClick = (userId: string) => {
     setSelectedUserId(userId)
     setShowUserProfile(true)
+  }
+
+  // Handle starting a circle chat from profile modal
+  const handleStartCircleChat = (userId: string) => {
+    setCircleChatUserId(userId)
+    setCurrentView('messages')
   }
 
   // Fetch unread message count
@@ -172,7 +197,7 @@ function App() {
     const flaresWithNames: FlareData[] = flaresData.map(f => ({
       ...f,
       location: f.location as { lat: number; lng: number } | null,
-      creator_name: profileMap[f.creator_id] || 'Anonymous'
+      creator_name: profileMap[f.creator_id] || 'Onbekende buur'
     }))
     
     setFlares(flaresWithNames)
@@ -186,6 +211,7 @@ function App() {
     location: { lat: number; lng: number } | null
     flare_type: 'request' | 'offer'
     is_free: boolean
+    circle_only: boolean
   }) => {
     if (!authUser) return
 
@@ -194,18 +220,22 @@ function App() {
       title: flareData.title,
       description: flareData.description,
       category: flareData.category,
-      location: flareData.location,
+      location: flareData.location || DEFAULT_LOCATION,
       starts_at: new Date().toISOString(),
       status: 'active',
       flare_type: flareData.flare_type,
-      is_free: flareData.is_free
+      is_free: flareData.is_free,
+      circle_only: flareData.circle_only
     })
 
     if (error) {
-      console.error('Error creating flare:', error)
-      toast.error('Failed to create flare')
+      console.error('Error creating flare:', error.message, error.details ?? '', error.hint ?? '')
+      toast.error(`Lichtje aanmaken mislukt: ${error.message}`)
     } else {
-      toast.success(flareData.flare_type === 'offer' ? 'Offer posted! 🎁' : 'Flare posted! 🔥')
+      const message = flareData.circle_only 
+        ? (flareData.flare_type === 'offer' ? 'Aanbod voor buurt geplaatst! 🔥🎁' : 'Lichtje voor buurt geplaatst! 🔥')
+        : (flareData.flare_type === 'offer' ? 'Aanbod geplaatst! 🎁' : 'Lichtje geplaatst! 🔥')
+      toast.success(message)
       fetchFlares()
     }
   }
@@ -217,7 +247,7 @@ function App() {
     // Find the flare to get owner info
     const flare = flares.find(f => f.id === flareId)
     if (!flare) {
-      toast.error('Flare not found')
+      toast.error('Lichtje niet gevonden')
       return
     }
 
@@ -230,7 +260,7 @@ function App() {
       .limit(1)
 
     if (existing && existing.length > 0) {
-      toast.error('You already offered to help with this flare')
+      toast.error('Je hebt al aangeboden om te helpen')
       return
     }
 
@@ -245,7 +275,7 @@ function App() {
     if (error) {
       console.error('Error offering help:', error)
       const errorDetail = error.message || error.code || JSON.stringify(error).slice(0, 100)
-      toast.error(`Failed to send help offer: ${errorDetail}`)
+      toast.error(`Hulpaanbod versturen mislukt: ${errorDetail}`)
       return
     }
 
@@ -253,7 +283,7 @@ function App() {
     // Validate that we have valid UUIDs before inserting
     if (!flare.creator_id || flare.creator_id === authUser.id) {
       // Can't send message to yourself or invalid creator
-      toast.success('Help offer sent! Waiting for response...')
+      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
       fetchHelpRequests()
       return
     }
@@ -270,9 +300,9 @@ function App() {
       console.error('Error sending notification message:', messageError)
       console.error('Message error details:', JSON.stringify(messageError, null, 2))
       // Help request was created, the message in flare_participants serves as backup
-      toast.success('Help offer sent! Waiting for response...')
+      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
     } else {
-      toast.success('Help offer sent! Waiting for response...')
+      toast.success('Hulpaanbod verstuurd! We wachten op reactie...')
     }
     
     fetchHelpRequests()
@@ -344,9 +374,9 @@ function App() {
             id: p.id,
             flareId: p.flare_id,
             helperId: p.user_id,
-            helperUsername: profileMap[p.user_id] || 'Anonymous',
+            helperUsername: profileMap[p.user_id] || 'Onbekende buur',
             flareOwnerId: flare!.creator_id,  // Safe because of filter above
-            flareOwnerUsername: profileMap[flare!.creator_id] || 'Anonymous',
+            flareOwnerUsername: profileMap[flare!.creator_id] || 'Onbekende buur',
             message: p.message || '',
             status: p.status as 'pending' | 'accepted' | 'denied',
             createdAt: new Date(p.joined_at).getTime()
@@ -370,9 +400,9 @@ function App() {
 
     if (error) {
       console.error('Error accepting help:', error)
-      toast.error('Failed to accept help offer')
+      toast.error('Hulpaanbod accepteren mislukt')
     } else {
-      toast.success('Help offer accepted! You can now chat.')
+      toast.success('Hulpaanbod geaccepteerd! Je kan nu chatten.')
       fetchHelpRequests()
     }
   }
@@ -388,9 +418,9 @@ function App() {
 
     if (error) {
       console.error('Error denying help:', error)
-      toast.error('Failed to decline help offer')
+      toast.error('Hulpaanbod weigeren mislukt')
     } else {
-      toast.info('Help offer declined')
+      toast.info('Hulpaanbod geweigerd')
       fetchHelpRequests()
     }
   }
@@ -402,7 +432,7 @@ function App() {
     // Find the help request to get the other participant
     const helpRequest = helpRequests.find(hr => hr.id === helpRequestId)
     if (!helpRequest) {
-      toast.error('Conversation not found. Please refresh and try again.')
+      toast.error('Gesprek niet gevonden. Herlaad de pagina en probeer opnieuw.')
       return
     }
 
@@ -414,7 +444,7 @@ function App() {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!receiverId || !uuidRegex.test(receiverId)) {
       console.error('Invalid receiver ID:', receiverId)
-      toast.error('Unable to send message. Please refresh and try again.')
+      toast.error('Bericht versturen niet mogelijk. Herlaad de pagina en probeer opnieuw.')
       fetchHelpRequests() // Refresh data to fix the issue
       return
     }
@@ -430,7 +460,7 @@ function App() {
     if (error) {
       console.error('Error sending message:', error)
       console.error('Error details:', JSON.stringify(error, null, 2))
-      toast.error('Failed to send message. Please try again.')
+      toast.error('Bericht versturen mislukt. Probeer opnieuw.')
     }
   }
 
@@ -440,7 +470,7 @@ function App() {
 
     // Check if user has enough lanterns
     if (profile.lantern_balance < LANTERN_TRANSFER_AMOUNT) {
-      toast.error('Not enough lanterns to complete this task')
+      toast.error('Niet genoeg lichtpuntjes om deze taak af te ronden')
       return
     }
 
@@ -503,7 +533,7 @@ function App() {
         }
       ])
 
-      toast.success(`🏮 Task completed! ${LANTERN_TRANSFER_AMOUNT} Lantern sent as thanks!`)
+      toast.success(`🏮 Taak voltooid! ${LANTERN_TRANSFER_AMOUNT} Lichtpuntje verzonden als bedankje!`)
       
       // Refresh data
       fetchFlares()
@@ -513,9 +543,16 @@ function App() {
       
       // Check for elder promotion
       checkElderPromotion(helperId)
+
+      // Increment trust level for circle connections
+      try {
+        await incrementTrustLevel.mutateAsync(helperId)
+      } catch {
+        // Silently fail - this is optional enhancement
+      }
     } catch (err) {
       console.error('Error completing flare:', err)
-      toast.error('Failed to complete task')
+      toast.error('Taak afronden mislukt')
     }
   }
 
@@ -600,6 +637,154 @@ function App() {
     setInviteCodes(formatted)
   }
 
+  // Fetch stories
+  const fetchStories = async () => {
+    const now = new Date().toISOString()
+
+    // Fetch non-expired stories
+    const { data: storiesData, error } = await supabase
+      .from('stories')
+      .select('*')
+      .gt('expires_at', now)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (error || !storiesData) {
+      console.error('Error fetching stories:', error)
+      return
+    }
+
+    if (storiesData.length === 0) {
+      setStories([])
+      return
+    }
+
+    const storyIds = storiesData.map(s => s.id)
+    const creatorIds = [...new Set(storiesData.map(s => s.creator_id))]
+
+    // Fetch profiles for creators
+    const { data: profilesData } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', creatorIds)
+
+    const profileMap: Record<string, { name: string; avatar: string | null }> = {}
+    profilesData?.forEach(p => {
+      profileMap[p.user_id] = { name: p.display_name, avatar: p.avatar_url }
+    })
+
+    // Fetch all reactions for these stories
+    const { data: reactionsData } = await supabase
+      .from('story_reactions')
+      .select('story_id, reaction')
+      .in('story_id', storyIds)
+
+    // Count reactions per story
+    const reactionCounts: Record<string, { heart: number; celebrate: number; home: number }> = {}
+    storyIds.forEach(id => {
+      reactionCounts[id] = { heart: 0, celebrate: 0, home: 0 }
+    })
+    reactionsData?.forEach(r => {
+      if (r.reaction === 'heart' || r.reaction === 'celebrate' || r.reaction === 'home') {
+        reactionCounts[r.story_id][r.reaction]++
+      }
+    })
+
+    // Get user's reactions if logged in
+    const userReactions: Record<string, string | null> = {}
+    if (authUser) {
+      const { data: userReactionsData } = await supabase
+        .from('story_reactions')
+        .select('story_id, reaction')
+        .eq('user_id', authUser.id)
+        .in('story_id', storyIds)
+
+      userReactionsData?.forEach(r => {
+        userReactions[r.story_id] = r.reaction
+      })
+    }
+
+    // Transform to Story type
+    const formattedStories: Story[] = storiesData.map(s => {
+      const userReaction = userReactions[s.id]
+      return {
+        id: s.id,
+        creatorId: s.creator_id,
+        creatorName: profileMap[s.creator_id]?.name || 'Onbekende buur',
+        creatorAvatar: profileMap[s.creator_id]?.avatar || null,
+        content: s.content,
+        photoUrl: s.photo_url,
+        createdAt: new Date(s.created_at).getTime(),
+        expiresAt: new Date(s.expires_at).getTime(),
+        reactions: reactionCounts[s.id],
+        userReaction: isValidStoryReaction(userReaction) ? userReaction : null
+      }
+    })
+
+    setStories(formattedStories)
+  }
+
+  // Create a new story
+  const handleCreateStory = async (content: string, photoUrl?: string) => {
+    if (!authUser) return
+
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 48)
+
+    const { error } = await supabase.from('stories').insert({
+      creator_id: authUser.id,
+      content,
+      photo_url: photoUrl || null,
+      expires_at: expiresAt.toISOString()
+    })
+
+    if (error) {
+      console.error('Error creating story:', error)
+      toast.error('Verhaal delen mislukt')
+    } else {
+      fetchStories()
+    }
+  }
+
+  // Toggle reaction on a story
+  const handleStoryReaction = async (storyId: string, reaction: StoryReactionType) => {
+    if (!authUser) return
+
+    // Check existing reaction
+    const { data: existing } = await supabase
+      .from('story_reactions')
+      .select('id, reaction')
+      .eq('story_id', storyId)
+      .eq('user_id', authUser.id)
+      .single()
+
+    if (existing) {
+      if (existing.reaction === reaction) {
+        // Same reaction - remove it
+        await supabase
+          .from('story_reactions')
+          .delete()
+          .eq('id', existing.id)
+      } else {
+        // Different reaction - update it
+        await supabase
+          .from('story_reactions')
+          .update({ reaction })
+          .eq('id', existing.id)
+      }
+    } else {
+      // No existing reaction - add new one
+      await supabase.from('story_reactions').insert({
+        story_id: storyId,
+        user_id: authUser.id,
+        reaction
+      })
+    }
+
+    // Refresh stories to update counts
+    fetchStories()
+  }
+
   // Generate a new invite code
   const handleGenerateInvite = async () => {
     if (!authUser) return
@@ -616,9 +801,9 @@ function App() {
 
     if (error) {
       console.error('Error generating invite:', error)
-      toast.error('Failed to generate invite code')
+      toast.error('Uitnodigingscode aanmaken mislukt')
     } else {
-      toast.success('New invite code generated!')
+      toast.success('Nieuwe uitnodigingscode aangemaakt!')
       fetchInviteCodes()
     }
   }
@@ -643,7 +828,7 @@ function App() {
       // If they've reached elder threshold, their trust_score should be high enough
       // The Elder badge is shown when trust_score >= ELDER_TRUST_THRESHOLD
       if ((userProfile?.trust_score || 0) >= ELDER_TRUST_THRESHOLD) {
-        toast.success('🌟 Congratulations! You\'ve earned Elder status!')
+        toast.success('🌟 Proficiat! Je bent nu een Buurheld!')
       }
     }
   }
@@ -658,6 +843,7 @@ function App() {
     fetchHelpCount()
     fetchInviteCodes()
     fetchUnreadCount()
+    fetchStories()
 
     const channel = supabase
       .channel('flares-changes')
@@ -687,6 +873,38 @@ function App() {
         () => {
           fetchHelpRequests()
           fetchHelpCount()
+        }
+      )
+      .subscribe()
+
+    // Subscribe to stories changes
+    const storiesChannel = supabase
+      .channel('stories-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'stories'
+        },
+        () => {
+          fetchStories()
+        }
+      )
+      .subscribe()
+
+    // Subscribe to story_reactions changes
+    const reactionsChannel = supabase
+      .channel('story-reactions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'story_reactions'
+        },
+        () => {
+          fetchStories()
         }
       )
       .subscribe()
@@ -725,6 +943,8 @@ function App() {
       supabase.removeChannel(channel)
       supabase.removeChannel(participantsChannel)
       supabase.removeChannel(messagesChannel)
+      supabase.removeChannel(storiesChannel)
+      supabase.removeChannel(reactionsChannel)
     }
   }, [authUser])
 
@@ -803,7 +1023,7 @@ function App() {
       const formattedMessages: Message[] = messagesData.map(m => ({
         id: m.id,
         userId: m.sender_id,
-        username: profileMap[m.sender_id] || 'Anonymous',
+        username: profileMap[m.sender_id] || 'Onbekende buur',
         content: m.content,
         timestamp: new Date(m.created_at).getTime(),
         type: 'campfire' as const
@@ -924,7 +1144,7 @@ function App() {
         return {
           id: m.id,
           userId: m.sender_id,
-          username: profileMap[m.sender_id] || 'Anonymous',
+          username: profileMap[m.sender_id] || 'Onbekende buur',
           content: m.content,
           timestamp: new Date(m.created_at).getTime(),
           type: 'mission' as const,
@@ -1146,12 +1366,12 @@ function App() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4 p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-muted-foreground text-center">Loading your profile...</p>
+        <p className="text-muted-foreground text-center">Je profiel laden...</p>
         <button 
           onClick={refreshProfile}
           className="text-primary hover:underline text-sm"
         >
-          Tap to retry
+          Klik om opnieuw te proberen
         </button>
       </div>
     )
@@ -1177,7 +1397,8 @@ function App() {
     location: profile.location as { lat: number; lng: number } | undefined,
     isAdmin,
     isModerator,
-    badges: profile.badges || []
+    badges: profile.badges || [],
+    supporterBadge: profile.supporter_badge
   }
 
   // Find active chat if one is selected
@@ -1193,8 +1414,12 @@ function App() {
             user={userData}
             flares={flares}
             helpRequests={helpRequests}
+            stories={stories}
+            circleMemberIds={circleMemberIds}
             onCreateFlare={handleCreateFlare}
             onJoinFlare={handleJoinFlare}
+            onCreateStory={handleCreateStory}
+            onStoryReaction={handleStoryReaction}
             onUserClick={handleUserClick}
           />
         )}
@@ -1234,7 +1459,7 @@ function App() {
             flares={flares.map(f => ({
               id: f.id,
               userId: f.creator_id,
-              username: f.creator_name || 'Anonymous',
+              username: f.creator_name || 'Onbekende buur',
               category: f.category as 'Mechanical' | 'Food' | 'Talk' | 'Other',
               description: f.description,
               location: f.location || { lat: 0, lng: 0 },
@@ -1248,6 +1473,8 @@ function App() {
             onSendMessage={handleSendChatMessage}
             onCompleteFlare={handleCompleteFlare}
             onMarkAsRead={handleMarkAsRead}
+            onUserClick={handleUserClick}
+            initialCircleChatUserId={circleChatUserId}
           />
         )}
         {currentView === 'profile' && (
@@ -1278,6 +1505,7 @@ function App() {
         userId={selectedUserId}
         isOpen={showUserProfile}
         onClose={() => setShowUserProfile(false)}
+        onStartCircleChat={handleStartCircleChat}
       />
 
       {/* Enhanced Bottom Navigation */}
@@ -1285,39 +1513,39 @@ function App() {
         <div className="flex items-center justify-around p-1.5 max-w-lg mx-auto">
           <NavButton
             icon={Flame}
-            label="Flares"
+            label="Lichtjes"
             active={currentView === 'flares'}
             onClick={() => setCurrentView('flares')}
           />
           <NavButton
             icon={Fire}
-            label="Campfire"
+            label="'t Kampvuur"
             active={currentView === 'campfire'}
             onClick={() => setCurrentView('campfire')}
           />
           <NavButton
             icon={Wallet}
-            label="Wallet"
+            label="Portemonnee"
             active={currentView === 'wallet'}
             onClick={() => setCurrentView('wallet')}
           />
           <NavButton
             icon={ChatCircleDots}
-            label="Messages"
+            label="Gesprekken"
             active={currentView === 'messages'}
             onClick={() => setCurrentView('messages')}
             badge={unreadCount}
           />
           <NavButton
             icon={UserCircle}
-            label="Profile"
+            label="Profiel"
             active={currentView === 'profile'}
             onClick={() => setCurrentView('profile')}
           />
           {isModerator && !isAdmin && (
             <NavButton
               icon={ShieldCheck}
-              label="Mod"
+              label="Moderator"
               active={currentView === 'moderator'}
               onClick={() => setCurrentView('moderator')}
               isModeratorButton
@@ -1326,7 +1554,7 @@ function App() {
           {isAdmin && (
             <NavButton
               icon={ShieldCheck}
-              label="Admin"
+              label="Beheer"
               active={currentView === 'admin'}
               onClick={() => setCurrentView('admin')}
               isAdminButton

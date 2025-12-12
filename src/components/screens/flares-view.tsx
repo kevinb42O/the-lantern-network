@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, MapPin, Clock, Users, Wrench, Hamburger, Chat, Lightbulb, HandWaving, Sparkle, Fire, Hourglass, CheckCircle, XCircle, Gift, Coin, Heart } from '@phosphor-icons/react'
+import { Plus, MapPin, Clock, Users, Wrench, Hamburger, Chat, Lightbulb, HandWaving, Sparkle, Fire, Hourglass, CheckCircle, XCircle, Gift, Coin, Heart, Camera, PaperPlaneTilt, Lock } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { AmbientBackground } from '@/components/ui/ambient-background'
 import { toast } from 'sonner'
-import type { User, HelpRequest } from '@/lib/types'
+import type { User, HelpRequest, Story, StoryReactionType } from '@/lib/types'
+import { StoryCard } from '@/components/story-card'
 
 // Flare from Supabase
 interface FlareData {
@@ -31,14 +33,17 @@ interface FlareData {
   creator_name?: string
   flare_type?: 'request' | 'offer'
   is_free?: boolean
+  circle_only?: boolean
 }
 
-type FilterTab = 'all' | 'requests' | 'offers'
+type FilterTab = 'all' | 'requests' | 'offers' | 'stories'
 
 interface FlaresViewProps {
   user: User
   flares: FlareData[]
   helpRequests: HelpRequest[]
+  stories?: Story[]
+  circleMemberIds?: string[]
   onCreateFlare: (flare: {
     title: string
     description: string
@@ -46,8 +51,11 @@ interface FlaresViewProps {
     location: { lat: number; lng: number } | null
     flare_type: 'request' | 'offer'
     is_free: boolean
+    circle_only: boolean
   }) => Promise<void>
   onJoinFlare: (flareId: string, message: string) => Promise<void>
+  onCreateStory?: (content: string, photoUrl?: string) => Promise<void>
+  onStoryReaction?: (storyId: string, reaction: StoryReactionType) => void
   onUserClick?: (userId: string) => void
 }
 
@@ -88,7 +96,7 @@ const categoryConfig: Record<string, { icon: React.ElementType; color: string; b
 
 const categories = ['Mechanical', 'Food', 'Talk', 'Other']
 
-export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFlare, onUserClick }: FlaresViewProps) {
+export function FlaresView({ user, flares, helpRequests, stories = [], circleMemberIds = [], onCreateFlare, onJoinFlare, onCreateStory, onStoryReaction, onUserClick }: FlaresViewProps) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
   const [category, setCategory] = useState('Other')
@@ -100,7 +108,11 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
   // New state for flare type and offers
   const [flareType, setFlareType] = useState<'request' | 'offer'>('request')
   const [isFree, setIsFree] = useState(false)
-  const [createStep, setCreateStep] = useState<'type' | 'details'>('type')
+  const [circleOnly, setCircleOnly] = useState(false)
+  const [createStep, setCreateStep] = useState<'type' | 'details' | 'story'>('type')
+  
+  // Story creation state
+  const [storyContent, setStoryContent] = useState('')
   
   // Filter state
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all')
@@ -150,7 +162,8 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
         category,
         location: useLocation ? userLocation : null,
         flare_type: flareType,
-        is_free: isFree
+        is_free: isFree,
+        circle_only: circleOnly
       })
       setShowCreateModal(false)
       setTitle('')
@@ -158,7 +171,23 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
       setCategory('Other')
       setFlareType('request')
       setIsFree(false)
+      setCircleOnly(false)
       setCreateStep('type')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleCreateStory = async () => {
+    if (!storyContent.trim() || !onCreateStory) return
+    
+    setCreating(true)
+    try {
+      await onCreateStory(storyContent.trim())
+      setShowCreateModal(false)
+      setStoryContent('')
+      setCreateStep('type')
+      toast.success('Story shared with neighbors!')
     } finally {
       setCreating(false)
     }
@@ -215,10 +244,24 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
     return seconds < 300
   }
 
-  const activeFlares = flares.filter(f => f.status === 'active')
+  // Convert circleMemberIds to a Set for O(1) lookup performance
+  const circleMemberSet = new Set(circleMemberIds)
+
+  // Filter out circle-only flares that user shouldn't see
+  const visibleFlares = flares.filter(f => {
+    // Always show user's own flares
+    if (f.creator_id === user.id) return true
+    // If flare is circle_only, only show if creator is in user's circle
+    if (f.circle_only) {
+      return circleMemberSet.has(f.creator_id)
+    }
+    return true
+  })
+
+  const activeFlares = visibleFlares.filter(f => f.status === 'active')
   
   // Filter flares based on active tab
-  const filteredFlares = activeFlares.filter(flare => {
+  const filteredFlares = activeFilter === 'stories' ? [] : activeFlares.filter(flare => {
     const type = flare.flare_type || 'request'
     if (activeFilter === 'all') return true
     if (activeFilter === 'requests') return type === 'request'
@@ -229,6 +272,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
   // Count for tabs
   const requestCount = activeFlares.filter(f => (f.flare_type || 'request') === 'request').length
   const offerCount = activeFlares.filter(f => f.flare_type === 'offer').length
+  const storyCount = stories.length
 
   return (
     <div className="flex flex-col h-full bg-background">
@@ -242,34 +286,34 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
             <div>
               <h1 className="text-2xl font-bold text-foreground">Neighborhood Flares</h1>
               <p className="text-sm text-muted-foreground">
-                {activeFlares.length === 0 
+                {activeFlares.length === 0 && storyCount === 0
                   ? "No active flares right now" 
-                  : `${requestCount} request${requestCount !== 1 ? 's' : ''} • ${offerCount} offer${offerCount !== 1 ? 's' : ''}`
+                  : `${requestCount} request${requestCount !== 1 ? 's' : ''} • ${offerCount} offer${offerCount !== 1 ? 's' : ''} • ${storyCount} stor${storyCount !== 1 ? 'ies' : 'y'}`
                 }
               </p>
             </div>
           </div>
           <Button onClick={handleOpenCreate} className="gap-2 btn-glow rounded-xl shadow-lg shadow-primary/20">
             <Plus size={18} weight="bold" />
-            <span className="hidden sm:inline">Light Flare</span>
-            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">Nieuw</span>
+            <span className="sm:hidden">+</span>
           </Button>
         </div>
       </div>
 
       {/* Filter Tabs */}
       <div className="px-4 pt-4 max-w-2xl mx-auto w-full">
-        <div className="flex gap-2 p-1 rounded-xl bg-muted/30 border border-border/50">
+        <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/50 overflow-x-auto">
           <button
             onClick={() => setActiveFilter('all')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
               activeFilter === 'all'
                 ? 'bg-card text-foreground shadow-md'
                 : 'text-muted-foreground hover:text-foreground hover:bg-card/50'
             }`}
           >
-            <Fire size={16} weight={activeFilter === 'all' ? 'duotone' : 'regular'} />
-            All
+            <Fire size={14} weight={activeFilter === 'all' ? 'duotone' : 'regular'} />
+            Alles
             {activeFlares.length > 0 && (
               <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
                 {activeFlares.length}
@@ -278,14 +322,15 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
           </button>
           <button
             onClick={() => setActiveFilter('requests')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
               activeFilter === 'requests'
                 ? 'bg-gradient-to-r from-orange-500/20 to-amber-500/20 text-orange-400 shadow-md border border-orange-500/20'
                 : 'text-muted-foreground hover:text-orange-400 hover:bg-orange-500/10'
             }`}
           >
-            <HandWaving size={16} weight={activeFilter === 'requests' ? 'duotone' : 'regular'} />
-            Requests
+            <HandWaving size={14} weight={activeFilter === 'requests' ? 'duotone' : 'regular'} />
+            <span className="hidden sm:inline">Vragen</span>
+            <span className="sm:hidden">Hulp</span>
             {requestCount > 0 && (
               <span className="text-xs bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">
                 {requestCount}
@@ -294,17 +339,33 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
           </button>
           <button
             onClick={() => setActiveFilter('offers')}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
               activeFilter === 'offers'
                 ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 shadow-md border border-emerald-500/20'
                 : 'text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10'
             }`}
           >
-            <Gift size={16} weight={activeFilter === 'offers' ? 'duotone' : 'regular'} />
-            Offers
+            <Gift size={14} weight={activeFilter === 'offers' ? 'duotone' : 'regular'} />
+            Aanbiedingen
             {offerCount > 0 && (
               <span className="text-xs bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
                 {offerCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveFilter('stories')}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+              activeFilter === 'stories'
+                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 shadow-md border border-amber-500/20'
+                : 'text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10'
+            }`}
+          >
+            <Camera size={14} weight={activeFilter === 'stories' ? 'duotone' : 'regular'} />
+            Verhalen
+            {storyCount > 0 && (
+              <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">
+                {storyCount}
               </span>
             )}
           </button>
@@ -312,41 +373,90 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
       </div>
 
       {/* Flares List */}
-      <div className="flex-1 overflow-y-auto p-4 pb-8">
-        <div className="space-y-4 max-w-2xl mx-auto">
-          {filteredFlares.length === 0 ? (
+      <div className="flex-1 overflow-y-auto p-4 pb-8 relative">
+        <AmbientBackground variant="flares" />
+        <div className="space-y-4 max-w-2xl mx-auto relative z-10">
+          {/* Stories Tab - show only stories */}
+          {activeFilter === 'stories' ? (
+            stories.length === 0 ? (
+              <div className="text-center py-16 px-4">
+                <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/10 mb-6">
+                  <Camera size={48} weight="duotone" className="text-amber-400 bounce-subtle" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-3">
+                  Nog geen verhalen
+                </h3>
+                <p className="text-muted-foreground max-w-sm mx-auto mb-6 leading-relaxed">
+                  Deel een moment uit de buurt! Verhalen verdwijnen na 48 uur.
+                </p>
+                <Button onClick={handleOpenCreate} size="lg" className="gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500">
+                  <Camera size={20} weight="duotone" />
+                  Deel een moment
+                </Button>
+              </div>
+            ) : (
+              stories.map((story, index) => (
+                <div key={story.id} className="fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <StoryCard
+                    story={story}
+                    isOwner={story.creatorId === user.id}
+                    onReaction={onStoryReaction}
+                    onUserClick={onUserClick}
+                  />
+                </div>
+              ))
+            )
+          ) : filteredFlares.length === 0 && (activeFilter !== 'all' || stories.length === 0) ? (
             <div className="text-center py-16 px-4">
               <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 mb-6">
                 <Sparkle size={48} weight="duotone" className="text-primary bounce-subtle" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-3">
                 {activeFilter === 'offers' 
-                  ? 'No offers yet'
+                  ? 'Nog geen aanbiedingen'
                   : activeFilter === 'requests'
-                    ? 'No requests right now'
-                    : 'Your neighborhood is quiet'
+                    ? 'Momenteel geen hulpvragen'
+                    : 'De buurt is rustig'
                 }
               </h3>
               <p className="text-muted-foreground max-w-sm mx-auto mb-6 leading-relaxed">
                 {activeFilter === 'offers'
-                  ? 'Be the first to share something with your neighbors!'
+                  ? 'Wees de eerste om iets te delen met je buren!'
                   : activeFilter === 'requests'
-                    ? 'No one needs help right now. Check back soon!'
-                    : 'Be the first to light a flare and bring neighbors together!'
+                    ? 'Niemand heeft nu hulp nodig. Kom later nog eens kijken!'
+                    : 'Wees de eerste om een lichtje aan te steken en de buurt samen te brengen!'
                 }
               </p>
               <Button onClick={handleOpenCreate} size="lg" className="gap-2 rounded-xl btn-glow">
                 <Fire size={20} weight="duotone" />
-                Light the First Flare
+                Steek het eerste lichtje aan
               </Button>
             </div>
           ) : (
-            filteredFlares.map((flare, index) => {
+            <>
+              {/* When "All" is selected, intermix stories with flares */}
+              {activeFilter === 'all' && stories.length > 0 && (
+                <>
+                  {/* Show first story at the top if there are any */}
+                  {stories.slice(0, 1).map((story) => (
+                    <div key={story.id} className="fade-in-up">
+                      <StoryCard
+                        story={story}
+                        isOwner={story.creatorId === user.id}
+                        onReaction={onStoryReaction}
+                        onUserClick={onUserClick}
+                      />
+                    </div>
+                  ))}
+                </>
+              )}
+              {filteredFlares.map((flare, index) => {
               const config = categoryConfig[flare.category] || categoryConfig.Other
               const CategoryIcon = config.icon
               const isOwner = flare.creator_id === user.id
               const isOffer = flare.flare_type === 'offer'
               const isFreefree = flare.is_free === true
+              const isCircleOnly = flare.circle_only === true
               const recentPost = isRecent(flare.created_at)
 
               return (
@@ -360,7 +470,16 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   {/* Flare Type Badge - Top Right */}
-                  <div className="absolute top-3 right-3 z-10">
+                  <div className="absolute top-3 right-3 z-10 flex gap-1">
+                    {isCircleOnly && (
+                      <Badge 
+                        variant="outline" 
+                        className="text-xs font-semibold bg-amber-500/15 text-amber-400 border-amber-500/30"
+                      >
+                        <Lock size={10} className="mr-1" />
+                        Circle
+                      </Badge>
+                    )}
                     <Badge 
                       variant="outline" 
                       className={`text-xs font-semibold ${
@@ -432,7 +551,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                           className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-sm"
                           aria-label={`View ${flare.creator_name || 'user'}'s profile`}
                         >
-                          {flare.creator_name || 'Anonymous'}
+                          {flare.creator_name || 'Onbekende buur'}
                         </button>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span className={`flex items-center gap-1 ${recentPost ? 'text-green-400' : ''}`}>
@@ -444,7 +563,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                               <span>•</span>
                               <span className="flex items-center gap-1">
                                 <MapPin size={11} />
-                                Nearby
+                                Dichtbij
                               </span>
                             </>
                           )}
@@ -455,12 +574,12 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                                 {isFreefree ? (
                                   <>
                                     <Heart size={11} weight="fill" />
-                                    Free
+                                    Gratis
                                   </>
                                 ) : (
                                   <>
                                     <Coin size={11} weight="fill" />
-                                    1 Token
+                                    1 Lichtpuntje
                                   </>
                                 )}
                               </span>
@@ -544,14 +663,26 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                             : 'bg-primary/10 text-primary'
                         }`}>
                           <Sparkle size={12} className="mr-1" />
-                          Your {isOffer ? 'Offer' : 'Flare'}
+                          Jouw {isOffer ? 'aanbod' : 'lichtje'}
                         </Badge>
                       )}
                     </div>
                   </CardContent>
                 </Card>
               )
-            })
+            })}
+              {/* Show remaining stories after flares when "All" is selected */}
+              {activeFilter === 'all' && stories.slice(1).map((story, index) => (
+                <div key={story.id} className="fade-in-up" style={{ animationDelay: `${(filteredFlares.length + index + 1) * 0.05}s` }}>
+                  <StoryCard
+                    story={story}
+                    isOwner={story.creatorId === user.id}
+                    onReaction={onStoryReaction}
+                    onUserClick={onUserClick}
+                  />
+                </div>
+              ))}
+            </>
           )}
         </div>
       </div>
@@ -564,19 +695,19 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
               {helpFlare?.flare_type === 'offer' ? (
                 <>
                   <Gift size={24} weight="duotone" className="text-emerald-400" />
-                  Claim This Offer
+                  Claim dit aanbod
                 </>
               ) : (
                 <>
                   <HandWaving size={24} weight="duotone" className="text-primary" />
-                  Offer Your Help
+                  Bied je hulp aan
                 </>
               )}
             </DialogTitle>
             <DialogDescription>
               {helpFlare?.flare_type === 'offer' 
-                ? 'Let them know you\'re interested'
-                : 'Let them know you\'re here to help'
+                ? 'Laat weten dat je interesse hebt'
+                : 'Laat weten dat je kan helpen'
               }
             </DialogDescription>
           </DialogHeader>
@@ -601,12 +732,12 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                     {helpFlare.is_free ? (
                       <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
                         <Heart size={12} weight="fill" className="mr-1" />
-                        Free Gift
+                        Gratis geschenk
                       </Badge>
                     ) : (
                       <Badge className="bg-amber-500/20 text-amber-400 border-0 text-xs">
                         <Coin size={12} weight="fill" className="mr-1" />
-                        1 Token
+                        1 Lichtpuntje
                       </Badge>
                     )}
                   </div>
@@ -617,13 +748,13 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
               <div className="space-y-2">
                 <Label htmlFor="help-message" className="text-sm font-medium flex items-center gap-2">
                   <Chat size={14} className="text-muted-foreground" />
-                  Your message
+                  Je bericht
                 </Label>
                 <Textarea
                   id="help-message"
                   placeholder={helpFlare.flare_type === 'offer' 
-                    ? "Hi! I'd love to claim this. Here's how to reach me..."
-                    : "Hi! I'd love to help you with this. I have experience with..."
+                    ? "Dag! Ik zou dit graag claimen. Zo bereik je me..."
+                    : "Dag! Ik kan je hiermee helpen. Ik heb ervaring met..."
                   }
                   value={helpMessage}
                   onChange={(e) => setHelpMessage(e.target.value)}
@@ -643,7 +774,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                   className="flex-1 rounded-xl"
                   onClick={() => setShowHelpModal(false)}
                 >
-                  Maybe Later
+                  Misschien later
                 </Button>
                 <Button
                   className={`flex-1 rounded-xl ${
@@ -654,7 +785,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                   onClick={handleSendHelpOffer}
                   disabled={!helpMessage.trim() || sendingHelp}
                 >
-                  {sendingHelp ? 'Sending...' : helpFlare.flare_type === 'offer' ? '🎁 Send Request' : '🤝 Send Offer'}
+                  {sendingHelp ? 'Versturen...' : helpFlare.flare_type === 'offer' ? '🎁 Verstuur vraag' : '🤝 Verstuur aanbod'}
                 </Button>
               </div>
             </div>
@@ -669,6 +800,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
           setCreateStep('type')
           setFlareType('request')
           setIsFree(false)
+          setStoryContent('')
         }
       }}>
         <DialogContent className="sm:max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
@@ -677,26 +809,33 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
               {createStep === 'type' ? (
                 <>
                   <Fire size={24} weight="duotone" className="text-primary" />
-                  Light a Flare
+                  Nieuw bericht
+                </>
+              ) : createStep === 'story' ? (
+                <>
+                  <Camera size={24} weight="duotone" className="text-amber-400" />
+                  Deel een moment
                 </>
               ) : flareType === 'offer' ? (
                 <>
                   <Gift size={24} weight="duotone" className="text-emerald-400" />
-                  Share an Offer
+                  Deel een aanbod
                 </>
               ) : (
                 <>
                   <HandWaving size={24} weight="duotone" className="text-orange-400" />
-                  Ask for Help
+                  Vraag om hulp
                 </>
               )}
             </DialogTitle>
             <DialogDescription>
               {createStep === 'type' 
-                ? 'What would you like to do?'
-                : flareType === 'offer'
-                  ? 'Share something with your neighbors'
-                  : 'Ask your neighbors for help'
+                ? 'Wat wil je delen?'
+                : createStep === 'story'
+                  ? 'Deel een moment met je buren'
+                  : flareType === 'offer'
+                    ? 'Deel iets met je buren'
+                    : 'Vraag je buren om hulp'
               }
             </DialogDescription>
           </DialogHeader>
@@ -704,44 +843,117 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
           <div className="space-y-6 py-2">
             {createStep === 'type' ? (
               /* Step 1: Choose Type */
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFlareType('request')
+                      setCreateStep('details')
+                    }}
+                    className="p-5 rounded-2xl border-2 border-border/50 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all duration-200 flex flex-col items-center gap-2 group"
+                  >
+                    <div className="p-3 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 group-hover:scale-110 transition-transform">
+                      <Fire size={28} weight="duotone" className="text-orange-400" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="font-bold text-foreground text-sm mb-0.5">Vraag om hulp</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Hulp nodig
+                      </p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFlareType('offer')
+                      setCreateStep('details')
+                    }}
+                    className="p-5 rounded-2xl border-2 border-border/50 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all duration-200 flex flex-col items-center gap-2 group"
+                  >
+                    <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 group-hover:scale-110 transition-transform">
+                      <Gift size={28} weight="duotone" className="text-emerald-400" />
+                    </div>
+                    <div className="text-center">
+                      <h3 className="font-bold text-foreground text-sm mb-0.5">Bied iets aan</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Deel met buren
+                      </p>
+                    </div>
+                  </button>
+                </div>
+                {/* Share a Moment option - full width */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setFlareType('request')
-                    setCreateStep('details')
-                  }}
-                  className="p-6 rounded-2xl border-2 border-border/50 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all duration-200 flex flex-col items-center gap-3 group"
+                  onClick={() => setCreateStep('story')}
+                  className="w-full p-4 rounded-2xl border-2 border-border/50 hover:border-amber-500/50 hover:bg-amber-500/5 transition-all duration-200 flex items-center gap-4 group"
                 >
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 group-hover:scale-110 transition-transform">
-                    <Fire size={32} weight="duotone" className="text-orange-400" />
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 group-hover:scale-110 transition-transform">
+                    <Camera size={28} weight="duotone" className="text-amber-400" />
                   </div>
-                  <div className="text-center">
-                    <h3 className="font-bold text-foreground mb-1">Ask for Help</h3>
+                  <div className="text-left flex-1">
+                    <h3 className="font-bold text-foreground text-sm mb-0.5">Deel een moment</h3>
                     <p className="text-xs text-muted-foreground">
-                      Need a neighbor to help you
+                      Update uit de buurt • Verdwijnt na 48u
                     </p>
                   </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFlareType('offer')
-                    setCreateStep('details')
-                  }}
-                  className="p-6 rounded-2xl border-2 border-border/50 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all duration-200 flex flex-col items-center gap-3 group"
-                >
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 group-hover:scale-110 transition-transform">
-                    <Gift size={32} weight="duotone" className="text-emerald-400" />
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-bold text-foreground mb-1">Offer Something</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Share something with neighbors
-                    </p>
-                  </div>
+                  <PaperPlaneTilt size={20} className="text-muted-foreground group-hover:text-amber-400 transition-colors" />
                 </button>
               </div>
+            ) : createStep === 'story' ? (
+              /* Story Creation */
+              <>
+                {/* Back Button */}
+                <button
+                  type="button"
+                  onClick={() => setCreateStep('type')}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                >
+                  ← Terug
+                </button>
+
+                {/* Story Content */}
+                <div className="space-y-2">
+                  <Label htmlFor="story-content" className="text-sm font-medium">
+                    Wat gebeurt er in de buurt?
+                  </Label>
+                  <Textarea
+                    id="story-content"
+                    placeholder="Mijn kind zijn eerste fietstocht! 🚴‍♂️"
+                    value={storyContent}
+                    onChange={(e) => setStoryContent(e.target.value)}
+                    rows={4}
+                    maxLength={500}
+                    className="resize-none rounded-xl"
+                  />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {storyContent.length}/500
+                  </p>
+                </div>
+
+                {/* Info about stories */}
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400/80">
+                  <p>✨ Verhalen zijn informele updates - geen actie nodig van je buren. Ze verdwijnen na 48 uur.</p>
+                </div>
+
+                {/* Submit */}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-xl"
+                    onClick={() => setShowCreateModal(false)}
+                  >
+                    Annuleren
+                  </Button>
+                  <Button
+                    className="flex-1 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500"
+                    onClick={handleCreateStory}
+                    disabled={!storyContent.trim() || creating}
+                  >
+                    {creating ? 'Delen...' : '📸 Deel met buren'}
+                  </Button>
+                </div>
+              </>
             ) : (
               /* Step 2: Details */
               <>
@@ -751,13 +963,13 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                   onClick={() => setCreateStep('type')}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
-                  ← Back to type selection
+                  ← Terug naar keuze
                 </button>
 
                 {/* Category Selection */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">
-                    {flareType === 'offer' ? 'What are you offering?' : 'What do you need help with?'}
+                    {flareType === 'offer' ? 'Wat bied je aan?' : 'Waarmee heb je hulp nodig?'}
                   </Label>
                   <div className="grid grid-cols-2 gap-3">
                     {categories.map((cat) => {
@@ -810,14 +1022,14 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                 {/* Title */}
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-sm font-medium">
-                    Quick summary
+                    Korte samenvatting
                   </Label>
                   <input
                     id="title"
                     type="text"
                     placeholder={flareType === 'offer' 
-                      ? "What are you offering? e.g., 'Extra lasagna to share'"
-                      : "What do you need? e.g., 'Need help moving a couch'"
+                      ? "Wat bied je aan? bv. 'Extra lasagne om te delen'"
+                      : "Wat heb je nodig? bv. 'Hulp bij zetel verplaatsen'"
                     }
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -833,13 +1045,13 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                 {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-sm font-medium">
-                    Tell us more
+                    Vertel meer
                   </Label>
                   <Textarea
                     id="description"
                     placeholder={flareType === 'offer'
-                      ? "Describe what you're offering, when it's available, any conditions..."
-                      : "Share more details so neighbors know how to help..."
+                      ? "Beschrijf wat je aanbiedt, wanneer het beschikbaar is, eventuele voorwaarden..."
+                      : "Vertel wat meer zodat buren weten hoe ze kunnen helpen..."
                     }
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -861,7 +1073,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                   }`}>
                     <Label className="text-sm font-medium mb-3 block flex items-center gap-2">
                       <Heart size={16} className="text-emerald-400" />
-                      How do you want to share this?
+                      Hoe wil je dit delen?
                     </Label>
                     <div className="space-y-3">
                       <button
@@ -881,10 +1093,10 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                           </div>
                           <div>
                             <div className="font-medium text-foreground flex items-center gap-2">
-                              🎁 Free Gift
+                              🎁 Gratis geschenk
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              No token needed - pure generosity!
+                              Geen lichtpuntje nodig - puur uit gulheid!
                             </p>
                           </div>
                         </div>
@@ -906,10 +1118,10 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                           </div>
                           <div>
                             <div className="font-medium text-foreground flex items-center gap-2">
-                              🪙 Token Exchange
+                              🪙 Ruilen
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              Recipient spends 1 token to claim
+                              Ontvanger gebruikt 1 lichtpuntje
                             </p>
                           </div>
                         </div>
@@ -926,10 +1138,10 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                     </div>
                     <div className="space-y-0.5">
                       <Label htmlFor="location-toggle" className="text-sm font-medium cursor-pointer">
-                        Share my location
+                        Deel mijn locatie
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        Helps nearby neighbors find you
+                        Helpt nabije buren je te vinden
                       </p>
                     </div>
                   </div>
@@ -940,6 +1152,32 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                   />
                 </div>
 
+                {/* Circle Only Toggle */}
+                <div className={`flex items-center justify-between p-4 rounded-xl border ${
+                  circleOnly 
+                    ? 'bg-amber-500/10 border-amber-500/30' 
+                    : 'bg-muted/30 border-border/50'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${circleOnly ? 'bg-amber-500/20' : 'bg-muted'}`}>
+                      <Lock size={18} className={circleOnly ? 'text-amber-400' : 'text-muted-foreground'} />
+                    </div>
+                    <div className="space-y-0.5">
+                      <Label htmlFor="circle-toggle" className="text-sm font-medium cursor-pointer">
+                        Enkel voor buurtkring
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Alleen je vertrouwenskring ziet dit
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="circle-toggle"
+                    checked={circleOnly}
+                    onCheckedChange={setCircleOnly}
+                  />
+                </div>
+
                 {/* Submit */}
                 <div className="flex gap-3 pt-2">
                   <Button
@@ -947,7 +1185,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                     className="flex-1 rounded-xl"
                     onClick={() => setShowCreateModal(false)}
                   >
-                    Cancel
+                    Annuleren
                   </Button>
                   <Button
                     className={`flex-1 rounded-xl ${
@@ -958,7 +1196,7 @@ export function FlaresView({ user, flares, helpRequests, onCreateFlare, onJoinFl
                     onClick={handleCreate}
                     disabled={!title.trim() || !description.trim() || creating}
                   >
-                    {creating ? 'Posting...' : flareType === 'offer' ? '🎁 Post Offer' : '🔥 Post Request'}
+                    {creating ? 'Plaatsen...' : flareType === 'offer' ? '🎁 Plaats aanbod' : '🔥 Plaats vraag'}
                   </Button>
                 </div>
               </>

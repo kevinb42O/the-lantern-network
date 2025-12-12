@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { Flare } from '@/lib/database.types';
 import { useAuth } from '@/contexts/AuthContext';
+import { DEFAULT_LOCATION } from '@/lib/economy';
 
 // Fetch all active flares
 export function useFlares() {
@@ -91,11 +92,15 @@ export function useCreateFlare() {
         .insert({
           ...flare,
           creator_id: user.id,
+          location: flare.location || DEFAULT_LOCATION,
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating flare:', error.message, error.details ?? '', error.hint ?? '');
+        throw error;
+      }
 
       // Deduct lantern cost from user's balance
       if (flare.lantern_cost > 0) {

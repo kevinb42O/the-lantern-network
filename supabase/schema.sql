@@ -516,7 +516,176 @@ CREATE INDEX IF NOT EXISTS idx_announcements_sender_id ON announcements(sender_i
 CREATE INDEX IF NOT EXISTS idx_announcement_recipients_user_id ON announcement_recipients(user_id);
 CREATE INDEX IF NOT EXISTS idx_announcement_recipients_announcement_id ON announcement_recipients(announcement_id);
 
+-- Supporter Badges table (donation recognition system)
+CREATE TABLE IF NOT EXISTS supporter_badges (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  badge_type VARCHAR(20) NOT NULL CHECK (badge_type IN ('supporter', 'flame_keeper', 'beacon', 'lighthouse')),
+  notes TEXT,
+  granted_at TIMESTAMPTZ DEFAULT NOW(),
+  granted_by UUID REFERENCES auth.users(id) ON DELETE SET NULL NOT NULL
+);
+
+-- Enable RLS on supporter_badges table
+ALTER TABLE supporter_badges ENABLE ROW LEVEL SECURITY;
+
+-- Supporter badges policies
+-- Everyone can view supporter badges (for display on profiles)
+CREATE POLICY "Supporter badges are viewable by everyone" ON supporter_badges
+  FOR SELECT USING (true);
+
+-- Only admins and moderators can grant badges
+CREATE POLICY "Admins can manage supporter badges" ON supporter_badges
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND (is_admin = true OR is_moderator = true)
+    )
+  );
+
+-- Only admins and moderators can update badges
+CREATE POLICY "Admins can update supporter badges" ON supporter_badges
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND (is_admin = true OR is_moderator = true)
+    )
+  );
+
+-- Only admins and moderators can delete badges
+CREATE POLICY "Admins can delete supporter badges" ON supporter_badges
+  FOR DELETE USING (
+    EXISTS (
+      SELECT 1 FROM profiles 
+      WHERE user_id = auth.uid() AND (is_admin = true OR is_moderator = true)
+    )
+  );
+
+-- Create indexes for supporter badges
+CREATE INDEX IF NOT EXISTS idx_supporter_badges_user_id ON supporter_badges(user_id);
+CREATE INDEX IF NOT EXISTS idx_supporter_badges_badge_type ON supporter_badges(badge_type);
+CREATE INDEX IF NOT EXISTS idx_supporter_badges_granted_at ON supporter_badges(granted_at);
+
+-- Stories table (neighborhood moments)
+CREATE TABLE IF NOT EXISTS stories (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  creator_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  content VARCHAR(500) NOT NULL,
+  photo_url TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '48 hours')
+);
+
+-- Story reactions table
+CREATE TABLE IF NOT EXISTS story_reactions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  story_id UUID REFERENCES stories(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  reaction VARCHAR(20) NOT NULL CHECK (reaction IN ('heart', 'celebrate', 'home')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(story_id, user_id)
+);
+
+-- Enable RLS on stories tables
+ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE story_reactions ENABLE ROW LEVEL SECURITY;
+
+-- Stories policies
+-- Non-expired stories are viewable by everyone
+CREATE POLICY "Non-expired stories are viewable by everyone" ON stories
+  FOR SELECT USING (expires_at > NOW());
+
+-- Users can view their own stories even if expired
+CREATE POLICY "Users can view their own stories" ON stories
+  FOR SELECT USING (auth.uid() = creator_id);
+
+-- Authenticated users can create stories
+CREATE POLICY "Authenticated users can create stories" ON stories
+  FOR INSERT WITH CHECK (auth.uid() = creator_id);
+
+-- Creators can delete their own stories
+CREATE POLICY "Creators can delete their own stories" ON stories
+  FOR DELETE USING (auth.uid() = creator_id);
+
+-- Story reactions policies
+-- Reactions are viewable by everyone (for counting)
+CREATE POLICY "Story reactions are viewable by everyone" ON story_reactions
+  FOR SELECT USING (true);
+
+-- Users can add their own reactions
+CREATE POLICY "Users can add their own reactions" ON story_reactions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Users can update their own reactions
+CREATE POLICY "Users can update their own reactions" ON story_reactions
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Users can delete their own reactions
+CREATE POLICY "Users can delete their own reactions" ON story_reactions
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Create indexes for stories
+CREATE INDEX IF NOT EXISTS idx_stories_creator_id ON stories(creator_id);
+CREATE INDEX IF NOT EXISTS idx_stories_created_at ON stories(created_at);
+CREATE INDEX IF NOT EXISTS idx_stories_expires_at ON stories(expires_at);
+CREATE INDEX IF NOT EXISTS idx_story_reactions_story_id ON story_reactions(story_id);
+CREATE INDEX IF NOT EXISTS idx_story_reactions_user_id ON story_reactions(user_id);
+
+-- Enable realtime for stories
+ALTER PUBLICATION supabase_realtime ADD TABLE stories;
+ALTER PUBLICATION supabase_realtime ADD TABLE story_reactions;
+
 -- Enable realtime for messages and flare_participants tables
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 ALTER PUBLICATION supabase_realtime ADD TABLE flare_participants;
 ALTER PUBLICATION supabase_realtime ADD TABLE flares;
+
+-- Connection Requests table (for Trust Circle system)
+CREATE TABLE IF NOT EXISTS connection_requests (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  from_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  to_user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  message TEXT,
+  flare_id UUID REFERENCES flares(id) ON DELETE SET NULL,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'declined')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(from_user_id, to_user_id)
+);
+
+-- Enable RLS on connection_requests table
+ALTER TABLE connection_requests ENABLE ROW LEVEL SECURITY;
+
+-- Connection requests policies
+-- Users can view requests they sent or received
+CREATE POLICY "Users can view their own connection requests" ON connection_requests
+  FOR SELECT USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
+
+-- Users can create connection requests
+CREATE POLICY "Users can create connection requests" ON connection_requests
+  FOR INSERT WITH CHECK (auth.uid() = from_user_id);
+
+-- Users can update requests they received (to accept/decline)
+CREATE POLICY "Users can update received connection requests" ON connection_requests
+  FOR UPDATE USING (auth.uid() = to_user_id);
+
+-- Users can delete their own requests
+CREATE POLICY "Users can delete their own connection requests" ON connection_requests
+  FOR DELETE USING (auth.uid() = from_user_id OR auth.uid() = to_user_id);
+
+-- Create indexes for connection requests
+CREATE INDEX IF NOT EXISTS idx_connection_requests_from_user_id ON connection_requests(from_user_id);
+CREATE INDEX IF NOT EXISTS idx_connection_requests_to_user_id ON connection_requests(to_user_id);
+CREATE INDEX IF NOT EXISTS idx_connection_requests_status ON connection_requests(status);
+
+-- Enable realtime for connection_requests and connections
+ALTER PUBLICATION supabase_realtime ADD TABLE connection_requests;
+ALTER PUBLICATION supabase_realtime ADD TABLE connections;
+
+-- Add circle_only column to flares table (if not exists)
+-- Note: ALTER TABLE ADD COLUMN IF NOT EXISTS is PostgreSQL 9.6+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'flares' AND column_name = 'circle_only') THEN
+    ALTER TABLE flares ADD COLUMN circle_only BOOLEAN DEFAULT FALSE;
+  END IF;
+END $$;

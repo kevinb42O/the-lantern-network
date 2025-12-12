@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy, Medal, BookOpen } from '@phosphor-icons/react'
+import { Gear, Ticket, SignOut, ShieldWarning, Sparkle, Copy, DoorOpen, Star, HandHeart, Trophy, Medal, BookOpen, Heart } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
@@ -7,10 +7,11 @@ import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { VibeCard } from '@/components/vibe-card'
 import { PhilosophyView } from './philosophy-view'
+import { SupportPage } from './support-page'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
-import { getHighestBadge, getNextBadge, getEarnedBadges, getAllUserBadges, BADGES } from '@/lib/economy'
+import { getHighestBadge, getNextBadge, getEarnedBadges, getAllUserBadges, BADGES, getSupporterBadgeInfo } from '@/lib/economy'
 
 // Check if Supabase is configured
 const isSupabaseConfigured = 
@@ -39,12 +40,13 @@ export function ProfileView({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showBadges, setShowBadges] = useState(false)
   const [showPhilosophy, setShowPhilosophy] = useState(false)
+  const [showSupport, setShowSupport] = useState(false)
 
   const availableInvites = inviteCodes.filter(code => !code.usedBy)
 
   const copyInviteCode = (code: string) => {
     navigator.clipboard.writeText(code)
-    toast.success('Invite code copied to clipboard!')
+    toast.success('Uitnodigingscode gekopieerd!')
   }
 
   const handleSignOut = async () => {
@@ -68,9 +70,17 @@ export function ProfileView({
     ? BADGES.filter(b => adminBadges.includes(b.id) && !earnedBadges.some(eb => eb.id === b.id))
     : []
 
+  // Get supporter badge info if user has one
+  const supporterBadgeInfo = user.supporterBadge ? getSupporterBadgeInfo(user.supporterBadge) : null
+
   // Calculate member duration
   const memberSince = user.createdAt ? new Date(user.createdAt) : new Date()
   const daysSinceJoined = Math.floor((Date.now() - memberSince.getTime()) / (1000 * 60 * 60 * 24))
+
+  // Show support page if requested
+  if (showSupport) {
+    return <SupportPage onBack={() => setShowSupport(false)} />;
+  }
 
   // Show philosophy page if requested
   if (showPhilosophy) {
@@ -88,9 +98,9 @@ export function ProfileView({
               <Star size={24} weight="duotone" className="text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Your Profile</h1>
+              <h1 className="text-2xl font-bold text-foreground">Je profiel</h1>
               <p className="text-sm text-muted-foreground">
-                Member for {daysSinceJoined === 0 ? 'today' : `${daysSinceJoined} day${daysSinceJoined !== 1 ? 's' : ''}`}
+                Lid sinds {daysSinceJoined === 0 ? 'vandaag' : `${daysSinceJoined} dag${daysSinceJoined !== 1 ? 'en' : ''}`}
               </p>
             </div>
           </div>
@@ -130,15 +140,15 @@ export function ProfileView({
                 className="rounded-xl gap-1"
               >
                 <Medal size={14} />
-                View All
+                Bekijk alle
               </Button>
             </div>
             {nextBadge && (
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Progress to {nextBadge.badge.name}</span>
+                  <span className="text-muted-foreground">Voortgang naar {nextBadge.badge.name}</span>
                   <span className={nextBadge.badge.color}>
-                    {helpCount}/{nextBadge.badge.minFlares} helps
+                    {helpCount}/{nextBadge.badge.minFlares} keer geholpen
                   </span>
                 </div>
                 <Progress 
@@ -156,21 +166,21 @@ export function ProfileView({
                 <HandHeart size={20} weight="duotone" className="text-primary" />
               </div>
               <p className="text-2xl font-bold text-foreground">{helpCount}</p>
-              <p className="text-xs text-muted-foreground">Helps Given</p>
+              <p className="text-xs text-muted-foreground">Keer geholpen</p>
             </Card>
             <Card className="p-4 text-center bg-gradient-to-br from-card to-card/80 border-border/50 card-hover">
               <div className="inline-flex p-2 rounded-lg bg-accent/15 mb-2">
                 <Star size={20} weight="duotone" className="text-accent" />
               </div>
               <p className="text-2xl font-bold text-foreground">{user.reputation}</p>
-              <p className="text-xs text-muted-foreground">Reputation</p>
+              <p className="text-xs text-muted-foreground">Reputatie</p>
             </Card>
             <Card className="p-4 text-center bg-gradient-to-br from-card to-card/80 border-border/50 card-hover">
               <div className="inline-flex p-2 rounded-lg bg-success/15 mb-2">
                 <Trophy size={20} weight="duotone" className="text-success" />
               </div>
               <p className="text-2xl font-bold text-foreground">{user.lanternBalance}</p>
-              <p className="text-xs text-muted-foreground">Lanterns</p>
+              <p className="text-xs text-muted-foreground">Lichtpuntjes</p>
             </Card>
           </div>
 
@@ -183,11 +193,11 @@ export function ProfileView({
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
-                    Elder Status
+                    Buurheld status
                     <span className="text-amber-400">✨</span>
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    You can invite new members to join the network
+                    Je kan nieuwe leden uitnodigen
                   </p>
                 </div>
               </div>
@@ -197,10 +207,10 @@ export function ProfileView({
                 onClick={() => setShowInvites(true)}
               >
                 <Ticket size={18} className="text-amber-400" />
-                <span>Manage Invites</span>
+                <span>Uitnodigingen beheren</span>
                 {availableInvites.length > 0 && (
                   <span className="ml-auto bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-xs font-medium">
-                    {availableInvites.length} available
+                    {availableInvites.length} beschikbaar
                   </span>
                 )}
               </Button>
@@ -216,11 +226,20 @@ export function ProfileView({
             <div className="space-y-2">
               <Button
                 variant="outline"
+                className="w-full justify-start gap-3 rounded-xl h-12 border-rose-500/30 hover:bg-rose-500/10"
+                onClick={() => setShowSupport(true)}
+              >
+                <Heart size={18} weight="duotone" className="text-rose-400" />
+                <span className="flex-1 text-left">Steun ons</span>
+                <span className="text-xs text-rose-400">❤️</span>
+              </Button>
+              <Button
+                variant="outline"
                 className="w-full justify-start gap-3 rounded-xl h-12"
                 onClick={() => setShowPhilosophy(true)}
               >
                 <BookOpen size={18} className="text-muted-foreground" />
-                Our Philosophy
+                Onze filosofie
               </Button>
               {isSupabaseConfigured && (
                 <Button
@@ -229,7 +248,7 @@ export function ProfileView({
                   onClick={handleSignOut}
                 >
                   <DoorOpen size={18} className="text-muted-foreground" />
-                  Sign Out
+                  Afmelden
                 </Button>
               )}
               <Button 
@@ -237,7 +256,7 @@ export function ProfileView({
                 className="w-full justify-start gap-3 rounded-xl h-12"
               >
                 <ShieldWarning size={18} className="text-muted-foreground" />
-                Report an Issue
+                Meld een probleem
               </Button>
               <Button
                 variant="outline"
@@ -245,7 +264,7 @@ export function ProfileView({
                 onClick={() => setShowDeleteConfirm(true)}
               >
                 <SignOut size={18} />
-                Delete Account
+                Account verwijderen
               </Button>
             </div>
           </Card>
@@ -258,10 +277,10 @@ export function ProfileView({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Ticket size={24} weight="duotone" className="text-amber-400" />
-              Invite Codes
+              Uitnodigingscodes
             </DialogTitle>
             <DialogDescription>
-              Share these codes with trusted neighbors to grow the network
+              Deel deze codes met vertrouwde buren om het netwerk te laten groeien
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -270,17 +289,17 @@ export function ProfileView({
                 <div className="inline-flex p-4 rounded-full bg-muted/50 mb-4">
                   <Ticket size={40} className="text-muted-foreground" />
                 </div>
-                <p className="text-muted-foreground mb-4">No available invite codes</p>
+                <p className="text-muted-foreground mb-4">Geen beschikbare uitnodigingscodes</p>
                 {user.isElder && (
                   <Button
                     onClick={() => {
                       onGenerateInvite()
-                      toast.success('New invite code generated!')
+                      toast.success('Nieuwe uitnodigingscode aangemaakt!')
                     }}
                     className="gap-2 rounded-xl"
                   >
                     <Sparkle size={16} />
-                    Generate New Code
+                    Nieuwe code aanmaken
                   </Button>
                 )}
               </div>
@@ -294,7 +313,7 @@ export function ProfileView({
                           {invite.code}
                         </code>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Ready to share
+                          Klaar om te delen
                         </p>
                       </div>
                       <Button
@@ -304,7 +323,7 @@ export function ProfileView({
                         className="gap-2 rounded-xl"
                       >
                         <Copy size={14} />
-                        Copy
+                        Kopiëren
                       </Button>
                     </div>
                   </Card>
@@ -314,11 +333,11 @@ export function ProfileView({
                     className="w-full gap-2 rounded-xl"
                     onClick={() => {
                       onGenerateInvite()
-                      toast.success('New invite code generated!')
+                      toast.success('Nieuwe uitnodigingscode aangemaakt!')
                     }}
                   >
                     <Sparkle size={16} />
-                    Generate Another Code
+                    Nog een code aanmaken
                   </Button>
                 )}
               </>
@@ -371,6 +390,29 @@ export function ProfileView({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
+            {/* Supporter Badge (highest priority) */}
+            {supporterBadgeInfo && (
+              <>
+                <h4 className="text-sm font-medium text-foreground pt-1">Supporter Badge</h4>
+                <Card 
+                  className={`p-4 ${supporterBadgeInfo.bgColor} border-2 ${supporterBadgeInfo.borderColor} shadow-[0_0_15px_rgba(251,191,36,0.15)]`}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl animate-pulse">{supporterBadgeInfo.emoji}</span>
+                    <div className="flex-1">
+                      <h4 className={`font-semibold ${supporterBadgeInfo.color}`}>{supporterBadgeInfo.name}</h4>
+                      <p className="text-xs text-muted-foreground">{supporterBadgeInfo.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Thank you for supporting The Lantern Network!
+                      </p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 font-medium">
+                      Supporter
+                    </span>
+                  </div>
+                </Card>
+              </>
+            )}
             {/* Custom Badges (assigned by admin) */}
             {customBadges.length > 0 && (
               <>
@@ -395,8 +437,11 @@ export function ProfileView({
                     </div>
                   </Card>
                 ))}
-                <h4 className="text-sm font-medium text-foreground pt-2">Earned Badges</h4>
               </>
+            )}
+            {/* Earned Badges Section Header - show if we have supporter/custom badges */}
+            {(supporterBadgeInfo || customBadges.length > 0) && (
+              <h4 className="text-sm font-medium text-foreground pt-2">Earned Badges</h4>
             )}
             {earnedBadges.map((badge) => (
               <Card 

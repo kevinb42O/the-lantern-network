@@ -2,6 +2,7 @@ import { ArrowUp, ArrowDown, Lamp, Sparkle, HandCoins } from '@phosphor-icons/re
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
 import { LanternBalance } from '@/components/lantern-balance'
+import { AmbientBackground } from '@/components/ui/ambient-background'
 import type { User, LanternTransaction } from '@/lib/types'
 
 interface WalletViewProps {
@@ -39,15 +40,15 @@ export function WalletView({ user, transactions }: WalletViewProps) {
     <div className="flex flex-col h-full bg-background">
 <<<<<<< Updated upstream
       {/* Header with Balance */}
-      <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
+      <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent relative z-10">
         <div className="max-w-lg mx-auto space-y-5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-primary/15">
               <Lamp size={24} weight="duotone" className="text-primary lantern-glow" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Lantern Wallet</h1>
-              <p className="text-sm text-muted-foreground">Your community currency</p>
+              <h1 className="text-2xl font-bold text-foreground">Portemonnee</h1>
+              <p className="text-sm text-muted-foreground">Je Lichtpuntjes</p>
             </div>
           </div>
           
@@ -58,14 +59,14 @@ export function WalletView({ user, transactions }: WalletViewProps) {
             <div className="p-4 rounded-xl bg-success/10 border border-success/20">
               <div className="flex items-center gap-2 mb-1">
                 <ArrowDown size={16} className="text-success" />
-                <span className="text-xs font-medium text-success uppercase tracking-wide">Received</span>
+                <span className="text-xs font-medium text-success uppercase tracking-wide">Ontvangen</span>
               </div>
               <p className="text-2xl font-bold text-success">{totalReceived}</p>
             </div>
             <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
               <div className="flex items-center gap-2 mb-1">
                 <ArrowUp size={16} className="text-primary" />
-                <span className="text-xs font-medium text-primary uppercase tracking-wide">Given</span>
+                <span className="text-xs font-medium text-primary uppercase tracking-wide">Gegeven</span>
               </div>
               <p className="text-2xl font-bold text-primary">{totalSent}</p>
             </div>
@@ -82,13 +83,13 @@ export function WalletView({ user, transactions }: WalletViewProps) {
 
       {/* Transactions */}
       <ScrollArea className="flex-1">
-        <div className="p-5 max-w-lg mx-auto">
+        <div className="p-5 max-w-lg mx-auto relative z-10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">
-              Transaction History
+              Bedankjes
             </h2>
             <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
-              {transactions.length} total
+              {transactions.length} totaal
             </span>
           </div>
           
@@ -98,10 +99,10 @@ export function WalletView({ user, transactions }: WalletViewProps) {
                 <HandCoins size={48} weight="duotone" className="text-primary bounce-subtle" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                No transactions yet
+                Nog geen bedankjes
               </h3>
               <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                Help a neighbor to earn your first Lantern, or receive one as a welcome gift!
+                Help een buur om je eerste Lichtpuntje te verdienen!
               </p>
             </div>
           ) : (
