@@ -551,7 +551,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                           className="font-medium text-foreground hover:text-primary transition-colors cursor-pointer text-sm"
                           aria-label={`View ${flare.creator_name || 'user'}'s profile`}
                         >
-                          {flare.creator_name || 'Anonymous'}
+                          {flare.creator_name || 'Onbekende buur'}
                         </button>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span className={`flex items-center gap-1 ${recentPost ? 'text-green-400' : ''}`}>

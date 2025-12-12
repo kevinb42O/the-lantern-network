@@ -106,7 +106,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
 
       const formattedSupporters: Supporter[] = badgesData.map((s) => ({
         user_id: s.user_id,
-        display_name: profileMap[s.user_id]?.display_name || 'Anonymous',
+        display_name: profileMap[s.user_id]?.display_name || 'Onbekende buur',
         avatar_url: profileMap[s.user_id]?.avatar_url || null,
         badge_type: s.badge_type as SupporterBadgeTier,
         granted_at: s.granted_at

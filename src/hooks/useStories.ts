@@ -44,7 +44,7 @@ function transformStory(
   return {
     id: storyData.id,
     creatorId: storyData.creator_id,
-    creatorName: storyData.profiles?.display_name || 'Anonymous',
+    creatorName: storyData.profiles?.display_name || 'Onbekende buur',
     creatorAvatar: storyData.profiles?.avatar_url || null,
     content: storyData.content,
     photoUrl: storyData.photo_url,

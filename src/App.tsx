@@ -178,7 +178,7 @@ function App() {
     const flaresWithNames: FlareData[] = flaresData.map(f => ({
       ...f,
       location: f.location as { lat: number; lng: number } | null,
-      creator_name: profileMap[f.creator_id] || 'Anonymous'
+      creator_name: profileMap[f.creator_id] || 'Onbekende buur'
     }))
     
     setFlares(flaresWithNames)
@@ -354,9 +354,9 @@ function App() {
             id: p.id,
             flareId: p.flare_id,
             helperId: p.user_id,
-            helperUsername: profileMap[p.user_id] || 'Anonymous',
+            helperUsername: profileMap[p.user_id] || 'Onbekende buur',
             flareOwnerId: flare!.creator_id,  // Safe because of filter above
-            flareOwnerUsername: profileMap[flare!.creator_id] || 'Anonymous',
+            flareOwnerUsername: profileMap[flare!.creator_id] || 'Onbekende buur',
             message: p.message || '',
             status: p.status as 'pending' | 'accepted' | 'denied',
             createdAt: new Date(p.joined_at).getTime()
@@ -690,7 +690,7 @@ function App() {
       return {
         id: s.id,
         creatorId: s.creator_id,
-        creatorName: profileMap[s.creator_id]?.name || 'Anonymous',
+        creatorName: profileMap[s.creator_id]?.name || 'Onbekende buur',
         creatorAvatar: profileMap[s.creator_id]?.avatar || null,
         content: s.content,
         photoUrl: s.photo_url,
@@ -1003,7 +1003,7 @@ function App() {
       const formattedMessages: Message[] = messagesData.map(m => ({
         id: m.id,
         userId: m.sender_id,
-        username: profileMap[m.sender_id] || 'Anonymous',
+        username: profileMap[m.sender_id] || 'Onbekende buur',
         content: m.content,
         timestamp: new Date(m.created_at).getTime(),
         type: 'campfire' as const
@@ -1089,7 +1089,7 @@ function App() {
         return {
           id: m.id,
           userId: m.sender_id,
-          username: profileMap[m.sender_id] || 'Anonymous',
+          username: profileMap[m.sender_id] || 'Onbekende buur',
           content: m.content,
           timestamp: new Date(m.created_at).getTime(),
           type: 'mission' as const,
@@ -1337,7 +1337,7 @@ function App() {
             flares={flares.map(f => ({
               id: f.id,
               userId: f.creator_id,
-              username: f.creator_name || 'Anonymous',
+              username: f.creator_name || 'Onbekende buur',
               category: f.category as 'Mechanical' | 'Food' | 'Talk' | 'Other',
               description: f.description,
               location: f.location || { lat: 0, lng: 0 },
@@ -1391,39 +1391,39 @@ function App() {
         <div className="flex items-center justify-around p-1.5 max-w-lg mx-auto">
           <NavButton
             icon={Flame}
-            label="Flares"
+            label="Lichtjes"
             active={currentView === 'flares'}
             onClick={() => setCurrentView('flares')}
           />
           <NavButton
             icon={Fire}
-            label="Campfire"
+            label="'t Kampvuur"
             active={currentView === 'campfire'}
             onClick={() => setCurrentView('campfire')}
           />
           <NavButton
             icon={Wallet}
-            label="Wallet"
+            label="Portemonnee"
             active={currentView === 'wallet'}
             onClick={() => setCurrentView('wallet')}
           />
           <NavButton
             icon={ChatCircleDots}
-            label="Messages"
+            label="Gesprekken"
             active={currentView === 'messages'}
             onClick={() => setCurrentView('messages')}
             badge={unreadCount}
           />
           <NavButton
             icon={UserCircle}
-            label="Profile"
+            label="Profiel"
             active={currentView === 'profile'}
             onClick={() => setCurrentView('profile')}
           />
           {isModerator && !isAdmin && (
             <NavButton
               icon={ShieldCheck}
-              label="Mod"
+              label="Moderator"
               active={currentView === 'moderator'}
               onClick={() => setCurrentView('moderator')}
               isModeratorButton
@@ -1432,7 +1432,7 @@ function App() {
           {isAdmin && (
             <NavButton
               icon={ShieldCheck}
-              label="Admin"
+              label="Beheer"
               active={currentView === 'admin'}
               onClick={() => setCurrentView('admin')}
               isAdminButton

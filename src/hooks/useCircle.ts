@@ -77,7 +77,7 @@ export function useCircleConnections() {
       return data.map(c => ({
         id: c.id,
         connectedUserId: c.connected_user_id,
-        connectedUserName: profileMap[c.connected_user_id]?.name || 'Anonymous',
+        connectedUserName: profileMap[c.connected_user_id]?.name || 'Onbekende buur',
         connectedUserAvatar: profileMap[c.connected_user_id]?.avatar || null,
         trustLevel: c.trust_level,
         metThroughFlareId: c.met_through_flare_id || null,
@@ -143,9 +143,9 @@ export function useConnectionRequests() {
         flareId: r.flare_id,
         status: r.status,
         createdAt: r.created_at,
-        fromUserName: profileMap[r.from_user_id]?.name || 'Anonymous',
+        fromUserName: profileMap[r.from_user_id]?.name || 'Onbekende buur',
         fromUserAvatar: profileMap[r.from_user_id]?.avatar || null,
-        toUserName: profileMap[r.to_user_id]?.name || 'Anonymous',
+        toUserName: profileMap[r.to_user_id]?.name || 'Onbekende buur',
         toUserAvatar: profileMap[r.to_user_id]?.avatar || null,
         flareName: r.flare_id ? flareMap[r.flare_id] || null : null,
       }));
@@ -470,7 +470,7 @@ export function useCircleMessages(partnerId: string | null) {
       return allMessages.map(m => ({
         id: m.id,
         senderId: m.sender_id,
-        senderName: profileMap[m.sender_id]?.name || 'Anonymous',
+        senderName: profileMap[m.sender_id]?.name || 'Onbekende buur',
         senderAvatar: profileMap[m.sender_id]?.avatar || null,
         receiverId: m.receiver_id,
         content: m.content,
