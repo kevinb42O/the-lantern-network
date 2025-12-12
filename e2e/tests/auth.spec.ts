@@ -22,7 +22,7 @@ test.describe('Authentication Flow', () => {
     });
 
     await test.step('Verify heading text', async () => {
-      await authPage.verifyHeading('The Lantern Network');
+      await authPage.verifyHeading('De Lantaarn');
     });
   });
 

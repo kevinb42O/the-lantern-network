@@ -191,7 +191,7 @@ export class FlaresPage {
     }
     
     // Submit
-    const submitButton = this.page.locator('button[type="submit"], button:has-text("Send")').first();
+    const submitButton = this.page.locator('button[type="submit"], button:has-text("Versturen")').first();
     await submitButton.click();
     
     await waitForRealtimeUpdate(this.page);

@@ -59,50 +59,51 @@ export const TEST_STORY = {
 
 /**
  * Selectors for common UI elements
+ * Updated for Flemish translation
  */
 export const SELECTORS = {
   // Auth
   EMAIL_INPUT: '#email',
   PASSWORD_INPUT: '#password',
   SIGN_IN_BUTTON: 'button[type="submit"]',
-  SIGN_OUT_BUTTON: 'button:has-text("Sign Out")',
+  SIGN_OUT_BUTTON: 'button:has-text("Afmelden")',
   
-  // Navigation
-  NAV_FLARES: 'nav a[href*="flares"], nav button:has-text("Flares")',
-  NAV_CAMPFIRE: 'nav a[href*="campfire"], nav button:has-text("Campfire")',
-  NAV_MESSAGES: 'nav a[href*="messages"], nav button:has-text("Messages")',
-  NAV_WALLET: 'nav a[href*="wallet"], nav button:has-text("Wallet")',
-  NAV_PROFILE: 'nav a[href*="profile"], nav button:has-text("Profile")',
-  NAV_ADMIN: 'nav a[href*="admin"], nav button:has-text("Admin")',
+  // Navigation - Updated for Flemish
+  NAV_FLARES: 'nav a[href*="flares"], nav button:has-text("Lichtjes")',
+  NAV_CAMPFIRE: 'nav a[href*="campfire"], nav button:has-text("\'t Kampvuur")',
+  NAV_MESSAGES: 'nav a[href*="messages"], nav button:has-text("Gesprekken")',
+  NAV_WALLET: 'nav a[href*="wallet"], nav button:has-text("Portemonnee")',
+  NAV_PROFILE: 'nav a[href*="profile"], nav button:has-text("Profiel")',
+  NAV_ADMIN: 'nav a[href*="admin"], nav button:has-text("Beheer")',
   
-  // Flares
-  CREATE_FLARE_BUTTON: 'button:has-text("Create"), button:has-text("New Flare")',
+  // Flares - Updated for Flemish
+  CREATE_FLARE_BUTTON: 'button:has-text("Aanmaken"), button:has-text("Nieuw Lichtje")',
   FLARE_CARD: '[data-testid="flare-card"], .flare-card, [class*="card"]',
-  FLARE_TITLE_INPUT: 'input[placeholder*="title" i], input[name="title"]',
-  FLARE_DESCRIPTION_INPUT: 'textarea[placeholder*="describe" i], textarea[name="description"]',
-  FLARE_TYPE_REQUEST: 'button:has-text("Request"), input[value="request"]',
-  FLARE_TYPE_OFFER: 'button:has-text("Offer"), input[value="offer"]',
-  FLARE_SUBMIT_BUTTON: 'button[type="submit"], button:has-text("Create")',
+  FLARE_TITLE_INPUT: 'input[placeholder*="titel" i], input[name="title"]',
+  FLARE_DESCRIPTION_INPUT: 'textarea[placeholder*="beschrijving" i], textarea[placeholder*="beschrijf" i], textarea[name="description"]',
+  FLARE_TYPE_REQUEST: 'button:has-text("Vraag"), input[value="request"]',
+  FLARE_TYPE_OFFER: 'button:has-text("Aanbod"), input[value="offer"]',
+  FLARE_SUBMIT_BUTTON: 'button[type="submit"], button:has-text("Aanmaken")',
   
-  // Campfire
-  MESSAGE_INPUT: 'textarea[placeholder*="message" i], input[placeholder*="message" i]',
-  SEND_MESSAGE_BUTTON: 'button[type="submit"], button:has-text("Send")',
+  // Campfire - Updated for Flemish
+  MESSAGE_INPUT: 'textarea[placeholder*="bericht" i], input[placeholder*="bericht" i]',
+  SEND_MESSAGE_BUTTON: 'button[type="submit"], button:has-text("Versturen")',
   MESSAGE_ITEM: '[data-testid="message"], .message, [class*="message"]',
   
-  // Wallet
+  // Wallet - Updated for Flemish
   WALLET_BALANCE: '[data-testid="balance"], [class*="balance"]',
   TRANSACTION_HISTORY: '[data-testid="transaction"], [class*="transaction"]',
   
-  // Profile
+  // Profile - Updated for Flemish
   PROFILE_NAME: '[data-testid="profile-name"], [class*="profile-name"]',
   PROFILE_STATS: '[data-testid="stats"], [class*="stats"]',
   
-  // Admin
+  // Admin - Updated for Flemish
   ADMIN_PANEL: '[data-testid="admin-panel"], [class*="admin"]',
-  SEND_ANNOUNCEMENT_BUTTON: 'button:has-text("Send Announcement"), button:has-text("Announce")',
+  SEND_ANNOUNCEMENT_BUTTON: 'button:has-text("Versturen"), button:has-text("Aankondiging")',
   
-  // Stories
-  CREATE_STORY_BUTTON: 'button:has-text("Share Story"), button:has-text("Story")',
+  // Stories - Updated for Flemish
+  CREATE_STORY_BUTTON: 'button:has-text("Verhaal delen"), button:has-text("Verhaal")',
   STORY_CARD: '[data-testid="story"], [class*="story"]',
   STORY_REACTION_BUTTON: 'button[aria-label*="react"], button:has([class*="heart"])',
   
