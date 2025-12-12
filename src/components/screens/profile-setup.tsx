@@ -12,9 +12,9 @@ import { INITIAL_LANTERNS } from '@/lib/economy';
 import { LanternBackground } from '@/components/ui/lantern-background';
 
 const SUGGESTED_TAGS = [
-  'Cooking', 'Gardening', 'Tech Support', 'Pet Care', 'Tutoring',
-  'Music', 'Art', 'Sports', 'Languages', 'Handyman', 'Childcare',
-  'Photography', 'Writing', 'Fitness', 'Crafts', 'Automotive'
+  'Koken', 'Tuinieren', 'Computerhulp', 'Dierenverzorging', 'Bijles',
+  'Muziek', 'Kunst', 'Sport', 'Talen', 'Klusjes', 'Kinderopvang',
+  'Fotografie', 'Schrijven', 'Fitness', 'Knutselen', 'Auto\'s'
 ];
 
 interface ProfileSetupProps {
@@ -98,18 +98,18 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
       
       <Card className="w-full max-w-md relative z-10">
         <CardHeader>
-          <CardTitle>Create Your Profile</CardTitle>
+          <CardTitle>Maak je profiel aan</CardTitle>
           <CardDescription>
-            Tell your neighbors a bit about yourself
+            Vertel je buren iets over jezelf
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name *</Label>
+              <Label htmlFor="displayName">Je naam *</Label>
               <Input
                 id="displayName"
-                placeholder="What should neighbors call you?"
+                placeholder="Hoe mogen je buren je noemen?"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
@@ -118,10 +118,10 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio (optional)</Label>
+              <Label htmlFor="bio">Bio (optioneel)</Label>
               <Textarea
                 id="bio"
-                placeholder="Tell neighbors about yourself..."
+                placeholder="Vertel wat over jezelf..."
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={200}
@@ -133,7 +133,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
             </div>
 
             <div className="space-y-3">
-              <Label>Vibe Tags * (1-5 skills/interests)</Label>
+              <Label>Je vaardigheden * (1-5 vaardigheden/interesses)</Label>
               
               {/* Selected tags */}
               {vibeTags.length > 0 && (
@@ -161,7 +161,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
               {vibeTags.length < 5 && (
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Add a custom skill..."
+                    placeholder="Voeg een vaardigheid toe..."
                     value={customTag}
                     onChange={(e) => setCustomTag(e.target.value)}
                     onKeyDown={(e) => {
@@ -178,7 +178,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
                     onClick={handleAddCustomTag}
                     disabled={!customTag.trim()}
                   >
-                    Add
+                    Toevoegen
                   </Button>
                 </div>
               )}
@@ -211,7 +211,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
               className="w-full"
               disabled={loading || !displayName.trim() || vibeTags.length === 0}
             >
-              {loading ? 'Creating Profile...' : 'Complete Setup'}
+              {loading ? 'Profiel aanmaken...' : 'Profiel voltooien'}
             </Button>
           </form>
         </CardContent>
