@@ -36,10 +36,11 @@ export function useConversations() {
         const partner = message.sender_id === user.id ? message.receiver : message.sender;
 
         if (!conversationsMap.has(partnerId)) {
+          const partnerRecord = partner as { display_name?: string; avatar_url?: string } | null;
           conversationsMap.set(partnerId, {
             partnerId,
-            partnerName: (partner as any)?.display_name || 'Unknown',
-            partnerAvatar: (partner as any)?.avatar_url,
+            partnerName: partnerRecord?.display_name || 'Unknown',
+            partnerAvatar: partnerRecord?.avatar_url ?? null,
             lastMessage: message.content,
             lastMessageTime: message.created_at,
             unreadCount: 0,

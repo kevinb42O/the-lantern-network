@@ -7,7 +7,6 @@ import { AuthScreen } from '@/components/screens/auth-screen'
 import { ProfileSetup } from '@/components/screens/profile-setup'
 import { FlaresView } from '@/components/screens/flares-view'
 import { CampfireView } from '@/components/screens/campfire-view'
-import { ChatView } from '@/components/screens/chat-view'
 import { WalletView } from '@/components/screens/wallet-view'
 import { ProfileView } from '@/components/screens/profile-view'
 import { MessagesView } from '@/components/screens/messages-view'
@@ -18,7 +17,7 @@ import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
-import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode, Story, StoryReactionType } from '@/lib/types'
+import type { Message, HelpRequest, LanternTransaction, InviteCode, Story, StoryReactionType } from '@/lib/types'
 import { 
   generateInviteCode, 
   ELDER_HELP_THRESHOLD, 
@@ -65,22 +64,6 @@ interface FlareData {
   flare_type?: 'request' | 'offer'
   is_free?: boolean
   circle_only?: boolean
-}
-
-// Help request data from Supabase (using flare_participants table)
-interface HelpRequestData {
-  id: string
-  flare_id: string
-  user_id: string
-  status: 'pending' | 'accepted' | 'denied' | 'completed'
-  message: string | null
-  joined_at: string
-  helper_name?: string
-  flare_owner_id?: string
-  flare_owner_name?: string
-  flare_title?: string
-  flare_description?: string
-  flare_category?: string
 }
 
 function App() {
@@ -1302,11 +1285,6 @@ function App() {
     supporterBadge: profile.supporter_badge
   }
 
-  // Find active chat if one is selected
-  const activeChat = activeChatId 
-    ? (chats || []).find(c => c.id === activeChatId) 
-    : null
-
   return (
     <div className="h-screen flex flex-col bg-background">
       <div className="flex-1 overflow-hidden">
@@ -1324,7 +1302,7 @@ function App() {
             onUserClick={handleUserClick}
           />
         )}
-        {currentView === 'campfire' && !activeChat && (
+        {currentView === 'campfire' && (
           <CampfireView
             user={userData}
             messages={messages}

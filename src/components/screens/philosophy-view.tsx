@@ -4,7 +4,6 @@ import {
   UsersThree, 
   HandHeart, 
   Sparkle, 
-  Scales, 
   ShieldCheck, 
   Fire,
   ArrowLeft,

@@ -36,6 +36,7 @@ export function ProfileView({
 }: ProfileViewProps) {
   const { signOut } = useAuth();
   const [showInvites, setShowInvites] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showSettings, setShowSettings] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showBadges, setShowBadges] = useState(false)
@@ -63,6 +64,7 @@ export function ProfileView({
   const earnedBadges = getEarnedBadges(helpCount)
   
   // Get all user badges (earned + admin-granted, no duplicates)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const allUserBadges = getAllUserBadges(helpCount, adminBadges)
   
   // Get custom badges assigned by admin that are NOT already earned through flares

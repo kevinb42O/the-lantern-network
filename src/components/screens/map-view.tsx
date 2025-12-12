@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, MapTrifold, ListBullets, NavigationArrow, Fire, PaperPlaneRight, User as UserIcon } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { FlareCard } from '@/components/flare-card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
