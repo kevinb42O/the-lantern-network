@@ -295,8 +295,8 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
           </div>
           <Button onClick={handleOpenCreate} className="gap-2 btn-glow rounded-xl shadow-lg shadow-primary/20">
             <Plus size={18} weight="bold" />
-            <span className="hidden sm:inline">New Post</span>
-            <span className="sm:hidden">New</span>
+            <span className="hidden sm:inline">Nieuw</span>
+            <span className="sm:hidden">+</span>
           </Button>
         </div>
       </div>
@@ -313,7 +313,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
             }`}
           >
             <Fire size={14} weight={activeFilter === 'all' ? 'duotone' : 'regular'} />
-            All
+            Alles
             {activeFlares.length > 0 && (
               <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
                 {activeFlares.length}
@@ -329,8 +329,8 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
             }`}
           >
             <HandWaving size={14} weight={activeFilter === 'requests' ? 'duotone' : 'regular'} />
-            <span className="hidden sm:inline">Requests</span>
-            <span className="sm:hidden">Help</span>
+            <span className="hidden sm:inline">Vragen</span>
+            <span className="sm:hidden">Hulp</span>
             {requestCount > 0 && (
               <span className="text-xs bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">
                 {requestCount}
@@ -346,7 +346,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
             }`}
           >
             <Gift size={14} weight={activeFilter === 'offers' ? 'duotone' : 'regular'} />
-            Offers
+            Aanbiedingen
             {offerCount > 0 && (
               <span className="text-xs bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
                 {offerCount}
@@ -362,7 +362,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
             }`}
           >
             <Camera size={14} weight={activeFilter === 'stories' ? 'duotone' : 'regular'} />
-            Stories
+            Verhalen
             {storyCount > 0 && (
               <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">
                 {storyCount}
@@ -384,14 +384,14 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                   <Camera size={48} weight="duotone" className="text-amber-400 bounce-subtle" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3">
-                  No stories yet
+                  Nog geen verhalen
                 </h3>
                 <p className="text-muted-foreground max-w-sm mx-auto mb-6 leading-relaxed">
-                  Share a moment from your neighborhood! Stories expire after 48 hours.
+                  Deel een moment uit de buurt! Verhalen verdwijnen na 48 uur.
                 </p>
                 <Button onClick={handleOpenCreate} size="lg" className="gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500">
                   <Camera size={20} weight="duotone" />
-                  Share a Moment
+                  Deel een moment
                 </Button>
               </div>
             ) : (
@@ -413,23 +413,23 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-3">
                 {activeFilter === 'offers' 
-                  ? 'No offers yet'
+                  ? 'Nog geen aanbiedingen'
                   : activeFilter === 'requests'
-                    ? 'No requests right now'
-                    : 'Your neighborhood is quiet'
+                    ? 'Momenteel geen hulpvragen'
+                    : 'De buurt is rustig'
                 }
               </h3>
               <p className="text-muted-foreground max-w-sm mx-auto mb-6 leading-relaxed">
                 {activeFilter === 'offers'
-                  ? 'Be the first to share something with your neighbors!'
+                  ? 'Wees de eerste om iets te delen met je buren!'
                   : activeFilter === 'requests'
-                    ? 'No one needs help right now. Check back soon!'
-                    : 'Be the first to light a flare and bring neighbors together!'
+                    ? 'Niemand heeft nu hulp nodig. Kom later nog eens kijken!'
+                    : 'Wees de eerste om een lichtje aan te steken en de buurt samen te brengen!'
                 }
               </p>
               <Button onClick={handleOpenCreate} size="lg" className="gap-2 rounded-xl btn-glow">
                 <Fire size={20} weight="duotone" />
-                Light the First Flare
+                Steek het eerste lichtje aan
               </Button>
             </div>
           ) : (
@@ -663,7 +663,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                             : 'bg-primary/10 text-primary'
                         }`}>
                           <Sparkle size={12} className="mr-1" />
-                          Your {isOffer ? 'Offer' : 'Flare'}
+                          Jouw {isOffer ? 'aanbod' : 'lichtje'}
                         </Badge>
                       )}
                     </div>
@@ -695,19 +695,19 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
               {helpFlare?.flare_type === 'offer' ? (
                 <>
                   <Gift size={24} weight="duotone" className="text-emerald-400" />
-                  Claim This Offer
+                  Claim dit aanbod
                 </>
               ) : (
                 <>
                   <HandWaving size={24} weight="duotone" className="text-primary" />
-                  Offer Your Help
+                  Bied je hulp aan
                 </>
               )}
             </DialogTitle>
             <DialogDescription>
               {helpFlare?.flare_type === 'offer' 
-                ? 'Let them know you\'re interested'
-                : 'Let them know you\'re here to help'
+                ? 'Laat weten dat je interesse hebt'
+                : 'Laat weten dat je kan helpen'
               }
             </DialogDescription>
           </DialogHeader>
@@ -732,12 +732,12 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                     {helpFlare.is_free ? (
                       <Badge className="bg-emerald-500/20 text-emerald-400 border-0 text-xs">
                         <Heart size={12} weight="fill" className="mr-1" />
-                        Free Gift
+                        Gratis geschenk
                       </Badge>
                     ) : (
                       <Badge className="bg-amber-500/20 text-amber-400 border-0 text-xs">
                         <Coin size={12} weight="fill" className="mr-1" />
-                        1 Token
+                        1 Lichtpuntje
                       </Badge>
                     )}
                   </div>
@@ -748,13 +748,13 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
               <div className="space-y-2">
                 <Label htmlFor="help-message" className="text-sm font-medium flex items-center gap-2">
                   <Chat size={14} className="text-muted-foreground" />
-                  Your message
+                  Je bericht
                 </Label>
                 <Textarea
                   id="help-message"
                   placeholder={helpFlare.flare_type === 'offer' 
-                    ? "Hi! I'd love to claim this. Here's how to reach me..."
-                    : "Hi! I'd love to help you with this. I have experience with..."
+                    ? "Dag! Ik zou dit graag claimen. Zo bereik je me..."
+                    : "Dag! Ik kan je hiermee helpen. Ik heb ervaring met..."
                   }
                   value={helpMessage}
                   onChange={(e) => setHelpMessage(e.target.value)}
@@ -774,7 +774,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                   className="flex-1 rounded-xl"
                   onClick={() => setShowHelpModal(false)}
                 >
-                  Maybe Later
+                  Misschien later
                 </Button>
                 <Button
                   className={`flex-1 rounded-xl ${
@@ -785,7 +785,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                   onClick={handleSendHelpOffer}
                   disabled={!helpMessage.trim() || sendingHelp}
                 >
-                  {sendingHelp ? 'Sending...' : helpFlare.flare_type === 'offer' ? '🎁 Send Request' : '🤝 Send Offer'}
+                  {sendingHelp ? 'Versturen...' : helpFlare.flare_type === 'offer' ? '🎁 Verstuur vraag' : '🤝 Verstuur aanbod'}
                 </Button>
               </div>
             </div>
@@ -809,33 +809,33 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
               {createStep === 'type' ? (
                 <>
                   <Fire size={24} weight="duotone" className="text-primary" />
-                  Create Post
+                  Nieuw bericht
                 </>
               ) : createStep === 'story' ? (
                 <>
                   <Camera size={24} weight="duotone" className="text-amber-400" />
-                  Share a Moment
+                  Deel een moment
                 </>
               ) : flareType === 'offer' ? (
                 <>
                   <Gift size={24} weight="duotone" className="text-emerald-400" />
-                  Share an Offer
+                  Deel een aanbod
                 </>
               ) : (
                 <>
                   <HandWaving size={24} weight="duotone" className="text-orange-400" />
-                  Ask for Help
+                  Vraag om hulp
                 </>
               )}
             </DialogTitle>
             <DialogDescription>
               {createStep === 'type' 
-                ? 'What would you like to share?'
+                ? 'Wat wil je delen?'
                 : createStep === 'story'
-                  ? 'Share a casual moment with your neighbors'
+                  ? 'Deel een moment met je buren'
                   : flareType === 'offer'
-                    ? 'Share something with your neighbors'
-                    : 'Ask your neighbors for help'
+                    ? 'Deel iets met je buren'
+                    : 'Vraag je buren om hulp'
               }
             </DialogDescription>
           </DialogHeader>
@@ -857,9 +857,9 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                       <Fire size={28} weight="duotone" className="text-orange-400" />
                     </div>
                     <div className="text-center">
-                      <h3 className="font-bold text-foreground text-sm mb-0.5">Ask for Help</h3>
+                      <h3 className="font-bold text-foreground text-sm mb-0.5">Vraag om hulp</h3>
                       <p className="text-xs text-muted-foreground">
-                        Need a neighbor
+                        Hulp nodig
                       </p>
                     </div>
                   </button>
@@ -875,9 +875,9 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                       <Gift size={28} weight="duotone" className="text-emerald-400" />
                     </div>
                     <div className="text-center">
-                      <h3 className="font-bold text-foreground text-sm mb-0.5">Offer Something</h3>
+                      <h3 className="font-bold text-foreground text-sm mb-0.5">Bied iets aan</h3>
                       <p className="text-xs text-muted-foreground">
-                        Share with neighbors
+                        Deel met buren
                       </p>
                     </div>
                   </button>
@@ -892,9 +892,9 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                     <Camera size={28} weight="duotone" className="text-amber-400" />
                   </div>
                   <div className="text-left flex-1">
-                    <h3 className="font-bold text-foreground text-sm mb-0.5">Share a Moment</h3>
+                    <h3 className="font-bold text-foreground text-sm mb-0.5">Deel een moment</h3>
                     <p className="text-xs text-muted-foreground">
-                      Casual neighborhood update • Expires in 48h
+                      Update uit de buurt • Verdwijnt na 48u
                     </p>
                   </div>
                   <PaperPlaneTilt size={20} className="text-muted-foreground group-hover:text-amber-400 transition-colors" />
@@ -909,17 +909,17 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                   onClick={() => setCreateStep('type')}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
-                  ← Back
+                  ← Terug
                 </button>
 
                 {/* Story Content */}
                 <div className="space-y-2">
                   <Label htmlFor="story-content" className="text-sm font-medium">
-                    What's happening in your neighborhood?
+                    Wat gebeurt er in de buurt?
                   </Label>
                   <Textarea
                     id="story-content"
-                    placeholder="My kid's first bike ride! 🚴‍♂️"
+                    placeholder="Mijn kind zijn eerste fietstocht! 🚴‍♂️"
                     value={storyContent}
                     onChange={(e) => setStoryContent(e.target.value)}
                     rows={4}
@@ -933,7 +933,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
 
                 {/* Info about stories */}
                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400/80">
-                  <p>✨ Stories are casual moments - no action needed from neighbors. They'll disappear after 48 hours.</p>
+                  <p>✨ Verhalen zijn informele updates - geen actie nodig van je buren. Ze verdwijnen na 48 uur.</p>
                 </div>
 
                 {/* Submit */}
@@ -943,14 +943,14 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                     className="flex-1 rounded-xl"
                     onClick={() => setShowCreateModal(false)}
                   >
-                    Cancel
+                    Annuleren
                   </Button>
                   <Button
                     className="flex-1 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500"
                     onClick={handleCreateStory}
                     disabled={!storyContent.trim() || creating}
                   >
-                    {creating ? 'Sharing...' : '📸 Share with Neighbors'}
+                    {creating ? 'Delen...' : '📸 Deel met buren'}
                   </Button>
                 </div>
               </>
@@ -963,13 +963,13 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                   onClick={() => setCreateStep('type')}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
-                  ← Back to type selection
+                  ← Terug naar keuze
                 </button>
 
                 {/* Category Selection */}
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">
-                    {flareType === 'offer' ? 'What are you offering?' : 'What do you need help with?'}
+                    {flareType === 'offer' ? 'Wat bied je aan?' : 'Waarmee heb je hulp nodig?'}
                   </Label>
                   <div className="grid grid-cols-2 gap-3">
                     {categories.map((cat) => {
@@ -1022,14 +1022,14 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                 {/* Title */}
                 <div className="space-y-2">
                   <Label htmlFor="title" className="text-sm font-medium">
-                    Quick summary
+                    Korte samenvatting
                   </Label>
                   <input
                     id="title"
                     type="text"
                     placeholder={flareType === 'offer' 
-                      ? "What are you offering? e.g., 'Extra lasagna to share'"
-                      : "What do you need? e.g., 'Need help moving a couch'"
+                      ? "Wat bied je aan? bv. 'Extra lasagne om te delen'"
+                      : "Wat heb je nodig? bv. 'Hulp bij zetel verplaatsen'"
                     }
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -1045,13 +1045,13 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                 {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-sm font-medium">
-                    Tell us more
+                    Vertel meer
                   </Label>
                   <Textarea
                     id="description"
                     placeholder={flareType === 'offer'
-                      ? "Describe what you're offering, when it's available, any conditions..."
-                      : "Share more details so neighbors know how to help..."
+                      ? "Beschrijf wat je aanbiedt, wanneer het beschikbaar is, eventuele voorwaarden..."
+                      : "Vertel wat meer zodat buren weten hoe ze kunnen helpen..."
                     }
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -1073,7 +1073,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                   }`}>
                     <Label className="text-sm font-medium mb-3 block flex items-center gap-2">
                       <Heart size={16} className="text-emerald-400" />
-                      How do you want to share this?
+                      Hoe wil je dit delen?
                     </Label>
                     <div className="space-y-3">
                       <button
@@ -1093,10 +1093,10 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                           </div>
                           <div>
                             <div className="font-medium text-foreground flex items-center gap-2">
-                              🎁 Free Gift
+                              🎁 Gratis geschenk
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              No token needed - pure generosity!
+                              Geen lichtpuntje nodig - puur uit gulheid!
                             </p>
                           </div>
                         </div>
@@ -1118,10 +1118,10 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                           </div>
                           <div>
                             <div className="font-medium text-foreground flex items-center gap-2">
-                              🪙 Token Exchange
+                              🪙 Ruilen
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              Recipient spends 1 token to claim
+                              Ontvanger gebruikt 1 lichtpuntje
                             </p>
                           </div>
                         </div>
@@ -1138,10 +1138,10 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                     </div>
                     <div className="space-y-0.5">
                       <Label htmlFor="location-toggle" className="text-sm font-medium cursor-pointer">
-                        Share my location
+                        Deel mijn locatie
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        Helps nearby neighbors find you
+                        Helpt nabije buren je te vinden
                       </p>
                     </div>
                   </div>
@@ -1164,10 +1164,10 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                     </div>
                     <div className="space-y-0.5">
                       <Label htmlFor="circle-toggle" className="text-sm font-medium cursor-pointer">
-                        Circle only
+                        Enkel voor buurtkring
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        Only your Trust Circle will see this
+                        Alleen je vertrouwenskring ziet dit
                       </p>
                     </div>
                   </div>
@@ -1185,7 +1185,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                     className="flex-1 rounded-xl"
                     onClick={() => setShowCreateModal(false)}
                   >
-                    Cancel
+                    Annuleren
                   </Button>
                   <Button
                     className={`flex-1 rounded-xl ${
@@ -1196,7 +1196,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                     onClick={handleCreate}
                     disabled={!title.trim() || !description.trim() || creating}
                   >
-                    {creating ? 'Posting...' : flareType === 'offer' ? '🎁 Post Offer' : '🔥 Post Request'}
+                    {creating ? 'Plaatsen...' : flareType === 'offer' ? '🎁 Plaats aanbod' : '🔥 Plaats vraag'}
                   </Button>
                 </div>
               </>
