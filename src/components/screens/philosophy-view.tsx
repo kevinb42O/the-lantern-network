@@ -45,8 +45,8 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
             <ArrowLeft size={22} />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Our Philosophy</h1>
-            <p className="text-sm text-muted-foreground">Why we do what we do</p>
+            <h1 className="text-2xl font-bold text-foreground">Onze Filosofie</h1>
+            <p className="text-sm text-muted-foreground">Waarom we doen wat we doen</p>
           </div>
         </div>
       </div>
@@ -68,12 +68,12 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
               </div>
             </div>
             <h2 className="text-3xl font-bold text-foreground mb-4">
-              Neighbors, Not Strangers
+              Buren, Geen Vreemden
             </h2>
             <p className="text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto">
-              In a world of infinite scroll and distant connections, 
-              we believe the people who can help you most are the ones 
-              who live closest to you.
+              In een wereld van eindeloos scrollen en verre verbindingen, 
+              geloven we dat de mensen die je het best kunnen helpen, 
+              degenen zijn die het dichtst bij je wonen.
             </p>
           </motion.div>
 
@@ -89,26 +89,26 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                   <Heart size={24} weight="duotone" className="text-rose-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground">Why We Built This</h3>
-                  <p className="text-sm text-muted-foreground">The honest truth</p>
+                  <h3 className="text-xl font-semibold text-foreground">Waarom We Dit Bouwden</h3>
+                  <p className="text-sm text-muted-foreground">De eerlijke waarheid</p>
                 </div>
               </div>
               <div className="space-y-4 text-foreground/90 leading-relaxed">
                 <p>
-                  We're tired of apps that promise community but deliver algorithms. 
-                  Tired of platforms that turn every interaction into a transaction, 
-                  every favor into a gig, every neighbor into a rating.
+                  We zijn het moe van apps die gemeenschap beloven maar algoritmes leveren. 
+                  Moe van platforms die elke interactie in een transactie veranderen, 
+                  elke gunst in een opdracht, elke buur in een beoordeling.
                 </p>
                 <p>
-                  The Lantern Network exists because real community can't be 
-                  bought—it has to be built. One small help at a time. 
-                  A ride to the airport. A cup of sugar. Someone to talk to 
-                  when you're locked out at 2am.
+                  De Lantaarn bestaat omdat echte gemeenschap niet gekocht kan worden—
+                  het moet gebouwd worden. Één kleine hulp tegelijk. 
+                  Een rit naar de luchthaven. Een kopje suiker. Iemand om mee te praten 
+                  als je om 2 uur 's nachts buitengesloten bent.
                 </p>
                 <p>
-                  We're not here to disrupt anything. We're here to remember 
-                  something we forgot: <span className="text-primary font-medium">that looking out for each other 
-                  is how neighborhoods actually work.</span>
+                  We zijn hier niet om iets te ontwrichten. We zijn hier om iets te herinneren 
+                  dat we vergeten zijn: <span className="text-primary font-medium">dat voor elkaar zorgen 
+                  is hoe de buurt eigenlijk werkt.</span>
                 </p>
               </div>
             </Card>
@@ -126,28 +126,28 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                   <UsersThree size={24} weight="duotone" className="text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground">Who This Is For</h3>
-                  <p className="text-sm text-muted-foreground">Real people, real needs</p>
+                  <h3 className="text-xl font-semibold text-foreground">Voor Wie Dit Is</h3>
+                  <p className="text-sm text-muted-foreground">Echte mensen, echte behoeften</p>
                 </div>
               </div>
               <div className="space-y-4 text-foreground/90 leading-relaxed">
                 <p>
-                  <span className="text-primary font-medium">The new parent</span> who needs 
-                  20 minutes of babysitting to take a shower. <span className="text-primary font-medium">The 
-                  elderly neighbor</span> who just needs someone to reach the top shelf. 
-                  <span className="text-primary font-medium"> The student</span> whose car won't 
-                  start before an exam.
+                  <span className="text-primary font-medium">De jonge ouder</span> die 
+                  20 minuten kinderopvang nodig heeft om te kunnen douchen. <span className="text-primary font-medium">De 
+                  oudere buur</span> die gewoon iemand nodig heeft om de bovenste plank te bereiken. 
+                  <span className="text-primary font-medium"> De student</span> wiens auto niet 
+                  wil starten voor een examen.
                 </p>
                 <p>
-                  <span className="text-primary font-medium">The person who works from home</span> and 
-                  hasn't had a real conversation in days. <span className="text-primary font-medium">The 
-                  skilled mechanic</span> who'd rather help a neighbor than watch them get 
-                  ripped off. <span className="text-primary font-medium">Anyone</span> who believes 
-                  that asking for help isn't weakness—it's trust.
+                  <span className="text-primary font-medium">De persoon die thuis werkt</span> en 
+                  al dagen geen echt gesprek heeft gehad. <span className="text-primary font-medium">De 
+                  ervaren monteur</span> die liever een buur helpt dan hem te zien opgelicht worden. 
+                  <span className="text-primary font-medium">Iedereen</span> die gelooft 
+                  dat om hulp vragen geen zwakte is—het is vertrouwen.
                 </p>
                 <p className="italic text-muted-foreground">
-                  If you've ever thought "I wish I knew someone who could help with this," 
-                  this is for you.
+                  Als je ooit gedacht hebt "Ik wou dat ik iemand kende die hiermee kon helpen," 
+                  dan is dit voor jou.
                 </p>
               </div>
             </Card>
@@ -163,11 +163,11 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
               <div className="p-2.5 rounded-xl bg-amber-500/15">
                 <Lightbulb size={20} weight="duotone" className="text-amber-400" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground">How It Works</h3>
+              <h3 className="text-xl font-semibold text-foreground">Hoe Het Werkt</h3>
             </div>
             <p className="text-muted-foreground mb-5 leading-relaxed">
-              We designed simple rules that encourage genuine help and discourage hoarding, 
-              exploitation, and the usual platform nonsense.
+              We hebben eenvoudige regels ontworpen die oprechte hulp aanmoedigen en hamsteren, 
+              uitbuiting en de gebruikelijke platform-onzin ontmoedigen.
             </p>
 
             <div className="space-y-4">
@@ -178,16 +178,16 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                     <Sparkle size={22} weight="duotone" className="text-amber-400" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-2">🏮 Lanterns — Our Currency of Trust</h4>
+                    <h4 className="font-semibold text-foreground mb-2">🏮 Lichtpuntjes — Onze Valuta van Vertrouwen</h4>
                     <p className="text-sm text-foreground/80 leading-relaxed mb-3">
-                      Lanterns aren't money. You can't buy them. You can't cash them out. 
-                      They're a way to say "thank you" that actually means something.
+                      Lichtpuntjes zijn geen geld. Je kunt ze niet kopen. Je kunt ze niet uitbetalen. 
+                      Ze zijn een manier om "dank je wel" te zeggen die echt iets betekent.
                     </p>
                     <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>• Start with <span className="text-primary font-medium">{INITIAL_LANTERNS} Lanterns</span> when you join</p>
-                      <p>• Maximum of <span className="text-primary font-medium">{HOARD_LIMIT} Lanterns</span> at any time (no hoarding)</p>
-                      <p>• Give 1 Lantern when someone helps you</p>
-                      <p>• <span className="italic">The cap keeps things flowing. Help more, give more, receive more.</span></p>
+                      <p>• Begin met <span className="text-primary font-medium">{INITIAL_LANTERNS} Lichtpuntjes</span> als je lid wordt</p>
+                      <p>• Maximum van <span className="text-primary font-medium">{HOARD_LIMIT} Lichtpuntjes</span> op elk moment (niet hamsteren)</p>
+                      <p>• Geef 1 Lichtpuntje als iemand je helpt</p>
+                      <p>• <span className="italic">De limiet houdt alles in beweging. Meer helpen, meer geven, meer ontvangen.</span></p>
                     </div>
                   </div>
                 </div>
@@ -200,16 +200,16 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                     <Fire size={22} weight="duotone" className="text-rose-400" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-2">🔥 Flares — When You Need Help</h4>
+                    <h4 className="font-semibold text-foreground mb-2">🔥 Lichtjes — Als Je Hulp Nodig Hebt</h4>
                     <p className="text-sm text-foreground/80 leading-relaxed mb-3">
-                      A Flare is a signal to your neighbors. Not a job posting. 
-                      Not a marketplace listing. Just an honest ask.
+                      Een Lichtje is een signaal naar je buren. Geen vacature. 
+                      Geen advertentie. Gewoon een eerlijk verzoek.
                     </p>
                     <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>• <span className="text-primary font-medium">Mechanical</span> — Car trouble, fixing things, moving stuff</p>
-                      <p>• <span className="text-primary font-medium">Food</span> — Need a meal, groceries, cooking help</p>
-                      <p>• <span className="text-primary font-medium">Talk</span> — Loneliness, advice, just need a human</p>
-                      <p>• <span className="text-primary font-medium">Other</span> — Everything else life throws at you</p>
+                      <p>• <span className="text-primary font-medium">Technisch</span> — Autopech, dingen repareren, verhuizen</p>
+                      <p>• <span className="text-primary font-medium">Eten</span> — Een maaltijd nodig, boodschappen, kookhulp</p>
+                      <p>• <span className="text-primary font-medium">Gezelschap</span> — Eenzaamheid, advies, gewoon een mens nodig</p>
+                      <p>• <span className="text-primary font-medium">Overig</span> — Alles wat het leven je nog meer voorschotelt</p>
                     </div>
                   </div>
                 </div>
@@ -222,16 +222,16 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                     <ShieldCheck size={22} weight="duotone" className="text-purple-400" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-2">⭐ Trust & Elders — Earned, Not Given</h4>
+                    <h4 className="font-semibold text-foreground mb-2">⭐ Vertrouwen & Buurhelden — Verdiend, Niet Gegeven</h4>
                     <p className="text-sm text-foreground/80 leading-relaxed mb-3">
-                      Your reputation here means something. It's built through action, 
-                      not profiles or verifications.
+                      Je reputatie hier betekent iets. Het wordt gebouwd door actie, 
+                      niet door profielen of verificaties.
                     </p>
                     <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>• Help others → earn trust points → unlock badges</p>
-                      <p>• After <span className="text-primary font-medium">{ELDER_HELP_THRESHOLD} completed helps</span> or <span className="text-primary font-medium">{ELDER_TRUST_THRESHOLD} trust points</span>: become an Elder</p>
-                      <p>• Elders can invite new members — you vouch for who you bring in</p>
-                      <p>• <span className="italic">This isn't a popularity contest. It's a web of trust.</span></p>
+                      <p>• Help anderen → verdien vertrouwenspunten → ontgrendel badges</p>
+                      <p>• Na <span className="text-primary font-medium">{ELDER_HELP_THRESHOLD} voltooide hulpacties</span> of <span className="text-primary font-medium">{ELDER_TRUST_THRESHOLD} vertrouwenspunten</span>: word een Buurheld</p>
+                      <p>• Buurhelden kunnen nieuwe leden uitnodigen — je staat in voor wie je meebrengt</p>
+                      <p>• <span className="italic">Dit is geen populariteitswedstrijd. Het is een web van vertrouwen.</span></p>
                     </div>
                   </div>
                 </div>
@@ -244,16 +244,16 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                     <TreeStructure size={22} weight="duotone" className="text-green-400" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-foreground mb-2">🌳 Invites — Quality Over Quantity</h4>
+                    <h4 className="font-semibold text-foreground mb-2">🌳 Uitnodigingen — Kwaliteit Boven Kwantiteit</h4>
                     <p className="text-sm text-foreground/80 leading-relaxed mb-3">
-                      We grow slowly and intentionally. Every member is vouched 
-                      for by someone already in the network.
+                      We groeien langzaam en bewust. Elk lid wordt aanbevolen 
+                      door iemand die al in het netwerk zit.
                     </p>
                     <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>• You can only join if someone invites you</p>
-                      <p>• Invite codes are limited — use them wisely</p>
-                      <p>• You're responsible for who you bring in</p>
-                      <p>• <span className="italic">This keeps out the trolls, spammers, and bad actors.</span></p>
+                      <p>• Je kunt alleen lid worden als iemand je uitnodigt</p>
+                      <p>• Uitnodigingscodes zijn beperkt — gebruik ze verstandig</p>
+                      <p>• Je bent verantwoordelijk voor wie je meebrengt</p>
+                      <p>• <span className="italic">Dit houdt trollen, spammers en kwaadwilligen buiten.</span></p>
                     </div>
                   </div>
                 </div>
@@ -273,16 +273,16 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                   <Fire size={24} weight="duotone" className="text-orange-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground">The Campfire</h3>
-                  <p className="text-sm text-muted-foreground">Where neighbors gather</p>
+                  <h3 className="text-xl font-semibold text-foreground">'t Kampvuur</h3>
+                  <p className="text-sm text-muted-foreground">Waar buren samenkomen</p>
                 </div>
               </div>
               <p className="text-foreground/90 leading-relaxed">
-                Not every interaction needs to be a "help request." Sometimes you 
-                just want to say good morning, share a sunset photo, or ask if 
-                anyone heard that weird noise last night. The Campfire is our 
-                shared space—ephemeral, casual, human. Messages fade after 24 hours 
-                because some things don't need to be permanent.
+                Niet elke interactie hoeft een "hulpvraag" te zijn. Soms wil je 
+                gewoon goedemorgen zeggen, een zonsondergangfoto delen, of vragen of 
+                iemand dat vreemde geluid gisteravond ook gehoord heeft. 't Kampvuur is onze 
+                gedeelde ruimte—vluchtig, informeel, menselijk. Berichten vervagen na 24 uur 
+                omdat sommige dingen niet permanent hoeven te zijn.
               </p>
             </Card>
           </motion.div>
@@ -299,28 +299,28 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
                   <Handshake size={24} weight="duotone" className="text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground">Our Promise</h3>
-                  <p className="text-sm text-muted-foreground">What you won't find here</p>
+                  <h3 className="text-xl font-semibold text-foreground">Onze Belofte</h3>
+                  <p className="text-sm text-muted-foreground">Wat je hier niet zult vinden</p>
                 </div>
               </div>
               <div className="space-y-3 text-foreground/90">
                 <p className="flex items-center gap-2">
-                  <span className="text-primary">✗</span> No ads. Ever.
+                  <span className="text-primary">✗</span> Geen advertenties. Nooit.
                 </p>
                 <p className="flex items-center gap-2">
-                  <span className="text-primary">✗</span> No selling your data.
+                  <span className="text-primary">✗</span> Je gegevens worden niet verkocht.
                 </p>
                 <p className="flex items-center gap-2">
-                  <span className="text-primary">✗</span> No algorithms deciding who you see.
+                  <span className="text-primary">✗</span> Geen algoritmes die bepalen wie je ziet.
                 </p>
                 <p className="flex items-center gap-2">
-                  <span className="text-primary">✗</span> No gamification tricks to keep you scrolling.
+                  <span className="text-primary">✗</span> Geen gamificatie-trucs om je te laten scrollen.
                 </p>
                 <p className="flex items-center gap-2">
-                  <span className="text-primary">✗</span> No premium tiers. No "pro" features.
+                  <span className="text-primary">✗</span> Geen premium-abonnementen. Geen "pro" functies.
                 </p>
                 <p className="mt-4 text-primary font-medium">
-                  ✓ Just neighbors, helping neighbors.
+                  ✓ Gewoon buren die buren helpen.
                 </p>
               </div>
             </Card>
@@ -338,11 +338,11 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
               <HandHeart size={40} weight="duotone" className="text-primary relative z-10" />
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-3">
-              Ready to Light the Way?
+              Klaar Om De Weg Te Verlichten?
             </h3>
             <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Every community starts small. Every trust is built one help at a time. 
-              Welcome to the neighborhood.
+              Elke buurtgemeenschap begint klein. Elk vertrouwen wordt opgebouwd, één hulp tegelijk. 
+              Welkom in de buurt.
             </p>
             <Button 
               onClick={onBack}
@@ -350,7 +350,7 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
               size="lg"
             >
               <Sparkle size={18} weight="duotone" />
-              Let's Get Started
+              Laten We Beginnen
             </Button>
           </motion.div>
 
