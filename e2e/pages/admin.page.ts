@@ -120,7 +120,7 @@ export class AdminPage {
         await clearButton.click();
         
         // Confirm
-        const confirmButton = this.page.locator('button:has-text("Confirm"), button:has-text("Yes")').first();
+        const confirmButton = this.page.locator('button:has-text("Bevestigen"), button:has-text("Ja")').first();
         if (await confirmButton.isVisible({ timeout: 2000 })) {
           await confirmButton.click();
         }
@@ -194,7 +194,7 @@ export class AdminPage {
         await actionButton.click();
         
         // Confirm if needed
-        const confirmButton = this.page.locator('button:has-text("Confirm"), button:has-text("Yes")').first();
+        const confirmButton = this.page.locator('button:has-text("Bevestigen"), button:has-text("Ja")').first();
         if (await confirmButton.isVisible({ timeout: 2000 })) {
           await confirmButton.click();
         }
