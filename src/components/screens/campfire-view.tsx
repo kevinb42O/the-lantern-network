@@ -112,9 +112,6 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
       setSubmittingReport(false)
     }
   }
-    const chatMsgs = messages.filter(m => m.chatId === chatId)
-    return chatMsgs.length > 0 ? chatMsgs[chatMsgs.length - 1] : null
-  }
 
   const timeAgo = (timestamp: number) => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000)
