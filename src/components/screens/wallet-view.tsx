@@ -2,7 +2,6 @@ import { ArrowUp, ArrowDown, Lamp, Sparkle, HandCoins } from '@phosphor-icons/re
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
 import { LanternBalance } from '@/components/lantern-balance'
-import { AmbientBackground } from '@/components/ui/ambient-background'
 import type { User, LanternTransaction } from '@/lib/types'
 
 interface WalletViewProps {

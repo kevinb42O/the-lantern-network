@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import { SELECTORS, FLARE_CATEGORIES } from '../fixtures/test-data';
+import { SELECTORS } from '../fixtures/test-data';
 import { waitForNetworkIdle, waitForRealtimeUpdate } from '../utils/helpers';
 
 export class FlaresPage {

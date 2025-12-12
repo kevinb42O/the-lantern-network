@@ -21,7 +21,9 @@ interface ProfileSetupProps {
   onComplete?: () => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user, refreshProfile } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -84,9 +86,9 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
       // Don't bother with transaction - just reload immediately
       window.location.reload();
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Profile setup error:', err);
-      setError(err.message || 'Failed to create profile');
+      setError(err instanceof Error ? err.message : 'Failed to create profile');
       setLoading(false);
     }
   };

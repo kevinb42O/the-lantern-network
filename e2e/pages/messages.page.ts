@@ -131,6 +131,7 @@ export class MessagesPage {
   /**
    * Send connection request to user
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async sendConnectionRequest(userName: string) {
     // This would typically be done from a user profile or search
     // Implementation depends on UI structure
@@ -239,6 +240,7 @@ export class MessagesPage {
   /**
    * Remove from circle
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async removeFromCircle(userName?: string) {
     await this.switchToTab('Circle');
     

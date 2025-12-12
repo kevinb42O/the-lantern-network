@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { AuthPage } from '../pages/auth.page';
 import { FlaresPage } from '../pages/flares.page';
 import { getTestCredentials } from '../utils/helpers';
