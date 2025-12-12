@@ -563,7 +563,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                               <span>•</span>
                               <span className="flex items-center gap-1">
                                 <MapPin size={11} />
-                                Nearby
+                                Dichtbij
                               </span>
                             </>
                           )}
@@ -574,12 +574,12 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                                 {isFreefree ? (
                                   <>
                                     <Heart size={11} weight="fill" />
-                                    Free
+                                    Gratis
                                   </>
                                 ) : (
                                   <>
                                     <Coin size={11} weight="fill" />
-                                    1 Token
+                                    1 Lichtpuntje
                                   </>
                                 )}
                               </span>
