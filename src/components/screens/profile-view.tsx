@@ -89,8 +89,6 @@ export function ProfileView({
 
   return (
     <div className="flex flex-col h-full bg-background">
-<<<<<<< Updated upstream
-      {/* Header */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -104,11 +102,6 @@ export function ProfileView({
               </p>
             </div>
           </div>
-=======
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-foreground">Profile</h1>
->>>>>>> Stashed changes
           <Button
             variant="ghost"
             size="icon"

@@ -1,31 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
-<<<<<<< Updated upstream
 import { Fire, PaperPlaneRight, Sparkle, ShieldCheck, Flag } from '@phosphor-icons/react'
-=======
-import { Fire, PaperPlaneRight, ChatsCircle, Wrench, ForkKnife, Lightbulb } from '@phosphor-icons/react'
->>>>>>> Stashed changes
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-<<<<<<< Updated upstream
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { AmbientBackground } from '@/components/ui/ambient-background'
 import { CampfireEffects } from '@/components/ui/campfire-effects'
 import { supabase } from '@/lib/supabase'
-=======
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import type { Message, User, Chat } from '@/lib/types'
->>>>>>> Stashed changes
 import { toast } from 'sonner'
 import type { Message, User, ReportCategory } from '@/lib/types'
 
 interface CampfireViewProps {
   user: User
   messages: Message[]
-  chats: Chat[]
   onSendMessage: (content: string) => void
-<<<<<<< Updated upstream
   adminUserIds?: string[]
   moderatorUserIds?: string[]
   onUserClick?: (userId: string) => void
@@ -49,23 +39,6 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
   const [reportCategory, setReportCategory] = useState<ReportCategory>('harassment')
   const [reportDescription, setReportDescription] = useState('')
   const [submittingReport, setSubmittingReport] = useState(false)
-=======
-  onOpenChat: (chatId: string) => void
-}
-
-const categoryIcons = {
-  Mechanical: Wrench,
-  Food: ForkKnife,
-  Talk: ChatsCircle,
-  Other: Lightbulb
-}
-
-export function CampfireView({ user, messages, chats, onSendMessage, onOpenChat }: CampfireViewProps) {
-  const [inputValue, setInputValue] = useState('')
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [messageCount, setMessageCount] = useState(0)
-  const [activeTab, setActiveTab] = useState<'campfire' | 'messages'>('campfire')
->>>>>>> Stashed changes
 
   const campfireMessages = messages
     .filter(m => m.type === 'campfire')
@@ -92,7 +65,6 @@ export function CampfireView({ user, messages, chats, onSendMessage, onOpenChat 
     }
   }
 
-<<<<<<< Updated upstream
   const handleReportMessage = (message: Message) => {
     setReportingMessage(message)
     setReportCategory('harassment')
@@ -139,14 +111,7 @@ export function CampfireView({ user, messages, chats, onSendMessage, onOpenChat 
     } finally {
       setSubmittingReport(false)
     }
-=======
-  // Get user's chats and sort by last activity
-  const userChats = chats
-    .filter(c => c.participants.ownerId === user.id || c.participants.helperId === user.id)
-    .sort((a, b) => b.lastActivity - a.lastActivity)
-
-  // Get unread count (chats with messages newer than last viewed)
-  const getLastMessage = (chatId: string) => {
+  }
     const chatMsgs = messages.filter(m => m.chatId === chatId)
     return chatMsgs.length > 0 ? chatMsgs[chatMsgs.length - 1] : null
   }
@@ -157,13 +122,10 @@ export function CampfireView({ user, messages, chats, onSendMessage, onOpenChat 
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
     return `${Math.floor(seconds / 86400)}d ago`
->>>>>>> Stashed changes
   }
 
   return (
     <div className="flex flex-col h-full bg-background">
-<<<<<<< Updated upstream
-      {/* Header with campfire ambiance */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-orange-950/30 via-card/80 to-transparent">
         <div className="flex items-center gap-4 max-w-2xl mx-auto">
           <div className="relative">
@@ -264,7 +226,7 @@ export function CampfireView({ user, messages, chats, onSendMessage, onOpenChat 
               <Flag size={24} weight="duotone" className="text-red-400" />
               Bericht melden
             </DialogTitle>
-            <DialogDescription">
+            <DialogDescription>
               Help ons de gemeenschap veilig te houden door ongepaste inhoud te melden
             </DialogDescription>
           </DialogHeader>
@@ -329,152 +291,6 @@ export function CampfireView({ user, messages, chats, onSendMessage, onOpenChat 
           )}
         </DialogContent>
       </Dialog>
-=======
-      <div className="p-4 border-b border-border bg-card/30">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'campfire' | 'messages')}>
-          <TabsList className="w-full">
-            <TabsTrigger value="campfire" className="flex-1 gap-2">
-              <Fire size={18} weight="duotone" />
-              Campfire
-            </TabsTrigger>
-            <TabsTrigger value="messages" className="flex-1 gap-2">
-              <ChatsCircle size={18} weight="duotone" />
-              Messages
-              {userChats.length > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs">
-                  {userChats.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      {activeTab === 'campfire' ? (
-        <>
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-            <div className="space-y-4 max-w-2xl mx-auto pb-4">
-              {campfireMessages.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="inline-flex p-6 rounded-full bg-primary/10 mb-4">
-                    <Fire size={64} className="text-primary lantern-glow" weight="duotone" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-foreground mb-2">
-                    Gather around the campfire
-                  </h3>
-                  <p className="text-muted-foreground max-w-sm mx-auto">
-                    Share stories, ask questions, or just say hello to your neighbors
-                  </p>
-                </div>
-              ) : (
-                campfireMessages.map((message) => (
-                  <MessageBubble
-                    key={message.id}
-                    message={message}
-                    isCurrentUser={message.userId === user.id}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
-
-          <div className="p-4 border-t border-border bg-card/50">
-            <div className="max-w-2xl mx-auto space-y-2">
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Share with the neighborhood..."
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  maxLength={500}
-                  className="flex-1"
-                  autoComplete="off"
-                />
-                <Button
-                  onClick={handleSend}
-                  disabled={!inputValue.trim() || messageCount >= 20}
-                  size="icon"
-                  className="shrink-0"
-                >
-                  <PaperPlaneRight size={20} weight="fill" />
-                </Button>
-              </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Press Enter to send</span>
-                <span className={messageCount >= 20 ? 'text-destructive font-medium' : ''}>
-                  {messageCount}/20 messages
-                </span>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-2">
-            {userChats.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="inline-flex p-6 rounded-full bg-muted/50 mb-4">
-                  <ChatsCircle size={64} className="text-muted-foreground" weight="duotone" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-2">
-                  No messages yet
-                </h3>
-                <p className="text-muted-foreground max-w-sm mx-auto">
-                  When you help someone or someone helps you, your conversations will appear here
-                </p>
-              </div>
-            ) : (
-              userChats.map((chat) => {
-                const lastMessage = getLastMessage(chat.id)
-                const otherName = chat.participants.ownerId === user.id 
-                  ? chat.participants.helperName 
-                  : chat.participants.ownerName
-                const isOwner = chat.participants.ownerId === user.id
-                const CategoryIcon = categoryIcons[chat.flareCategory]
-
-                return (
-                  <button
-                    key={chat.id}
-                    onClick={() => onOpenChat(chat.id)}
-                    className="w-full p-4 rounded-xl bg-card border border-border hover:bg-accent/50 transition-colors text-left"
-                  >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-12 w-12 flex-shrink-0">
-                        <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-                          {otherName.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="font-semibold text-foreground truncate">
-                            {otherName}
-                          </span>
-                          <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
-                            {timeAgo(chat.lastActivity)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <CategoryIcon size={14} className="text-muted-foreground flex-shrink-0" />
-                          <span className="text-xs text-muted-foreground">
-                            {isOwner ? 'Helping you' : 'You\'re helping'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {lastMessage 
-                            ? `${lastMessage.userId === user.id ? 'You: ' : ''}${lastMessage.content}`
-                            : chat.flareDescription
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })
-            )}
-          </div>
-        </ScrollArea>
-      )}
->>>>>>> Stashed changes
     </div>
   )
 }

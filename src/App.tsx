@@ -10,17 +10,12 @@ import { CampfireView } from '@/components/screens/campfire-view'
 import { ChatView } from '@/components/screens/chat-view'
 import { WalletView } from '@/components/screens/wallet-view'
 import { ProfileView } from '@/components/screens/profile-view'
-<<<<<<< Updated upstream
 import { MessagesView } from '@/components/screens/messages-view'
 import { AdminView } from '@/components/screens/admin-view'
 import { ModeratorView } from '@/components/screens/moderator-view'
 import { StatisticsView } from '@/components/screens/statistics-view'
 import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
-=======
-import type { User, Flare, Message, LanternTransaction, InviteCode, Chat } from '@/lib/types'
-import { INITIAL_LANTERNS, checkElderStatus, generateInviteCode } from '@/lib/economy'
->>>>>>> Stashed changes
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import type { Message, HelpRequest, Flare, LanternTransaction, InviteCode, Story, StoryReactionType } from '@/lib/types'
@@ -89,7 +84,6 @@ interface HelpRequestData {
 }
 
 function App() {
-<<<<<<< Updated upstream
   const { user: authUser, profile, loading: authLoading, signOut, refreshProfile, hasCompletedOnboarding } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
   const [currentView, setCurrentView] = useState<MainView>('flares')
@@ -99,18 +93,6 @@ function App() {
   
   // Flares state
   const [flares, setFlares] = useState<FlareData[]>([])
-=======
-  const [authState, setAuthState] = useState<AuthState>('splash')
-  const [currentView, setCurrentView] = useState<MainView>('map')
-  const [activeChatId, setActiveChatId] = useState<string | null>(null)
-  
-  const [user, setUser] = useKV<User | null>('user', null)
-  const [flares, setFlares] = useKV<Flare[]>('flares', [])
-  const [messages, setMessages] = useKV<Message[]>('messages', [])
-  const [chats, setChats] = useKV<Chat[]>('chats', [])
-  const [transactions, setTransactions] = useKV<LanternTransaction[]>('transactions', [])
-  const [inviteCodes, setInviteCodes] = useKV<InviteCode[]>('inviteCodes', [])
->>>>>>> Stashed changes
 
   // Help requests state
   const [helpRequests, setHelpRequests] = useState<HelpRequest[]>([])
@@ -312,7 +294,6 @@ function App() {
   const fetchHelpRequests = async () => {
     if (!authUser) return
 
-<<<<<<< Updated upstream
     try {
       // Get all help requests where user is involved (as helper or flare owner)
       const { data: participantsData, error: participantsError } = await supabase
@@ -1036,41 +1017,6 @@ function App() {
     } catch (err) {
       console.error('Messages fetch error:', err)
     }
-=======
-    const flare = (flares || []).find(f => f.id === flareId)
-    if (!flare) return
-
-    // Update flare status
-    setFlares((current) =>
-      (current || []).map(f =>
-        f.id === flareId
-          ? { ...f, status: 'accepted' as const, acceptedBy: user.id }
-          : f
-      )
-    )
-
-    // Create a new chat for this flare
-    const newChat: Chat = {
-      id: `chat-${Date.now()}`,
-      flareId: flare.id,
-      flareDescription: flare.description,
-      flareCategory: flare.category,
-      participants: {
-        ownerId: flare.userId,
-        ownerName: flare.username,
-        helperId: user.id,
-        helperName: user.username
-      },
-      createdAt: Date.now(),
-      lastActivity: Date.now()
-    }
-
-    setChats((current) => [...(current || []), newChat])
-    
-    // Navigate to campfire and open the chat
-    setCurrentView('campfire')
-    setActiveChatId(newChat.id)
->>>>>>> Stashed changes
   }
 
   // Fetch mission/chat messages for help requests
@@ -1225,49 +1171,11 @@ function App() {
     }
   }
 
-<<<<<<< Updated upstream
   // Admin: Remove a flare
   const handleRemoveFlare = async (flareId: string) => {
     if (!authUser) return
-=======
-  const handleSendDM = (content: string, chatId: string) => {
-    if (!user) return
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      userId: user.id,
-      username: user.username,
-      content,
-      timestamp: Date.now(),
-      type: 'dm',
-      chatId
-    }
-
-    setMessages((current) => [...(current || []), newMessage])
-
-    // Update chat's last activity
-    setChats((current) =>
-      (current || []).map(c =>
-        c.id === chatId
-          ? { ...c, lastActivity: Date.now() }
-          : c
-      )
-    )
-  }
-
-  const handleOpenChat = (chatId: string) => {
-    setActiveChatId(chatId)
-  }
-
-  const handleCloseChat = () => {
-    setActiveChatId(null)
-  }
-
-  const handleGenerateInvite = () => {
-    if (!user || !user.isElder) return
->>>>>>> Stashed changes
-
-    const { error } = await supabase
+    const { error} = await supabase
       .from('flares')
       .delete()
       .eq('id', flareId)
@@ -1296,13 +1204,6 @@ function App() {
     }
 
     setMessages([])
-<<<<<<< Updated upstream
-=======
-    setChats([])
-    setTransactions([])
-    setInviteCodes([])
-    setAuthState('splash')
->>>>>>> Stashed changes
   }
 
   // Handle sign out
@@ -1425,29 +1326,12 @@ function App() {
         )}
         {currentView === 'campfire' && !activeChat && (
           <CampfireView
-<<<<<<< Updated upstream
             user={userData}
             messages={messages}
             onSendMessage={handleSendMessage}
             adminUserIds={isAdmin ? [...adminUserIds, authUser.id] : adminUserIds}
             moderatorUserIds={moderatorUserIds}
             onUserClick={handleUserClick}
-=======
-            user={user}
-            messages={messages || []}
-            chats={chats || []}
-            onSendMessage={handleSendMessage}
-            onOpenChat={handleOpenChat}
-          />
-        )}
-        {currentView === 'campfire' && activeChat && (
-          <ChatView
-            user={user}
-            chat={activeChat}
-            messages={messages || []}
-            onSendMessage={handleSendDM}
-            onBack={handleCloseChat}
->>>>>>> Stashed changes
           />
         )}
         {currentView === 'wallet' && (

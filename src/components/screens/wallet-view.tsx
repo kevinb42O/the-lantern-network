@@ -38,8 +38,6 @@ export function WalletView({ user, transactions }: WalletViewProps) {
 
   return (
     <div className="flex flex-col h-full bg-background">
-<<<<<<< Updated upstream
-      {/* Header with Balance */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent relative z-10">
         <div className="max-w-lg mx-auto space-y-5">
           <div className="flex items-center gap-3">
@@ -54,7 +52,6 @@ export function WalletView({ user, transactions }: WalletViewProps) {
           
           <LanternBalance balance={user.lanternBalance} />
 
-          {/* Quick Stats */}
           <div className="grid grid-cols-2 gap-3">
             <div className="p-4 rounded-xl bg-success/10 border border-success/20">
               <div className="flex items-center gap-2 mb-1">
@@ -72,13 +69,6 @@ export function WalletView({ user, transactions }: WalletViewProps) {
             </div>
           </div>
         </div>
-=======
-      <div className="p-4 border-b border-border">
-        <h1 className="text-2xl font-semibold text-foreground mb-4">
-          Lantern Wallet
-        </h1>
-        <LanternBalance balance={user.lanternBalance} />
->>>>>>> Stashed changes
       </div>
 
       {/* Transactions */}
