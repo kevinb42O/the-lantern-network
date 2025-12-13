@@ -352,10 +352,10 @@ export function MessagesView({
 
   const getTimeAgo = (timestamp: number): string => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000)
-    if (seconds < 60) return 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    return `${Math.floor(seconds / 86400)}d ago`
+    if (seconds < 60) return 'zojuist'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m geleden`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}u geleden`
+    return `${Math.floor(seconds / 86400)}d geleden`
   }
 
   const getTimeAgoFromString = (dateString: string): string => {
@@ -400,7 +400,7 @@ export function MessagesView({
   const handleAcceptConnectionRequest = async (requestId: string) => {
     try {
       await acceptRequest.mutateAsync(requestId)
-      toast.success("You're connected! 🔥")
+      toast.success("Jullie zijn verbonden! 🔥")
       refetchRequests()
       refetchCircle()
     } catch {
@@ -1087,7 +1087,7 @@ export function MessagesView({
                               </div>
                             )}
                             <p className="text-xs text-muted-foreground">
-                              Your offer was declined. Don't worry, there are other ways to help!
+                              Je aanbod werd geweigerd. Geen zorgen, er zijn andere manieren om te helpen!
                             </p>
                           </div>
                         </div>

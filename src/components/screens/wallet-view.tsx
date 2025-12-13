@@ -18,10 +18,10 @@ export function WalletView({ user, transactions }: WalletViewProps) {
     const diff = now.getTime() - date.getTime()
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 7) return `${days} days ago`
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (days === 0) return 'Vandaag'
+    if (days === 1) return 'Gisteren'
+    if (days < 7) return `${days} dagen geleden`
+    return date.toLocaleDateString('nl-BE', { month: 'short', day: 'numeric' })
   }
 
   const groupedTransactions = sortedTransactions.reduce((groups, tx) => {
@@ -150,11 +150,11 @@ function TransactionItem({ transaction, currentUserId }: TransactionItemProps) {
         
         <div className="flex-1 min-w-0">
           <p className="font-medium text-foreground flex items-center gap-2">
-            {isReceived ? 'Received' : 'Sent'} {transaction.amount} 🏮
+            {isReceived ? 'Ontvangen' : 'Verstuurd'} {transaction.amount} 🏮
             {isSystem && (
               <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
                 <Sparkle size={10} weight="fill" />
-                Gift
+                Cadeau
               </span>
             )}
           </p>
@@ -163,7 +163,7 @@ function TransactionItem({ transaction, currentUserId }: TransactionItemProps) {
           </p>
           {!isSystem && (
             <p className="text-xs text-muted-foreground/70 mt-1">
-              {isReceived ? `From ${transaction.from}` : `To ${transaction.to}`}
+              {isReceived ? `Van ${transaction.from}` : `Aan ${transaction.to}`}
             </p>
           )}
         </div>

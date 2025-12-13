@@ -198,11 +198,11 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
     if (hasAlreadyOfferedHelp(flare.id)) {
       const status = getHelpRequestStatus(flare.id)
       if (status?.status === 'pending') {
-        toast.info('Your offer is pending. Check Messages for updates.')
+        toast.info('Je aanbod is in afwachting. Kijk in Gesprekken voor updates.')
       } else if (status?.status === 'accepted') {
-        toast.info('Your offer was accepted! Check Messages to chat.')
+        toast.info('Je aanbod werd geaccepteerd! Kijk in Gesprekken om te chatten.')
       } else if (status?.status === 'denied') {
-        toast.info('Your offer was declined.')
+        toast.info('Je aanbod werd geweigerd.')
       }
       return
     }
@@ -215,7 +215,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
     if (!helpFlare) return
     
     if (!helpMessage.trim()) {
-      toast.error('Please write a message to introduce yourself')
+      toast.error('Schrijf een bericht om jezelf voor te stellen')
       return
     }
     
@@ -232,10 +232,10 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
 
   const timeAgo = (dateString: string) => {
     const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000)
-    if (seconds < 60) return 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-    return `${Math.floor(seconds / 86400)}d ago`
+    if (seconds < 60) return 'zojuist'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m geleden`
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}u geleden`
+    return `${Math.floor(seconds / 86400)}d geleden`
   }
 
   // Check if post is recent (less than 5 minutes)
@@ -284,11 +284,11 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
               <Fire size={24} weight="duotone" className="text-primary lantern-glow" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Neighborhood Flares</h1>
+              <h1 className="text-2xl font-bold text-foreground">Lichtjes in de Buurt</h1>
               <p className="text-sm text-muted-foreground">
                 {activeFlares.length === 0 && storyCount === 0
-                  ? "No active flares right now" 
-                  : `${requestCount} request${requestCount !== 1 ? 's' : ''} • ${offerCount} offer${offerCount !== 1 ? 's' : ''} • ${storyCount} stor${storyCount !== 1 ? 'ies' : 'y'}`
+                  ? "Momenteel geen actieve lichtjes" 
+                  : `${requestCount} ${requestCount !== 1 ? 'vragen' : 'vraag'} • ${offerCount} ${offerCount !== 1 ? 'aanbiedingen' : 'aanbieding'} • ${storyCount} ${storyCount !== 1 ? 'verhalen' : 'verhaal'}`
                 }
               </p>
             </div>

@@ -300,9 +300,9 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
 
   const timeAgo = () => {
     const seconds = Math.floor(messageAge / 1000)
-    if (seconds < 60) return 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    return `${Math.floor(seconds / 3600)}h ago`
+    if (seconds < 60) return 'zojuist'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m geleden`
+    return `${Math.floor(seconds / 3600)}u geleden`
   }
 
   // Display name
@@ -376,7 +376,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
                 onReport(message)
               }}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
-              title="Report message"
+              title="Bericht melden"
             >
               <Flag size={14} />
             </button>
