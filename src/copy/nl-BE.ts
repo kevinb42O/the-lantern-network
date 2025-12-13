@@ -56,4 +56,38 @@ export const lanternCopy = {
     ctaSendThanks: 'Bedankje sturen',
     ctaNotNow: 'Nu niet',
   },
+  support: {
+    pageTitle: 'Steun Ons',
+    pageSubtitle: 'Help om de lantaarns brandend te houden',
+    heroTitle: 'Elke Lantaarn Telt',
+    heroSubtitle: 'Jouw steun houdt onze gemeenschap helder',
+    heroBody: 'Het Lantaarnnetwerk draait op de kracht van buren die buren helpen. Jouw donatie helpt ons het platform te onderhouden, nieuwe functies te ontwikkelen, en de gemeenschap soepel te laten draaien — zonder advertenties, zonder verborgen kosten.',
+    impactConnections: 'buren verbonden',
+    chooseLevelTitle: 'Kies Je Steunniveau',
+    donationTiers: {
+      coffee: {
+        name: 'Koffie',
+        description: 'Koop een koffie voor de ontwikkelaar (ze kunnen het gebruiken)',
+      },
+      flame: {
+        name: 'Vlam',
+        description: 'Hou de vlam levend en de servers warm',
+      },
+      beacon: {
+        name: 'Baken',
+        description: 'Wees een leidend licht voor de hele buurt',
+      },
+      lighthouse: {
+        name: 'Vuurtoren',
+        description: 'Word een pilaar van steun en schijn ver vooruit',
+      },
+    },
+    buttonKofi: 'Steun via Ko-fi',
+    buttonPaypal: 'Doneer via PayPal',
+    badgesTitle: 'Steunbadges',
+    badgesSubtitle: 'Als dank krijgen supporters een speciaal badge op hun profiel',
+    supportersTitle: 'Recente Supporters',
+    supportersMore: 'En nog {count} geweldige supporters!',
+    emptyStateText: 'Wees de eerste om Het Lantaarnnetwerk te steunen!',
+  },
 } as const;

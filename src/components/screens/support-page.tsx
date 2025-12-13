@@ -19,6 +19,7 @@ import { SupporterBadge } from '@/components/ui/supporter-badge'
 import { SUPPORTER_BADGES } from '@/lib/economy'
 import { supabase } from '@/lib/supabase'
 import type { SupporterBadgeTier } from '@/lib/types'
+import { lanternCopy } from '@/copy/nl-BE'
 
 interface SupportPageProps {
   onBack: () => void
@@ -35,31 +36,31 @@ interface Supporter {
 const DONATION_TIERS = [
   {
     amount: 3,
-    name: 'Coffee',
+    name: lanternCopy.support.donationTiers.coffee.name,
     icon: Coffee,
     badge: 'supporter' as SupporterBadgeTier,
-    description: 'Buy us a coffee'
+    description: lanternCopy.support.donationTiers.coffee.description
   },
   {
     amount: 5,
-    name: 'Flame',
+    name: lanternCopy.support.donationTiers.flame.name,
     icon: Flame,
     badge: 'flame_keeper' as SupporterBadgeTier,
-    description: 'Keep the flame alive'
+    description: lanternCopy.support.donationTiers.flame.description
   },
   {
     amount: 15,
-    name: 'Beacon',
+    name: lanternCopy.support.donationTiers.beacon.name,
     icon: Sparkle,
     badge: 'beacon' as SupporterBadgeTier,
-    description: 'Be a guiding light'
+    description: lanternCopy.support.donationTiers.beacon.description
   },
   {
     amount: 50,
-    name: 'Lighthouse',
+    name: lanternCopy.support.donationTiers.lighthouse.name,
     icon: Lighthouse,
     badge: 'lighthouse' as SupporterBadgeTier,
-    description: 'Become a pillar of support'
+    description: lanternCopy.support.donationTiers.lighthouse.description
   }
 ]
 
@@ -168,10 +169,10 @@ export function SupportPage({ onBack }: SupportPageProps) {
             <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                 <Heart size={24} weight="duotone" className="text-rose-400" />
-                Support Us
+                {lanternCopy.support.pageTitle}
               </h1>
               <p className="text-sm text-muted-foreground">
-                Help keep the lanterns burning
+                {lanternCopy.support.pageSubtitle}
               </p>
             </div>
           </div>
@@ -192,18 +193,16 @@ export function SupportPage({ onBack }: SupportPageProps) {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-foreground">
-                    Every Lantern Matters
+                    {lanternCopy.support.heroTitle}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Your support keeps our community bright
+                    {lanternCopy.support.heroSubtitle}
                   </p>
                 </div>
               </div>
               
               <p className="text-sm text-foreground/80 leading-relaxed mb-4">
-                The Lantern Network is built on the power of neighbors helping neighbors. 
-                Your donation helps us maintain the platform, develop new features, 
-                and keep the community running smoothly — no ads, no hidden fees.
+                {lanternCopy.support.heroBody}
               </p>
 
               {/* Impact Stats */}
@@ -213,7 +212,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
                     <Users size={18} className="text-emerald-400" />
                     <span className="text-sm">
                       <span className="font-bold text-foreground">{stats.totalConnections}</span>
-                      <span className="text-muted-foreground"> neighbors connected</span>
+                      <span className="text-muted-foreground"> {lanternCopy.support.impactConnections}</span>
                     </span>
                   </div>
                 </div>
@@ -225,7 +224,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Star size={16} className="text-amber-400" />
-              Choose Your Support Level
+              {lanternCopy.support.chooseLevelTitle}
             </h3>
             
             <div className="grid grid-cols-2 gap-3">
@@ -261,7 +260,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
               onClick={() => handleDonateClick('kofi')}
             >
               <Coffee size={20} weight="fill" />
-              Support on Ko-fi
+              {lanternCopy.support.buttonKofi}
               <ArrowSquareOut size={16} className="ml-auto opacity-60" />
             </Button>
             
@@ -270,7 +269,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
               className="w-full gap-2 rounded-xl border-border h-11"
               onClick={() => handleDonateClick('paypal')}
             >
-              Donate via PayPal
+              {lanternCopy.support.buttonPaypal}
               <ArrowSquareOut size={16} className="ml-auto opacity-60" />
             </Button>
           </div>
@@ -279,10 +278,10 @@ export function SupportPage({ onBack }: SupportPageProps) {
           <Card className="p-4 bg-card/80 border-border/50">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Sparkle size={16} className="text-amber-400" />
-              Supporter Badges
+              {lanternCopy.support.badgesTitle}
             </h3>
             <p className="text-xs text-muted-foreground mb-4">
-              As a thank you, supporters receive a special badge displayed on their profile
+              {lanternCopy.support.badgesSubtitle}
             </p>
             <div className="flex flex-wrap gap-2">
               {SUPPORTER_BADGES.map((badge) => (
@@ -304,7 +303,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
             <Card className="p-4 bg-card/80 border-border/50">
               <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
                 <Heart size={16} className="text-rose-400" />
-                Recent Supporters
+                {lanternCopy.support.supportersTitle}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {supporters.map((supporter) => (
@@ -326,7 +325,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
               </div>
               {stats.totalSupporters > supporters.length && (
                 <p className="text-xs text-muted-foreground mt-3 text-center">
-                  And {stats.totalSupporters - supporters.length} more amazing supporters!
+                  {lanternCopy.support.supportersMore.replace('{count}', String(stats.totalSupporters - supporters.length))}
                 </p>
               )}
             </Card>
@@ -337,7 +336,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
             <Card className="p-6 text-center bg-muted/20 border-dashed">
               <Heart size={32} className="mx-auto text-muted-foreground/50 mb-2" />
               <p className="text-sm text-muted-foreground">
-                Be the first to support The Lantern Network!
+                {lanternCopy.support.emptyStateText}
               </p>
             </Card>
           )}
