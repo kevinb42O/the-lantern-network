@@ -24,8 +24,8 @@ export const lanternCopy = {
     flaresBody: 'Wees gerust: dat komt vanzelf. Je kan altijd zelf een klein lichtje plaatsen — een vraag of een aanbod.',
     flaresCtaCreate: 'Nieuw lichtje plaatsen',
     flaresCtaHelp: 'Hoe werkt dit?',
-    messagesTitle: 'Nog geen gesprekken',
-    messagesBody: 'Zodra je reageert op een lichtje, komt je gesprek hier te staan.',
+    messagesTitle: 'Nog geen berichten',
+    messagesBody: 'Zodra je reageert op een lichtje, komt je bericht hier te staan.',
     messagesCta: 'Lichtjes bekijken',
   },
   createFlare: {

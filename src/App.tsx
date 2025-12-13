@@ -1393,7 +1393,7 @@ function App() {
           />
           <NavButton
             icon={ChatCircleDots}
-            label="Gesprekken"
+            label="Berichten"
             active={currentView === 'messages'}
             onClick={() => setCurrentView('messages')}
             badge={unreadCount}

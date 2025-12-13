@@ -12,7 +12,7 @@ Dit document beschrijft de consistente vertaling van termen in De Lantaarn app v
 - **Flares** → **Lichtjes**
 - **Campfire** → **'t Kampvuur**
 - **Circles** → **Buurtkringen** (alternatief: Vertrouwenskringen)
-- **Messages/Chats** → **Gesprekken**
+- **Messages/Chats** → **Berichten**
 - **Wallet** → **Portemonnee**
 - **Profile** → **Profiel**
 - **Admin** → **Beheer**
@@ -158,7 +158,7 @@ Voorbeelden voor skill tags:
 **Voorbeelden:**
 - "Failed to send message" → "Bericht versturen mislukt"
 - "Not enough lanterns" → "Niet genoeg lichtpuntjes"
-- "Conversation not found" → "Gesprek niet gevonden"
+- "Conversation not found" → "Bericht niet gevonden"
 
 ## Success Messages Patronen
 

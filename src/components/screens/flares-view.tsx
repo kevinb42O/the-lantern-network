@@ -206,9 +206,9 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
     if (hasAlreadyOfferedHelp(flare.id)) {
       const status = getHelpRequestStatus(flare.id)
       if (status?.status === 'pending') {
-        toast.info('Je aanbod is in afwachting. Kijk in Gesprekken voor updates.')
+        toast.info('Je aanbod is in afwachting. Kijk in Berichten voor updates.')
       } else if (status?.status === 'accepted') {
-        toast.info('Je aanbod werd geaccepteerd! Kijk in Gesprekken om te chatten.')
+        toast.info('Je aanbod werd geaccepteerd! Kijk in Berichten om te chatten.')
       } else if (status?.status === 'denied') {
         toast.info('Je aanbod werd geweigerd.')
       }
