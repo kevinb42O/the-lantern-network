@@ -437,7 +437,7 @@ export function MapView({ user, flares, helpRequests, allUsers, onCreateFlare, o
                 {/* Info box */}
                 <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
                   <p className="text-sm text-foreground">
-                    <strong>💡 How it works:</strong> Your offer will appear in their Messages. If they accept, you'll be able to chat and coordinate. When the task is complete, they'll send you 1 Lantern as thanks!
+                    <strong>💡 Hoe het werkt:</strong> Je aanbod verschijnt in hun Gesprekken. Als ze accepteren, kun je chatten en afspreken. Als de taak voltooid is, sturen ze je 1 Lichtpuntje als bedankje!
                   </p>
                 </div>
                 

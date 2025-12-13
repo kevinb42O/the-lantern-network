@@ -53,7 +53,7 @@ export function ProfileView({
   const handleSignOut = async () => {
     if (isSupabaseConfigured) {
       await signOut();
-      toast.success('See you soon! 👋');
+      toast.success('Tot snel! 👋');
     }
   };
   
@@ -468,11 +468,11 @@ export function ProfileView({
                     <h4 className="font-semibold text-muted-foreground">{nextBadge.badge.name}</h4>
                     <p className="text-xs text-muted-foreground">{nextBadge.badge.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {nextBadge.flaresNeeded} more helps to unlock
+                      Nog {nextBadge.flaresNeeded} keer helpen om te ontgrendelen
                     </p>
                   </div>
                   <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">
-                    Next
+                    Volgende
                   </span>
                 </div>
               </Card>

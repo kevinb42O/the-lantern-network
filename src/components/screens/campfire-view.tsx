@@ -72,7 +72,7 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
 
   const handleSubmitReport = async () => {
     if (!reportingMessage || !reportDescription.trim()) {
-      toast.error('Please provide a description')
+      toast.error('Geef een beschrijving')
       return
     }
 
@@ -80,7 +80,7 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
     try {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) {
-        toast.error('You must be logged in to report')
+        toast.error('Je moet aangemeld zijn om te melden')
         return
       }
 
@@ -96,16 +96,16 @@ export function CampfireView({ user, messages, onSendMessage, adminUserIds = [],
 
       if (error) {
         console.error('Error submitting report:', error)
-        toast.error('Failed to submit report')
+        toast.error('Melding indienen mislukt')
         return
       }
 
-      toast.success('Report submitted. Thank you for helping keep our community safe.')
+      toast.success('Melding ingediend. Bedankt voor het helpen onze gemeenschap veilig te houden.')
       setShowReportModal(false)
       setReportingMessage(null)
     } catch (err) {
       console.error('Report error:', err)
-      toast.error('Failed to submit report')
+      toast.error('Melding indienen mislukt')
     } finally {
       setSubmittingReport(false)
     }
@@ -300,13 +300,13 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
 
   const timeAgo = () => {
     const seconds = Math.floor(messageAge / 1000)
-    if (seconds < 60) return 'just now'
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-    return `${Math.floor(seconds / 3600)}h ago`
+    if (seconds < 60) return 'zojuist'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m geleden`
+    return `${Math.floor(seconds / 3600)}u geleden`
   }
 
   // Display name
-  const displayName = isCurrentUser ? 'You' : message.username
+  const displayName = isCurrentUser ? 'Jij' : message.username
 
   // Get ring/avatar styles based on role
   const getRingStyle = () => {
@@ -335,7 +335,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
       <button
         onClick={() => onUserClick?.(message.userId)}
         className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
-        aria-label={`View ${message.username}'s profile`}
+        aria-label={`Bekijk ${message.username}'s profiel`}
       >
         <Avatar className={`flex-shrink-0 h-10 w-10 cursor-pointer ${getRingStyle()}`}>
           <AvatarFallback className={`text-sm font-semibold ${getAvatarBgStyle()}`}>
@@ -349,7 +349,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
           <button
             onClick={() => onUserClick?.(message.userId)}
             className={`text-sm font-semibold hover:underline cursor-pointer ${getNameStyle()}`}
-            aria-label={`View ${message.username}'s profile`}
+            aria-label={`Bekijk ${message.username}'s profiel`}
           >
             {displayName}
           </button>
@@ -376,7 +376,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
                 onReport(message)
               }}
               className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
-              title="Report message"
+              title="Bericht melden"
             >
               <Flag size={14} />
             </button>
