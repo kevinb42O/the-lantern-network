@@ -10,6 +10,7 @@ import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecip
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useCircleConnections, useConnectionRequests, useAcceptConnectionRequest, useDeclineConnectionRequest, useCircleMessages, useSendCircleMessage, useRemoveFromCircle, MAX_TRUST_LEVEL } from '@/hooks/useCircle'
+import { lanternCopy } from '@/copy/nl-BE'
 
 type MessagesTab = 'conversations' | 'circle' | 'requests'
 
@@ -559,7 +560,7 @@ export function MessagesView({
                 <ChatCircle size={24} weight="duotone" className="text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Gesprekken</h1>
+                <h1 className="text-2xl font-bold text-foreground">Berichten</h1>
                 <p className="text-sm text-muted-foreground">
                   {activeTab === 'circle' 
                     ? `${circleConnections.length} in je buurtkring`
@@ -586,7 +587,7 @@ export function MessagesView({
                 }`}
               >
                 <ChatCircle size={14} weight={activeTab === 'conversations' ? 'duotone' : 'regular'} />
-                Gesprekken
+                Berichten
                 {pendingRequestsForMe.length > 0 && (
                   <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
                     {pendingRequestsForMe.length}
@@ -1109,10 +1110,10 @@ export function MessagesView({
                       <ChatCircle size={48} weight="duotone" className="text-primary bounce-subtle" />
                     </div>
                     <h3 className="text-xl font-semibold text-foreground mb-3">
-                      Your inbox is empty
+                      {lanternCopy.empty.messagesTitle}
                     </h3>
                     <p className="text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                      When you offer to help with a flare or someone offers to help you, conversations will appear here.
+                      {lanternCopy.empty.messagesBody}
                     </p>
                   </div>
                 ) : activeConversations.length === 0 ? (

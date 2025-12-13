@@ -437,7 +437,7 @@ export function MapView({ user, flares, helpRequests, allUsers, onCreateFlare, o
                 {/* Info box */}
                 <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
                   <p className="text-sm text-foreground">
-                    <strong>💡 Hoe het werkt:</strong> Je aanbod verschijnt in hun Gesprekken. Als ze accepteren, kun je chatten en afspreken. Als de taak voltooid is, sturen ze je 1 Lichtpuntje als bedankje!
+                    <strong>💡 Hoe het werkt:</strong> Je aanbod verschijnt in hun Berichten. Als ze accepteren, kun je chatten en afspreken. Als de taak voltooid is, sturen ze je 1 Lichtpuntje als bedankje!
                   </p>
                 </div>
                 

@@ -415,6 +415,27 @@ CREATE TABLE IF NOT EXISTS announcement_recipients (
   UNIQUE(announcement_id, user_id)
 );
 
+-- Function to create announcement recipients for all users when announcement is created
+CREATE OR REPLACE FUNCTION create_announcement_recipients()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Insert a recipient record for every existing user
+  INSERT INTO announcement_recipients (announcement_id, user_id, created_at)
+  SELECT NEW.id, user_id, NOW()
+  FROM profiles
+  WHERE user_id IS NOT NULL;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger that runs after announcement insert
+DROP TRIGGER IF EXISTS trigger_create_announcement_recipients ON announcements;
+CREATE TRIGGER trigger_create_announcement_recipients
+  AFTER INSERT ON announcements
+  FOR EACH ROW
+  EXECUTE FUNCTION create_announcement_recipients();
+
 -- Enable RLS on announcements tables
 ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE announcement_recipients ENABLE ROW LEVEL SECURITY;

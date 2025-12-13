@@ -168,7 +168,7 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
       if (result.autoAccepted) {
         toast.success('Jullie zijn verbonden! 🔥')
       } else {
-        toast.success('Verzoek verstuurd! Ze zien het in hun Gesprekken.')
+        toast.success('Verzoek verstuurd! Ze zien het in hun Berichten.')
       }
       refetchConnectionStatus()
     } catch (error) {
