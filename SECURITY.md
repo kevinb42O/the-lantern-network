@@ -1,31 +1,38 @@
-Thanks for helping make GitHub safe for everyone.
+# Beveiligingsbeleid
 
-# Security
+## Melden van Beveiligingsproblemen
 
-GitHub takes the security of our software products and services seriously, including all of the open source code repositories managed through our GitHub organizations, such as [GitHub](https://github.com/GitHub).
+Bedankt voor het helpen om The Lantern Network veilig te houden voor iedereen.
 
-Even though [open source repositories are outside of the scope of our bug bounty program](https://bounty.github.com/index.html#scope) and therefore not eligible for bounty rewards, we will ensure that your finding gets passed along to the appropriate maintainers for remediation. 
+Als je een beveiligingsprobleem hebt ontdekt in dit project, neem dan verantwoordelijk contact met ons op.
 
-## Reporting Security Issues
+### Hoe te Melden
 
-If you believe you have found a security vulnerability in any GitHub-owned repository, please report it to us through coordinated disclosure.
+**E-mail je bevindingen naar: Lantaarn@contact.be**
 
-**Please do not report security vulnerabilities through public GitHub issues, discussions, or pull requests.**
+Voeg zoveel mogelijk van de volgende informatie toe om ons te helpen het probleem te begrijpen en op te lossen:
 
-Instead, please send an email to opensource-security[@]github.com.
+- Type probleem (bijv. SQL injection, cross-site scripting, authenticatie probleem)
+- Volledige paden van bronbestanden gerelateerd aan het probleem
+- De locatie van de betrokken broncode (tag/branch/commit of directe URL)
+- Stap-voor-stap instructies om het probleem te reproduceren
+- Proof-of-concept of exploit code (indien mogelijk)
+- Impact van het probleem, inclusief hoe een aanvaller het probleem zou kunnen uitbuiten
 
-Please include as much of the information listed below as you can to help us better understand and resolve the issue:
+### Belangrijk
 
-  * The type of issue (e.g., buffer overflow, SQL injection, or cross-site scripting)
-  * Full paths of source file(s) related to the manifestation of the issue
-  * The location of the affected source code (tag/branch/commit or direct URL)
-  * Any special configuration required to reproduce the issue
-  * Step-by-step instructions to reproduce the issue
-  * Proof-of-concept or exploit code (if possible)
-  * Impact of the issue, including how an attacker might exploit the issue
+**Gebruik GEEN publieke GitHub issues, discussions of pull requests om beveiligingsproblemen te melden.**
 
-This information will help us triage your report more quickly.
+Beveiligingskwesties moeten privé worden gemeld via e-mail zodat we het probleem kunnen onderzoeken en oplossen voordat het publiekelijk wordt gemaakt.
 
-## Policy
+## Responstijd
 
-See [GitHub's Safe Harbor Policy](https://docs.github.com/en/site-policy/security-policies/github-bug-bounty-program-legal-safe-harbor#1-safe-harbor-terms)
+We streven ernaar om binnen 48 uur te reageren op beveiligingsmeldingen en zullen je op de hoogte houden van de voortgang naar een oplossing.
+
+## Ondersteunde Versies
+
+We accepteren beveiligingsrapporten voor de huidige productieversie die draait op [https://the-lantern-network.vercel.app/](https://the-lantern-network.vercel.app/)
+
+---
+
+Bedankt voor het helpen om onze community veilig te houden!
