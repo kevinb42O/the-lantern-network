@@ -567,7 +567,7 @@ export function MessagesView({
                     : activeTab === 'requests'
                       ? `${pendingRequestCount} openstaande aanvra${pendingRequestCount !== 1 ? 'gen' : 'ag'}`
                       : myHelpRequests.length === 0 
-                        ? 'Nog geen gesprekken' 
+                        ? 'Nog geen berichten' 
                         : `${pendingRequestsForMe.length} openstaande aanvra${pendingRequestsForMe.length !== 1 ? 'gen' : 'ag'}`
                   }
                 </p>
