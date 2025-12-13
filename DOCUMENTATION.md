@@ -1,59 +1,55 @@
-# The Lantern Network - Project Documentation
+# The Lantern Network - Projectdocumentatie
 
-> **Live Demo**: [https://the-lantern-network.vercel.app/](https://the-lantern-network.vercel.app/)
+> **Live Demo**: [https://the-lantern-network.vercel.app/](https://the-lantern-network.vercel.app/)  
+> **Laatst bijgewerkt**: December 2025
 
-## 📋 Table of Contents
+## 📋 Inhoudsopgave
 
-1. [Project Overview](#project-overview)
-2. [Target Audience](#target-audience)
+1. [Projectoverzicht](#projectoverzicht)
+2. [Doelgroep](#doelgroep)
 3. [Tech Stack](#tech-stack)
-4. [Features Overview](#features-overview)
-5. [Working Features](#working-features)
-6. [Features In Progress / Not Working](#features-in-progress--not-working)
-7. [Application Architecture](#application-architecture)
-8. [Database Schema](#database-schema)
-9. [UI/UX Design System](#uiux-design-system)
-10. [Economy System](#economy-system)
-11. [Setup & Installation](#setup--installation)
-12. [Deployment](#deployment)
-13. [Contributing](#contributing)
+4. [Features](#features)
+5. [Applicatie Architectuur](#applicatie-architectuur)
+6. [Database Schema](#database-schema)
+7. [UI/UX Design Systeem](#uiux-design-systeem)
+8. [Lantern Economie](#lantern-economie)
+9. [Setup & Installatie](#setup--installatie)
+10. [Deployment](#deployment)
 
 ---
 
-## Project Overview
+## Projectoverzicht
 
-**The Lantern Network** is a hyperlocal mutual aid platform where neighbors help each other through a trust-based economy powered by **Lanterns** — a limited-supply virtual currency that prevents hoarding and incentivizes genuine community support.
+**The Lantern Network** is een hyperlocaal wederzijdse hulpplatform waar buren elkaar helpen via een vertrouwensgebaseerde economie aangedreven door **Lanterns** — een virtuele munteenheid met beperkte voorraad die hamsterzucht voorkomt en echte community-steun stimuleert.
 
-### Vision
+### Visie
 
-The app is designed to feel like a close-knit neighborhood, not a marketplace. It prioritizes:
+De app voelt als een hechte buurt, geen marktplaats. Het platform prioriteert:
 
-- **Intimate** - Warm, human-centered design that focuses on trust and connection over transactions
-- **Grounded** - Real, tangible help for real neighbors with a solid, dependable interface
-- **Hopeful** - Visual language that conveys possibility and mutual support, with glowing lanterns representing human warmth
+- **Intiem** - Warm, mensgericht ontwerp gericht op vertrouwen en verbinding boven transacties
+- **Geworteld** - Echte, tastbare hulp voor echte buren met een solide, betrouwbare interface
+- **Hoopvol** - Visuele taal die mogelijkheden en wederzijdse steun uitstraalt, met gloeiende lantaarns die menselijke warmte vertegenwoordigen
 
-### Core Concept
+### Kernidee
 
-Think of it as late-night neighborhood watch — warm glows in darkness, the feeling of looking out windows and seeing lights on in other homes, knowing you're not alone.
+Denk aan late-avond buurtwatch — warme gloed in de duisternis, het gevoel van uit ramen kijken en lichten zien branden in andere huizen, wetende dat je niet alleen bent.
 
 ---
 
-## Target Audience
+## Doelgroep
 
-The Lantern Network is designed for:
+1. **Buren & Lokale Gemeenschapsleden** - Mensen die willen helpen en hulp willen ontvangen van hun directe gemeenschap
+2. **Community Organisatoren** - Degenen die vertrouwensgebaseerde wederzijdse hulpnetwerken willen bouwen in hun buurten
+3. **Mensen die Verbinding Zoeken** - Individuen die meer verbonden willen voelen met hun lokale gemeenschap
+4. **Vaardighedendelaars** - Mensen met vaardigheden zoals mechanisch werk, koken, bijles, huisdierenzorg, en meer
+5. **Mensen die Hulp Nodig Hebben** - Gemeenschapsleden die af en toe hulp nodig hebben met dagelijkse taken
 
-1. **Neighbors & Local Community Members** - People who want to help and receive help from their immediate community
-2. **Community Organizers** - Those looking to build trust-based mutual aid networks in their neighborhoods
-3. **People Seeking Connection** - Individuals who want to feel more connected to their local community
-4. **Skill Sharers** - People with skills like mechanical work, cooking, tutoring, pet care, and more who want to offer help
-5. **Those In Need** - Community members who need occasional help with everyday tasks
+### Gebruik Cases
 
-### Use Cases
-
-- A neighbor needs help fixing their car (Mechanical flare)
-- Someone new to the area needs cooking tips or a meal (Food flare)
-- A person is going through a tough time and needs someone to talk to (Talk flare)
-- General community support requests (Other flare)
+- Een buur heeft hulp nodig met het repareren van hun auto (Mechanisch flare)
+- Iemand nieuw in de buurt heeft kooktips of een maaltijd nodig (Eten flare)
+- Een persoon heeft een moeilijke tijd en heeft iemand nodig om mee te praten (Praten flare)
+- Algemene community ondersteuningsverzoeken (Andere flare)
 
 ---
 
@@ -61,282 +57,157 @@ The Lantern Network is designed for:
 
 ### Frontend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
+| Technologie | Versie | Doel |
+|------------|---------|------|
 | **React** | 19.0.0 | UI Framework |
 | **TypeScript** | ~5.7.2 | Type Safety |
 | **Vite** | 6.4.1 | Build Tool & Dev Server |
 | **Tailwind CSS** | 4.1.11 | Styling |
-| **Framer Motion** | 12.6.2 | Animations |
-| **React Hook Form** | 7.54.2 | Form Handling |
-| **Zod** | 3.25.76 | Schema Validation |
+| **Framer Motion** | 12.6.2 | Animaties |
+| **React Hook Form** | 7.54.2 | Formulier Afhandeling |
+| **Zod** | 3.25.76 | Schema Validatie |
 
 ### UI Components
 
-| Library | Purpose |
-|---------|---------|
-| **Radix UI** | Accessible UI primitives (Dialog, Avatar, Tabs, etc.) |
-| **Phosphor Icons** | Icon library |
-| **Sonner** | Toast notifications |
-| **D3** | Data visualization (for map features) |
-| **Recharts** | Charting library |
+| Bibliotheek | Doel |
+|---------|------|
+| **Radix UI** | Toegankelijke UI primitieven (Dialog, Avatar, Tabs, etc.) |
+| **Phosphor Icons** | Icoonbibliotheek |
+| **Sonner** | Toast notificaties |
+| **Recharts** | Grafiekbibliotheek |
 
 ### Backend / Database
 
-| Service | Purpose |
-|---------|---------|
+| Service | Doel |
+|---------|------|
 | **Supabase** | Backend-as-a-Service (Auth, PostgreSQL, Realtime) |
-| **Supabase Auth** | User authentication (email/password, magic links) |
+| **Supabase Auth** | Gebruikersauthenticatie (email/wachtwoord, magic links) |
 | **PostgreSQL** | Database (via Supabase) |
-| **Row Level Security (RLS)** | Data access control |
+| **Row Level Security (RLS)** | Data toegangscontrole |
 
-### Deployment
+### Testing & Deployment
 
-| Service | Purpose |
-|---------|---------|
+| Service | Doel |
+|---------|------|
+| **Playwright** | End-to-end testing |
 | **Vercel** | Frontend hosting & deployment |
 
 ---
 
-## Features Overview
+## Features
 
-### Feature Status Legend
+### ✅ Werkende Features
 
-- ✅ **Working** - Fully functional
-- 🟡 **Partially Working** - Basic functionality exists, needs improvements
-- 🔴 **Not Working / Planned** - Not yet implemented or broken
+#### Authenticatie Systeem
+- Email/wachtwoord registratie en login
+- Magic link authenticatie (wachtwoordloos inloggen)
+- Sessiebeheer met automatische refresh
+- Uitloggen functionaliteit
 
----
+#### Profiel Systeem
+- Profiel aanmaken met display naam, bio en vibe tags (1-5 vaardigheden/interesses)
+- Vibe Card met gebruikersinfo, reputatie en vaardigheden
+- Elder status indicator voor ervaren communityleden
 
-## Working Features
+#### Splash Screen
+- Geanimeerde lancering met lantaarn logo en glow effecten
+- "The Neighborhood That Moves With You" tagline
+- Soepele overgang naar hoofdapp
 
-### ✅ Authentication System
+#### Navigatie
+- Bottom tab bar met 5 secties: Flares, Campfire, Wallet, Berichten, Profiel
 
-- **Email/Password Sign Up & Sign In** - Full registration and login flow
-- **Magic Link Authentication** - Passwordless sign-in via email
-- **Session Management** - Persistent sessions with automatic refresh
-- **Sign Out** - Clean logout functionality
+#### Flares (Hulpverzoeken)
+- Plaats hulpverzoeken met categorie (Mechanisch, Eten, Praten, Anders)
+- Bekijk actieve flares in de gemeenschap
+- "Bied Hulp Aan" knop voor anderen' flares
+- Realtime updates via Supabase
 
-### ✅ Profile System
+#### Campfire (Community Chat)
+- Globale chatruimte voor alle geverifieerde gebruikers
+- Realtime messaging met 3-seconden polling fallback
+- Berichten vervagen naarmate ze ouder worden
+- Admin badges voor admin berichten
+- Tijdstempels ("zojuist", "5m geleden", "2u geleden")
 
-- **Profile Creation** - New users can create profiles with:
-  - Display name (max 30 characters)
-  - Bio (max 200 characters, optional)
-  - Vibe Tags (1-5 skills/interests)
-- **Profile Display** - Vibe Card showing user info, reputation, and skills
-- **Elder Status Indicator** - Visual badge for elder community members
+#### Wallet
+- Lantern saldo display met voortgangsbalk (max 10)
+- Hamsterlimiet indicator
+- Transactiegeschiedenis layout
 
-### ✅ Splash Screen
+#### Berichten
+- Help verzoekgesprekken
+- Accept/Deny help verzoek functionaliteit
+- Markeer flare als compleet workflow
+- 1-op-1 messaging tussen gebruikers
 
-- **Animated Launch** - Beautiful lantern logo with glow effects
-- **Brand Introduction** - "The Neighborhood That Moves With You" tagline
-- **Smooth Transition** - Framer Motion animations to main app
+#### Lantern Economie
+- Saldo opslag in database (start op 5)
+- Lantern overdrachten tussen gebruikers bij taak voltooiing
+- Transactiegeschiedenis opname
+- Hamsterlimiet handhaving (max 10 lantaarns)
 
-### ✅ Navigation
+#### Elder Systeem
+- Elder badge op profiel (trust_score >= 100)
+- Trust score verhoogt bij helpen (+10) en hulp ontvangen (+5)
+- Elder-only invite generatie
+- Invite codes kopiëren naar klembord
 
-- **Bottom Tab Bar** - Mobile-first navigation with 5 main sections:
-  - Flares (help requests)
-  - Campfire (community chat)
-  - Wallet (Lantern balance)
-  - Messages (1:1 conversations)
-  - Profile (user settings)
+### 🔴 Nog Niet Geïmplementeerd
 
-### ✅ Flares (Help Requests)
-
-- **Create Flare** - Post help requests with:
-  - Category selection (Mechanical, Food, Talk, Other)
-  - Title (max 100 characters)
-  - Description (max 500 characters)
-  - Optional GPS location sharing
-- **View Active Flares** - See all active flares in the community
-- **Flare Cards** - Beautiful cards showing:
-  - Creator info and avatar
-  - Category badge with icons
-  - Description preview
-  - Time ago
-  - Location indicator (if shared)
-  - "Offer Help" button (for others' flares)
-  - "Your Flare" badge (for own flares)
-- **Real-time Updates** - Flares sync via Supabase realtime + polling
-
-### ✅ Campfire (Community Chat)
-
-- **Global Chat Room** - All verified users can see and send messages
-- **Real-time Messaging** - Messages appear instantly (realtime + 3-second polling fallback)
-- **Message Fading** - Messages visually fade as they age (opacity based on hours old)
-- **User Avatars** - Display initials with color coding
-- **Admin Badges** - Special amber styling for admin messages
-- **"You" Indicator** - Clear distinction between own and others' messages
-- **Timestamps** - Relative time display ("just now", "5m ago", "2h ago")
-- **Live Status Indicator** - Green pulse showing active connection
-
-### ✅ Wallet View
-
-- **Lantern Balance Display** - Current balance with progress bar (max 10)
-- **Hoard Limit Indicator** - Visual warning when at limit
-- **Transaction History Layout** - Prepared for displaying transaction history (currently empty state)
-
-### ✅ Profile View
-
-- **Vibe Card Display** - Full profile card with all user details
-- **Stats Display** - Helps completed count and reputation score
-- **Elder Status Section** - (Shown for Elder users) with invite code management
-- **Account Actions**:
-  - Sign Out button
-  - Report button (UI only)
-  - Delete Account button with confirmation dialog
-
-### ✅ UI/UX Components
-
-- **Dark Theme** - Deep navy backgrounds with amber accents
-- **Responsive Design** - Mobile-first with max-width containers
-- **Toast Notifications** - Sonner-based feedback for actions
-- **Modal Dialogs** - For flare creation, confirmations, etc.
-- **Form Validation** - Character limits and required field handling
-- **Accessibility** - Radix UI primitives with proper ARIA support
+- Kaartweergave met flare pins
+- Block/Report gebruiker functionaliteit
+- Spam preventie (rate limiting)
+- Bericht vervaltijd (Campfire berichten na 24u)
+- Invite code validatie/inwisseling bij aanmelding
+- Invite tree tracking
 
 ---
 
-## Features In Progress / Not Working
+## Applicatie Architectuur
 
-### ✅ Messages View (NOW WORKING)
-
-**Current Status**: Fully integrated with backend
-
-- ✅ UI for displaying help request categories:
-  - Incoming help requests (on your flares)
-  - Your pending offers (waiting for response)
-  - Declined requests
-  - Active conversations
-- ✅ Chat interface with message bubbles
-- ✅ Empty states for no messages
-- ✅ Help requests are fetched from database
-- ✅ 1-on-1 messaging between users
-- ✅ Accept/Deny help request functionality
-- ✅ Mark flare as complete workflow
-
-### ✅ "Offer Help" Button (NOW WORKING)
-
-**Current Status**: Fully functional
-
-- ✅ Button displays on other users' flares
-- ✅ Creates help request in database
-- ✅ Prevents duplicate help offers
-- ✅ Real-time updates via Supabase
-
-### ✅ Lantern Economy (NOW WORKING)
-
-**Current Status**: Fully functional
-
-- ✅ Balance display in wallet
-- ✅ Balance stored in database (starts at 5)
-- ✅ Lantern transfers between users on task completion
-- ✅ Transaction history recording
-- ✅ Hoard limit enforcement (max 10 lanterns)
-- ✅ Task completion Lantern exchange (1 lantern per completed help)
-
-### ✅ Invite System (NOW WORKING)
-
-**Current Status**: Fully functional for Elders
-
-- ✅ Database schema for invites table
-- ✅ Elder status display on profile
-- ✅ Invite code generation for Elders
-- ✅ Invite codes displayed in profile
-- ✅ Copy invite code to clipboard
-- 🔴 **Not Implemented**: Invite code validation/redemption at signup
-- 🔴 **Not Implemented**: Invite tree tracking
-
-### 🔴 Map View (Not Implemented)
-
-**Current Status**: Map view component exists but not integrated
-
-- ✅ Component file exists (`map-view.tsx`)
-- 🔴 **Not Implemented**: Actual map rendering
-- 🔴 **Not Implemented**: Flare pins on map
-- 🔴 **Not Implemented**: Distance calculations
-- 🔴 **Not Implemented**: Location-based flare filtering
-
-### ✅ Elder System (NOW WORKING)
-
-**Current Status**: Fully functional
-
-- ✅ Elder badge displays on profile (trust_score >= 100)
-- ✅ Elder threshold constants defined (20 helps OR 30 days + 5 rep)
-- ✅ Trust score increases on helping (+10) and receiving help (+5)
-- ✅ Elder-only invite generation
-- ✅ Elder status notifications
-
-### ✅ Trust/Reputation System (NOW WORKING)
-
-**Current Status**: Fully functional
-
-- ✅ Trust score stored in database
-- ✅ Displayed on profile
-- ✅ Reputation increases from helping (+10 points)
-- ✅ Reputation increases from receiving help (+5 points)
-- 🔴 **Not Implemented**: Trust levels in connections
-
-### 🔴 Safety Features (Not Implemented)
-
-- 🔴 **Not Implemented**: Block user functionality
-- 🔴 **Not Implemented**: Report user functionality
-- 🔴 **Not Implemented**: Spam prevention (rate limiting)
-- 🔴 **Not Implemented**: Content moderation
-
-### 🔴 Message Expiration (Not Implemented)
-
-- 🔴 **Not Implemented**: Campfire messages auto-delete after 24h
-- 🔴 **Not Implemented**: Chat archival after 48h inactivity
-
----
-
-## Application Architecture
-
-### Component Structure
+### Component Structuur
 
 ```
 src/
-├── App.tsx                    # Main app component with navigation
+├── App.tsx                    # Hoofdapp component met navigatie
 ├── main.tsx                   # React entry point
 ├── components/
-│   ├── screens/               # Full-page view components
+│   ├── screens/               # Volledig-scherm weergave componenten
 │   │   ├── auth-screen.tsx    # Login/signup flow
 │   │   ├── campfire-view.tsx  # Community chat
-│   │   ├── create-flare.tsx   # Flare creation modal
-│   │   ├── flares-view.tsx    # Flares list/feed
-│   │   ├── messages-view.tsx  # DM conversations
-│   │   ├── profile-setup.tsx  # New user profile creation
-│   │   ├── profile-view.tsx   # User profile page
-│   │   ├── splash-screen.tsx  # App launch animation
+│   │   ├── create-flare.tsx   # Flare aanmaak modal
+│   │   ├── flares-view.tsx    # Flares lijst/feed
+│   │   ├── messages-view.tsx  # DM gesprekken
+│   │   ├── profile-setup.tsx  # Nieuw gebruikersprofiel aanmaken
+│   │   ├── profile-view.tsx   # Gebruikersprofiel pagina
+│   │   ├── splash-screen.tsx  # App lanceer animatie
 │   │   └── wallet-view.tsx    # Lantern wallet
-│   ├── ui/                    # Reusable UI primitives (shadcn/ui style)
+│   ├── ui/                    # Herbruikbare UI primitieven
 │   ├── flare-card.tsx         # Flare display component
-│   ├── lantern-balance.tsx    # Balance widget
-│   └── vibe-card.tsx          # User profile card
+│   ├── lantern-balance.tsx    # Saldo widget
+│   └── vibe-card.tsx          # Gebruikersprofiel kaart
 ├── contexts/
-│   └── AuthContext.tsx        # Authentication state management
+│   └── AuthContext.tsx        # Authenticatie state management
 ├── hooks/                     # Custom React hooks
-│   ├── use-mobile.ts          # Mobile detection
-│   ├── useConnections.ts      # User connections
 │   ├── useFlares.ts           # Flare data management
 │   ├── useInvites.ts          # Invite code management
 │   ├── useMessages.ts         # Messaging state
-│   └── useTransactions.ts     # Lantern transactions
+│   └── useTransactions.ts     # Lantern transacties
 ├── lib/
-│   ├── database.types.ts      # Supabase type definitions
-│   ├── economy.ts             # Lantern economy logic
+│   ├── database.types.ts      # Supabase type definities
+│   ├── economy.ts             # Lantern economie logica
 │   ├── supabase.ts            # Supabase client
 │   ├── types.ts               # TypeScript interfaces
-│   └── utils.ts               # Utility functions
-└── styles/                    # CSS and styling
+│   └── utils.ts               # Hulpfuncties
+└── styles/                    # CSS en styling
 ```
 
 ### Data Flow
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                     Frontend (React)                 │
+│                  Frontend (React)                    │
 ├─────────────────────────────────────────────────────┤
 │  AuthContext ─────► Components ◄───── Custom Hooks  │
 │       │                  │                  │       │
@@ -350,7 +221,7 @@ src/
 ┌─────────────────────────────────────────────────────┐
 │                 Supabase Backend                     │
 ├─────────────────────────────────────────────────────┤
-│  Authentication │ PostgreSQL │ Realtime │ Storage   │
+│  Authenticatie │ PostgreSQL │ Realtime │ Storage    │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -358,330 +229,266 @@ src/
 
 ## Database Schema
 
-### Tables Overview
+### Belangrijkste Tabellen
 
 #### `profiles`
-Extends Supabase auth.users with additional user data.
+Breidt Supabase auth.users uit met aanvullende gebruikersdata.
 
-| Column | Type | Description |
+| Kolom | Type | Beschrijving |
 |--------|------|-------------|
-| `id` | UUID | Primary key |
-| `user_id` | UUID | Foreign key to auth.users |
-| `display_name` | VARCHAR(30) | User's display name |
-| `avatar_url` | TEXT | Profile photo URL |
-| `bio` | VARCHAR(200) | User bio |
-| `vibe_tags` | TEXT[] | Skills/interests array |
-| `trust_score` | INTEGER | Reputation score (default: 0) |
-| `lantern_balance` | INTEGER | Current Lantern balance (default: 5) |
-| `location` | JSONB | User's location {lat, lng} |
+| `id` | UUID | Primaire sleutel |
+| `user_id` | UUID | Vreemde sleutel naar auth.users |
+| `display_name` | VARCHAR(30) | Weergavenaam gebruiker |
+| `avatar_url` | TEXT | Profielfoto URL |
+| `bio` | VARCHAR(200) | Gebruiker bio |
+| `vibe_tags` | TEXT[] | Vaardigheden/interesses array |
+| `trust_score` | INTEGER | Reputatie score (standaard: 0) |
+| `lantern_balance` | INTEGER | Huidig Lantern saldo (standaard: 5) |
+| `location` | JSONB | Gebruikerslocatie {lat, lng} |
 | `is_admin` | BOOLEAN | Admin status |
-| `created_at` | TIMESTAMPTZ | Account creation time |
-| `updated_at` | TIMESTAMPTZ | Last update time |
+| `created_at` | TIMESTAMPTZ | Account aanmaaktijd |
 
 #### `flares`
-Help requests posted by users.
+Hulpverzoeken geplaatst door gebruikers.
 
-| Column | Type | Description |
+| Kolom | Type | Beschrijving |
 |--------|------|-------------|
-| `id` | UUID | Primary key |
-| `creator_id` | UUID | Foreign key to auth.users |
-| `title` | VARCHAR(100) | Flare title |
-| `description` | TEXT | Full description |
-| `category` | VARCHAR(50) | Category type |
-| `vibe_tags` | TEXT[] | Related tags |
-| `location` | JSONB | Location {lat, lng} |
-| `radius_miles` | DECIMAL | Visibility radius (default: 5) |
-| `max_participants` | INTEGER | Max helpers allowed |
-| `current_participants` | INTEGER | Current count (default: 0) |
-| `lantern_cost` | INTEGER | Lanterns for completion (default: 1) |
-| `starts_at` | TIMESTAMPTZ | Start time |
-| `ends_at` | TIMESTAMPTZ | End time (optional) |
+| `id` | UUID | Primaire sleutel |
+| `creator_id` | UUID | Vreemde sleutel naar auth.users |
+| `title` | VARCHAR(100) | Flare titel |
+| `description` | TEXT | Volledige beschrijving |
+| `category` | VARCHAR(50) | Categorie type |
+| `location` | JSONB | Locatie {lat, lng} |
+| `lantern_cost` | INTEGER | Lantaarns voor voltooiing (standaard: 1) |
 | `status` | VARCHAR(20) | active/accepted/completed/cancelled |
-| `created_at` | TIMESTAMPTZ | Creation time |
-
-#### `flare_participants`
-Tracks who joins which flares.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `flare_id` | UUID | Foreign key to flares |
-| `user_id` | UUID | Foreign key to auth.users |
-| `status` | VARCHAR(20) | joined/completed/left |
-| `joined_at` | TIMESTAMPTZ | Join time |
-
-#### `connections`
-Friendship/trust relationships between users.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `user_id` | UUID | First user |
-| `connected_user_id` | UUID | Second user |
-| `trust_level` | INTEGER | Trust rating 1-5 |
-| `met_through_flare_id` | UUID | How they connected |
-| `created_at` | TIMESTAMPTZ | Connection time |
+| `created_at` | TIMESTAMPTZ | Aanmaaktijd |
 
 #### `messages`
-Direct messages and campfire chat.
+Directe berichten en campfire chat.
 
-| Column | Type | Description |
+| Kolom | Type | Beschrijving |
 |--------|------|-------------|
-| `id` | UUID | Primary key |
-| `sender_id` | UUID | Message sender |
-| `receiver_id` | UUID | Message receiver |
-| `flare_id` | UUID | Related flare (null for campfire) |
-| `content` | TEXT | Message content |
-| `read` | BOOLEAN | Read status |
-| `created_at` | TIMESTAMPTZ | Send time |
+| `id` | UUID | Primaire sleutel |
+| `sender_id` | UUID | Bericht verzender |
+| `receiver_id` | UUID | Bericht ontvanger |
+| `flare_id` | UUID | Gerelateerde flare (null voor campfire) |
+| `content` | TEXT | Bericht inhoud |
+| `read` | BOOLEAN | Gelezen status |
+| `created_at` | TIMESTAMPTZ | Verzendtijd |
 
 #### `transactions`
-Lantern economy transaction log.
+Lantern economie transactie log.
 
-| Column | Type | Description |
+| Kolom | Type | Beschrijving |
 |--------|------|-------------|
-| `id` | UUID | Primary key |
-| `user_id` | UUID | Account holder |
-| `type` | VARCHAR(30) | Transaction type |
-| `amount` | INTEGER | Lantern amount |
-| `description` | TEXT | Transaction description |
-| `flare_id` | UUID | Related flare (optional) |
-| `created_at` | TIMESTAMPTZ | Transaction time |
+| `id` | UUID | Primaire sleutel |
+| `user_id` | UUID | Account houder |
+| `type` | VARCHAR(30) | Transactie type |
+| `amount` | INTEGER | Lantern bedrag |
+| `description` | TEXT | Transactie beschrijving |
+| `flare_id` | UUID | Gerelateerde flare (optioneel) |
+| `created_at` | TIMESTAMPTZ | Transactietijd |
 
-**Transaction Types**:
-- `welcome_bonus` - Initial Lanterns on signup
-- `flare_creation` - Cost to create flare
-- `transfer_in` - Received from another user
-- `transfer_out` - Sent to another user
-- `bonus` - System bonus
-- `invite_bonus` - Bonus for inviting someone
-- `referral_bonus` - Bonus for being invited
+**Transactie Types**:
+- `welcome_bonus` - Initiële Lantaarns bij aanmelding
+- `flare_creation` - Kosten om flare aan te maken
+- `transfer_in` - Ontvangen van andere gebruiker
+- `transfer_out` - Verzonden naar andere gebruiker
+- `bonus` - Systeem bonus
+- `invite_bonus` - Bonus voor uitnodigen van iemand
+- `referral_bonus` - Bonus voor uitgenodigd worden
 
 #### `invites`
-Invite code system for new user registration.
+Invite code systeem voor nieuwe gebruikersregistratie.
 
-| Column | Type | Description |
+| Kolom | Type | Beschrijving |
 |--------|------|-------------|
-| `id` | UUID | Primary key |
-| `inviter_id` | UUID | Who created the invite |
-| `code` | VARCHAR(8) | Unique invite code |
-| `used` | BOOLEAN | Whether code was used |
-| `used_by_id` | UUID | Who redeemed it |
-| `expires_at` | TIMESTAMPTZ | Expiration time |
-| `created_at` | TIMESTAMPTZ | Creation time |
+| `id` | UUID | Primaire sleutel |
+| `inviter_id` | UUID | Wie de invite aanmaakte |
+| `code` | VARCHAR(8) | Unieke invite code |
+| `used` | BOOLEAN | Of code gebruikt is |
+| `used_by_id` | UUID | Wie het inwissel de |
+| `expires_at` | TIMESTAMPTZ | Vervaltijd |
+| `created_at` | TIMESTAMPTZ | Aanmaaktijd |
 
 ### Row Level Security (RLS)
 
-All tables have RLS enabled with appropriate policies:
+Alle tabellen hebben RLS ingeschakeld met geschikte beleidsregels:
 
-- **Profiles**: Public read, users can only edit their own
-- **Flares**: Active flares visible to all, creators can edit/delete own
-- **Messages**: Users can only see their own conversations
-- **Transactions**: Users can only see their own
-- **Invites**: Public read for validation, authenticated create
+- **Profiles**: Public read, gebruikers kunnen alleen hun eigen bewerken
+- **Flares**: Actieve flares zichtbaar voor allen, creators kunnen eigen bewerken/verwijderen
+- **Messages**: Gebruikers kunnen alleen hun eigen gesprekken zien
+- **Transactions**: Gebruikers kunnen alleen hun eigen zien
+- **Invites**: Public read voor validatie, geauthenticeerde aanmaak
 
 ---
 
-## UI/UX Design System
+## UI/UX Design Systeem
 
-### Color Palette
+### Kleurenpalet
 
-The design evokes late-night neighborhood watch with warm amber glows against deep navy darkness.
+Het ontwerp roept late-avond buurtwatch op met warme amber gloed tegen diepe navy duisternis.
 
-| Color | OKLCH Value | Usage |
-|-------|-------------|-------|
-| **Primary (Amber)** | `oklch(0.75 0.15 75)` | Lantern currency, CTAs |
-| **Background (Deep Navy)** | `oklch(0.25 0.05 255)` | Main background |
-| **Card (Elevated Navy)** | `oklch(0.30 0.05 255)` | Cards, modals |
-| **Success (Sage Green)** | `oklch(0.65 0.08 145)` | Completed states |
-| **Accent (Bright Amber)** | `oklch(0.85 0.18 70)` | Active flares, urgent |
-| **Foreground (Warm White)** | `oklch(0.95 0 0)` | Text content |
+| Kleur | OKLCH Waarde | Gebruik |
+|-------|-------------|---------|
+| **Primair (Amber)** | `oklch(0.75 0.15 75)` | Lantern valuta, CTAs |
+| **Achtergrond (Deep Navy)** | `oklch(0.25 0.05 255)` | Hoofdachtergrond |
+| **Kaart (Elevated Navy)** | `oklch(0.30 0.05 255)` | Kaarten, modals |
+| **Succes (Sage Green)** | `oklch(0.65 0.08 145)` | Voltooide statussen |
+| **Accent (Bright Amber)** | `oklch(0.85 0.18 70)` | Actieve flares, urgent |
+| **Voorgrond (Warm White)** | `oklch(0.95 0 0)` | Tekst inhoud |
 
-### Typography
+### Typografie
 
-Using **Inter** font family for a warm, approachable feel:
+Gebruikt **Inter** font familie voor een warm, toegankelijk gevoel:
 
-| Level | Style | Usage |
-|-------|-------|-------|
-| **H1** | SemiBold 32px | Screen titles |
-| **H2** | Medium 24px | Section headers |
-| **H3** | Medium 18px | Card titles |
-| **Body** | Regular 16px | Content, chat |
-| **Caption** | Regular 14px | Timestamps, metadata |
-| **Label** | Medium 14px | Form labels, buttons |
+| Niveau | Stijl | Gebruik |
+|-------|-------|---------|
+| **H1** | SemiBold 32px | Scherm titels |
+| **H2** | Medium 24px | Sectie headers |
+| **H3** | Medium 18px | Kaart titels |
+| **Body** | Regular 16px | Inhoud, chat |
+| **Caption** | Regular 14px | Tijdstempels, metadata |
+| **Label** | Medium 14px | Formulier labels, knoppen |
 
-### Iconography
+### Iconografie
 
-Using **Phosphor Icons** with consistent weights:
+Gebruikt **Phosphor Icons** met consistente gewichten:
 
-- **Navigation**: House, ChatCircle, Wallet, UserCircle
-- **Actions**: Plus, PaperPlaneRight, HandHeart, X
-- **Categories**: Wrench (Mechanical), ForkKnife (Food), ChatsCircle (Talk), Lightbulb (Other)
+- **Navigatie**: House, ChatCircle, Wallet, UserCircle
+- **Acties**: Plus, PaperPlaneRight, HandHeart, X
+- **Categorieën**: Wrench (Mechanisch), ForkKnife (Eten), ChatsCircle (Praten), Lightbulb (Andere)
 - **Status**: CheckCircle, Clock, Fire, Star
 
-### Animations
+### Animaties
 
-Purposeful motion with Framer Motion:
+Doelgerichte beweging met Framer Motion:
 
-- **Critical alerts**: Gentle scale + glow
-- **Navigation**: Slide with fade
-- **Micro-interactions**: 100ms easing
-- **Ambient elements**: Slow 3-4s loop animations
+- **Kritieke waarschuwingen**: Zachte scale + glow
+- **Navigatie**: Slide met fade
+- **Micro-interacties**: 100ms easing
+- **Ambient elementen**: Langzame 3-4s loop animaties
 
 ---
 
-## Economy System
+## Lantern Economie
 
-### Lanterns
+### Lantaarns
 
-Lanterns are the trust-based currency with built-in scarcity:
+Lantaarns zijn de vertrouwensgebaseerde valuta met ingebouwde schaarste:
 
-| Rule | Value | Purpose |
+| Regel | Waarde | Doel |
 |------|-------|---------|
-| **Initial Balance** | 5 Lanterns | Start new users with some currency |
-| **Hoard Limit** | 10 Lanterns | Prevents hoarding, encourages circulation |
-| **Flare Cost** | 1 Lantern | Cost to complete/thank a helper |
+| **Initieel Saldo** | 5 Lantaarns | Start nieuwe gebruikers met valuta |
+| **Hamsterlimiet** | 10 Lantaarns | Voorkomt hamsteren, stimuleert circulatie |
+| **Flare Kosten** | 1 Lantaarn | Kosten om helper te bedanken bij voltooiing |
 
 ### Elder Status
 
-Long-standing helpful users earn Elder status through either:
+Langdurige behulpzame gebruikers verdienen Elder status via:
 
-1. **Help Threshold**: Complete 20 helps, OR
-2. **Time Threshold**: 30 days active + 5+ reputation
+1. **Hulp Drempel**: Voltooi 20 hulpacties, OF
+2. **Tijd Drempel**: 30 dagen actief + 5+ reputatie
 
-Elder benefits:
-- Ability to generate invite codes
-- Visual Elder badge on profile
-- Helps grow the trusted network
+Elder voordelen:
+- Mogelijkheid om invite codes te genereren
+- Visuele Elder badge op profiel
+- Helpt het vertrouwde netwerk te laten groeien
 
 ---
 
-## Setup & Installation
+## Setup & Installatie
 
-### Prerequisites
+### Vereisten
 
 - Node.js 18+ 
-- npm or pnpm
-- Supabase account (for backend)
+- npm of pnpm
+- Supabase account (voor backend)
 
-### Environment Variables
+### Omgevingsvariabelen
 
-Create a `.env` file based on `.env.example`:
+Maak een `.env` bestand aan:
 
 ```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_URL=jouw_supabase_project_url
+VITE_SUPABASE_ANON_KEY=jouw_supabase_anon_key
 ```
 
-### Installation Steps
+### Installatiestappen
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/the-lantern-network.git
+# Clone de repository
+git clone https://github.com/kevinb42O/the-lantern-network.git
 cd the-lantern-network
 
-# Install dependencies
+# Installeer dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your Supabase credentials
+# Stel omgevingsvariabelen in
+# Bewerk .env met jouw Supabase credentials
 
-# Run development server
+# Voer development server uit
 npm run dev
 ```
 
 ### Database Setup
 
-1. Create a new Supabase project
-2. Go to SQL Editor in Supabase dashboard
-3. Run the contents of `supabase/schema.sql`
-4. Enable realtime for the messages table (done in schema)
+1. Maak een nieuw Supabase project
+2. Ga naar SQL Editor in Supabase dashboard
+3. Voer de inhoud van `supabase/schema.sql` uit
+4. Schakel realtime in voor de messages tabel (gedaan in schema)
 
-### Available Scripts
+### Beschikbare Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
-| `npm run kill` | Kill process on port 5000 |
+Zie [README.md](README.md) voor een volledige lijst van beschikbare npm scripts.
 
 ---
 
 ## Deployment
 
-### Vercel (Recommended)
+### Vercel (Aanbevolen)
 
-The app is configured for Vercel deployment:
+De app is geconfigureerd voor Vercel deployment:
 
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard:
+1. Verbind je GitHub repository met Vercel
+2. Voeg omgevingsvariabelen toe in Vercel dashboard:
    - `VITE_SUPABASE_URL`
    - `VITE_SUPABASE_ANON_KEY`
 3. Deploy
 
-The live version is available at: [https://the-lantern-network.vercel.app/](https://the-lantern-network.vercel.app/)
+Live versie: [https://the-lantern-network.vercel.app/](https://the-lantern-network.vercel.app/)
 
-### Manual Deployment
+### Handmatige Deployment
 
 ```bash
-# Build the project
+# Build het project
 npm run build
 
-# The dist/ folder contains the static files
-# Deploy to any static hosting service
+# De dist/ folder bevat de statische bestanden
+# Deploy naar een willekeurige statische hosting service
 ```
 
 ---
 
-## Contributing
+## Aanvullende Documentatie
 
-### Project Structure
-
-The project follows a clean component-based architecture:
-
-- **Screens**: Full-page views in `src/components/screens/`
-- **UI Components**: Reusable primitives in `src/components/ui/`
-- **Business Logic**: Hooks in `src/hooks/`, utilities in `src/lib/`
-- **State Management**: React Context in `src/contexts/`
-
-### Code Style
-
-- TypeScript strict mode
-- ESLint for linting
-- Tailwind CSS for styling
-- Radix UI for accessible primitives
-
-### Known Admin Emails
-
-The app has admin functionality for certain emails (defined in `App.tsx`):
-
-```typescript
-const ADMIN_EMAILS = [
-  'kevinb42O@hotmail.com',
-]
-```
-
-Admins get special styling in the Campfire chat and may have additional privileges in future updates.
+- [README.md](README.md) - Projectoverzicht en quickstart
+- [e2e/README.md](e2e/README.md) - E2E test suite documentatie
+- [E2E_TEST_SETUP.md](E2E_TEST_SETUP.md) - E2E test setup handleiding
+- [SECURITY.md](SECURITY.md) - Beveiligingsbeleid
 
 ---
 
-## License
+## Licentie
 
-This project is based on GitHub Spark Template and is licensed under the MIT License. See [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-- Built with [GitHub Spark](https://github.com/github/spark)
-- UI components based on [shadcn/ui](https://ui.shadcn.com/)
-- Icons by [Phosphor Icons](https://phosphoricons.com/)
-- Animations by [Framer Motion](https://www.framer.com/motion/)
-- Backend by [Supabase](https://supabase.com/)
+Dit project is gebaseerd op GitHub Spark Template en is gelicenseerd onder de MIT Licentie. Zie [LICENSE](LICENSE) bestand voor details.
 
 ---
 
-*Last Updated: November 2024*
+## Dankbetuigingen
+
+- Gebouwd met [GitHub Spark](https://github.com/github/spark)
+- UI componenten gebaseerd op [shadcn/ui](https://ui.shadcn.com/)
+- Iconen door [Phosphor Icons](https://phosphoricons.com/)
+- Animaties door [Framer Motion](https://www.framer.com/motion/)
+- Backend door [Supabase](https://supabase.com/)
