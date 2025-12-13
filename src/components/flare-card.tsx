@@ -78,7 +78,7 @@ export function FlareCard({ flare, distance, isOwner, pendingHelpCount, helpRequ
                     onReport(flare)
                   }}
                   className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
-                  title="Report flare"
+                  title="Lichtje melden"
                 >
                   <Flag size={14} />
                 </button>

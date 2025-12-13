@@ -121,7 +121,7 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
 
   const handleSubmitReport = async () => {
     if (!profile || !reportDescription.trim()) {
-      toast.error('Please provide a description')
+      toast.error('Geef een beschrijving')
       return
     }
 
@@ -129,7 +129,7 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
     try {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) {
-        toast.error('You must be logged in to report')
+        toast.error('Je moet aangemeld zijn om te melden')
         return
       }
 
@@ -145,15 +145,15 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
 
       if (error) {
         console.error('Error submitting report:', error)
-        toast.error('Failed to submit report')
+        toast.error('Melding indienen mislukt')
         return
       }
 
-      toast.success('Report submitted. Thank you for helping keep our community safe.')
+      toast.success('Melding ingediend. Bedankt voor het helpen onze gemeenschap veilig te houden.')
       setShowReportModal(false)
     } catch (err) {
       console.error('Report error:', err)
-      toast.error('Failed to submit report')
+      toast.error('Melding indienen mislukt')
     } finally {
       setSubmittingReport(false)
     }
@@ -166,13 +166,13 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
     try {
       const result = await sendConnectionRequest.mutateAsync({ toUserId: userId })
       if (result.autoAccepted) {
-        toast.success('You\'re connected! 🔥')
+        toast.success('Jullie zijn verbonden! 🔥')
       } else {
-        toast.success('Request sent! They\'ll see it in their Messages.')
+        toast.success('Verzoek verstuurd! Ze zien het in hun Gesprekken.')
       }
       refetchConnectionStatus()
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : 'Failed to send request'
+      const errMsg = error instanceof Error ? error.message : 'Verzoek versturen mislukt'
       if (errMsg === 'Already in your circle' || errMsg === 'Request already sent') {
         toast.info(errMsg)
       } else {
@@ -187,10 +187,10 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
     
     try {
       await acceptConnectionRequest.mutateAsync(connectionStatus.requestId)
-      toast.success('You\'re connected! 🔥')
+      toast.success('Jullie zijn verbonden! 🔥')
       refetchConnectionStatus()
     } catch {
-      toast.error('Failed to accept request')
+      toast.error('Verzoek accepteren mislukt')
     }
   }
 
@@ -259,7 +259,7 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
                   size="icon"
                   className="absolute top-2 right-12 rounded-full bg-background/50 backdrop-blur-sm hover:bg-red-500/20 hover:text-red-400"
                   onClick={handleReportUser}
-                  title="Report user"
+                  title="Gebruiker melden"
                 >
                   <Flag size={18} />
                 </Button>
@@ -555,7 +555,7 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
                 <textarea
                   value={reportDescription}
                   onChange={(e) => setReportDescription(e.target.value)}
-                  placeholder="Please describe the issue with this user..."
+                  placeholder="Beschrijf het probleem met deze gebruiker..."
                   className="w-full h-24 px-3 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
                 />
               </div>
