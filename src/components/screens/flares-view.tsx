@@ -59,6 +59,14 @@ interface FlaresViewProps {
   onUserClick?: (userId: string) => void
 }
 
+// Category translation mapping
+const categoryTranslations: Record<string, string> = {
+  'Mechanical': 'Technisch',
+  'Food': 'Eten',
+  'Talk': 'Gezelschap',
+  'Other': 'Overig'
+}
+
 const categoryConfig: Record<string, { icon: React.ElementType; color: string; bgColor: string; emoji: string; requestGradient: string; offerGradient: string }> = {
   Mechanical: { 
     icon: Wrench, 
@@ -592,7 +600,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                         className={`${config.bgColor} ${config.color} border shrink-0 gap-1 px-2 py-0.5 text-xs`}
                       >
                         <span>{config.emoji}</span>
-                        <span className="hidden sm:inline">{flare.category}</span>
+                        <span className="hidden sm:inline">{categoryTranslations[flare.category] || flare.category}</span>
                       </Badge>
                     </div>
 
@@ -722,7 +730,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
               }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-lg">{categoryConfig[helpFlare.category]?.emoji || '💡'}</span>
-                  <span className="text-sm font-medium text-foreground">{helpFlare.category}</span>
+                  <span className="text-sm font-medium text-foreground">{categoryTranslations[helpFlare.category] || helpFlare.category}</span>
                   <span className="text-muted-foreground">•</span>
                   <span className="text-sm text-muted-foreground">{helpFlare.creator_name}</span>
                 </div>
@@ -1011,7 +1019,7 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                               ? flareType === 'offer' ? 'text-emerald-400' : 'text-orange-400'
                               : 'text-foreground'
                           }`}>
-                            {catConfig.emoji} {cat}
+                            {catConfig.emoji} {categoryTranslations[cat] || cat}
                           </span>
                         </button>
                       )

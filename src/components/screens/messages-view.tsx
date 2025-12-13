@@ -168,7 +168,7 @@ export function MessagesView({
   const claimAnnouncementGift = async (announcement: Announcement & { recipient?: AnnouncementRecipient }) => {
     if (claimingGift) return
     if (announcement.recipient?.gift_claimed) {
-      toast.error('Gift already claimed!')
+      toast.error('Cadeau al opgehaald!')
       return
     }
     if (announcement.gift_amount <= 0) return
@@ -177,7 +177,7 @@ export function MessagesView({
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) {
-        toast.error('Not authenticated')
+        toast.error('Niet aangemeld')
         return
       }
 
@@ -190,7 +190,7 @@ export function MessagesView({
         .single()
 
       if (existingRecipient?.gift_claimed) {
-        toast.error('Gift already claimed!')
+        toast.error('Cadeau al opgehaald!')
         fetchAnnouncements()
         return
       }
@@ -208,7 +208,7 @@ export function MessagesView({
 
         if (updateError) {
           console.error('Error updating recipient:', updateError)
-          toast.error('Failed to claim gift')
+          toast.error('Cadeau ophalen mislukt')
           return
         }
       } else {
@@ -224,7 +224,7 @@ export function MessagesView({
 
         if (insertError) {
           console.error('Error inserting recipient:', insertError)
-          toast.error('Failed to claim gift')
+          toast.error('Cadeau ophalen mislukt')
           return
         }
       }
@@ -238,7 +238,7 @@ export function MessagesView({
 
       if (profileError || !profileData) {
         console.error('Error fetching profile:', profileError)
-        toast.error('Failed to update balance')
+        toast.error('Saldo bijwerken mislukt')
         return
       }
 
@@ -250,7 +250,7 @@ export function MessagesView({
 
       if (balanceError) {
         console.error('Error updating balance:', balanceError)
-        toast.error('Failed to update balance')
+        toast.error('Saldo bijwerken mislukt')
         return
       }
 
@@ -269,11 +269,11 @@ export function MessagesView({
         // Not critical, gift was still claimed
       }
 
-      toast.success(`🎁 You received ${announcement.gift_amount} lantern${announcement.gift_amount > 1 ? 's' : ''}!`)
+      toast.success(`🎁 Je ontving ${announcement.gift_amount} lichtpunt${announcement.gift_amount > 1 ? 'jes' : 'je'}!`)
       fetchAnnouncements()
     } catch (err) {
       console.error('Error claiming gift:', err)
-      toast.error('Failed to claim gift')
+      toast.error('Cadeau ophalen mislukt')
     } finally {
       setClaimingGift(null)
     }
@@ -341,12 +341,12 @@ export function MessagesView({
     if (!flare) return
     
     if (user.lanternBalance < 1) {
-      toast.error('Not enough lanterns to complete this task')
+      toast.error('Niet genoeg lichtpuntjes om deze taak te voltooien')
       return
     }
     
     onCompleteFlare(flare.id, selectedConversation.helperId)
-    toast.success('🏮 Task completed! 1 Lantern sent as thanks!')
+    toast.success('🏮 Taak voltooid! 1 Lichtpuntje verstuurd als bedankje!')
     setSelectedConversation(null)
   }
 
@@ -385,7 +385,7 @@ export function MessagesView({
       setCircleChatInput('')
       refetchCircleMessages()
     } catch {
-      toast.error('Failed to send message')
+      toast.error('Bericht versturen mislukt')
     }
   }
 
@@ -404,30 +404,30 @@ export function MessagesView({
       refetchRequests()
       refetchCircle()
     } catch {
-      toast.error('Failed to accept request')
+      toast.error('Verzoek accepteren mislukt')
     }
   }
 
   const handleDeclineConnectionRequest = async (requestId: string) => {
     try {
       await declineRequest.mutateAsync(requestId)
-      toast.info('Request declined')
+      toast.info('Verzoek geweigerd')
       refetchRequests()
     } catch {
-      toast.error('Failed to decline request')
+      toast.error('Verzoek weigeren mislukt')
     }
   }
 
   // Handle remove from circle
   const handleRemoveFromCircle = async (connectedUserId: string) => {
-    if (!confirm('Remove from your circle? You can always add them back later.')) return
+    if (!confirm('Verwijderen uit je buurtkring? Je kunt ze later altijd weer toevoegen.')) return
     try {
       await removeFromCircle.mutateAsync(connectedUserId)
-      toast.info('Removed from circle')
+      toast.info('Verwijderd uit buurtkring')
       setSelectedCircleMember(null)
       refetchCircle()
     } catch {
-      toast.error('Failed to remove from circle')
+      toast.error('Verwijderen uit buurtkring mislukt')
     }
   }
 
