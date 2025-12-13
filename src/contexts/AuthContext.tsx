@@ -192,16 +192,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If user is an admin by email but profile doesn't have is_admin set
         if (isAdminEmail && !fetchedProfile.is_admin) {
           console.log('Syncing admin status for:', userEmail);
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ is_admin: true })
-            .eq('user_id', userId);
           
-          if (!updateError) {
-            fetchedProfile.is_admin = true;
-          } else {
-            console.error('Error syncing admin status:', updateError);
-          }
+          // Set admin status optimistically to unblock profile loading
+          fetchedProfile.is_admin = true;
+          
+          // Fire-and-forget database update with timeout protection
+          // This runs in the background and won't block profile loading
+          Promise.race([
+            supabase
+              .from('profiles')
+              .update({ is_admin: true })
+              .eq('user_id', userId),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Admin sync timeout')), 3000)
+            )
+          ]).catch((error) => {
+            // Log errors but don't block - optimistic update already applied
+            console.error('Error syncing admin status (non-blocking):', error);
+          });
         }
       }
       
