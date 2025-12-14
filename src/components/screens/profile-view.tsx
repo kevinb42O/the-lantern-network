@@ -11,7 +11,7 @@ import { SupportPage } from './support-page'
 import { useAuth } from '@/contexts/AuthContext'
 import type { User, InviteCode } from '@/lib/types'
 import { toast } from 'sonner'
-import { getHighestBadge, getNextBadge, getEarnedBadges, getAllUserBadges, BADGES, getSupporterBadgeInfo } from '@/lib/economy'
+import { getHighestBadge, getNextBadge, getEarnedBadges, BADGES, getSupporterBadgeInfo } from '@/lib/economy'
 
 // Check if Supabase is configured
 const isSupabaseConfigured = 
@@ -36,8 +36,6 @@ export function ProfileView({
 }: ProfileViewProps) {
   const { signOut } = useAuth();
   const [showInvites, setShowInvites] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [showSettings, setShowSettings] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showBadges, setShowBadges] = useState(false)
   const [showPhilosophy, setShowPhilosophy] = useState(false)
@@ -62,10 +60,6 @@ export function ProfileView({
   const currentBadge = getHighestBadge(helpCount, adminBadges)
   const nextBadge = getNextBadge(helpCount)
   const earnedBadges = getEarnedBadges(helpCount)
-  
-  // Get all user badges (earned + admin-granted, no duplicates)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const allUserBadges = getAllUserBadges(helpCount, adminBadges)
   
   // Get custom badges assigned by admin that are NOT already earned through flares
   const customBadges = adminBadges.length > 0
@@ -345,9 +339,9 @@ export function ProfileView({
       <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">Delete Your Account?</DialogTitle>
+            <DialogTitle className="text-xl">Account verwijderen?</DialogTitle>
             <DialogDescription className="text-base">
-              This action cannot be undone. All your data, including your Lanterns and help history, will be permanently deleted.
+              Deze actie kan niet ongedaan worden gemaakt. Al je gegevens, inclusief je Lichtpuntjes en hulpgeschiedenis, worden permanent verwijderd.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-3 pt-4">
@@ -356,7 +350,7 @@ export function ProfileView({
               className="flex-1 rounded-xl"
               onClick={() => setShowDeleteConfirm(false)}
             >
-              Keep My Account
+              Account behouden
             </Button>
             <Button
               variant="destructive"
@@ -366,7 +360,7 @@ export function ProfileView({
                 setShowDeleteConfirm(false)
               }}
             >
-              Delete Forever
+              Definitief verwijderen
             </Button>
           </div>
         </DialogContent>
@@ -378,10 +372,10 @@ export function ProfileView({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Medal size={24} weight="duotone" className="text-primary" />
-              Your Badges
+              Jouw badges
             </DialogTitle>
             <DialogDescription>
-              Earn badges by helping neighbors in the community
+              Verdien badges door buren te helpen in de gemeenschap
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
@@ -411,7 +405,7 @@ export function ProfileView({
             {/* Custom Badges (assigned by admin) */}
             {customBadges.length > 0 && (
               <>
-                <h4 className="text-sm font-medium text-foreground pt-1">Special Badges</h4>
+                <h4 className="text-sm font-medium text-foreground pt-1">Speciale badges</h4>
                 {customBadges.map((badge) => (
                   <Card 
                     key={`custom-${badge.id}`} 
@@ -423,11 +417,11 @@ export function ProfileView({
                         <h4 className={`font-semibold ${badge.color}`}>{badge.name}</h4>
                         <p className="text-xs text-muted-foreground">{badge.description}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Awarded by admin
+                          Toegekend door beheerder
                         </p>
                       </div>
                       <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400 font-medium">
-                        Special
+                        Speciaal
                       </span>
                     </div>
                   </Card>
@@ -449,12 +443,12 @@ export function ProfileView({
                     <h4 className={`font-semibold ${badge.color}`}>{badge.name}</h4>
                     <p className="text-xs text-muted-foreground">{badge.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Unlocked at {badge.minFlares} completed helps
+                      Ontgrendeld bij {badge.minFlares} voltooide hulpacties
                     </p>
                   </div>
                   {badge.id === currentBadge.id && (
                     <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">
-                      Current
+                      Huidig
                     </span>
                   )}
                 </div>
