@@ -72,7 +72,7 @@ export function VibeCard({ user, helpCount = 0, isModerator = false }: VibeCardP
             </p>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
               <Clock size={12} />
-              {daysSinceJoined === 0 ? 'Joined today' : `Member for ${daysSinceJoined} day${daysSinceJoined !== 1 ? 's' : ''}`}
+              {daysSinceJoined === 0 ? 'Vandaag lid geworden' : `Lid sinds ${daysSinceJoined} dag${daysSinceJoined !== 1 ? 'en' : ''}`}
             </p>
           </div>
         </div>
@@ -84,14 +84,14 @@ export function VibeCard({ user, helpCount = 0, isModerator = false }: VibeCardP
               <Star size={14} weight="fill" className="text-primary" />
             </div>
             <span className="font-semibold text-foreground">{user.reputation}</span>
-            <span className="text-muted-foreground">rep</span>
+            <span className="text-muted-foreground">reputatie</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="p-1 rounded bg-success/15">
               <HandHeart size={14} weight="duotone" className="text-success" />
             </div>
             <span className="font-semibold text-foreground">{helpCount}</span>
-            <span className="text-muted-foreground">helps</span>
+            <span className="text-muted-foreground">hulpacties</span>
           </div>
         </div>
         

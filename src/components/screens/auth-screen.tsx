@@ -192,9 +192,9 @@ export function AuthScreen() {
                 </span>
               ) : (
                 <>
-                  {mode === 'sign-in' && 'Sign In'}
-                  {mode === 'sign-up' && 'Create Account'}
-                  {mode === 'magic-link' && 'Send Magic Link'}
+                  {mode === 'sign-in' && 'Aanmelden'}
+                  {mode === 'sign-up' && 'Account aanmaken'}
+                  {mode === 'magic-link' && 'Magische link versturen'}
                   <ArrowRight size={18} weight="bold" />
                 </>
               )}

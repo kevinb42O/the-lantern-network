@@ -163,7 +163,7 @@ function TransactionItem({ transaction, currentUserId }: TransactionItemProps) {
           </p>
           {!isSystem && (
             <p className="text-xs text-muted-foreground/70 mt-1">
-              {isReceived ? `Van ${transaction.from}` : `Aan ${transaction.to}`}
+              {isReceived ? 'Van een buur' : 'Aan een buur'}
             </p>
           )}
         </div>

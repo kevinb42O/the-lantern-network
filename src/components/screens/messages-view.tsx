@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { AmbientBackground } from '@/components/ui/ambient-background'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient, CircleConnection } from '@/lib/types'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -48,6 +49,8 @@ export function MessagesView({
   // Circle chat state
   const [selectedCircleMember, setSelectedCircleMember] = useState<CircleConnection | null>(null)
   const [circleChatInput, setCircleChatInput] = useState('')
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
+  const [userToRemove, setUserToRemove] = useState<string | null>(null)
   
   // Circle hooks
   const { data: circleConnections = [], refetch: refetchCircle } = useCircleConnections()
@@ -420,15 +423,24 @@ export function MessagesView({
   }
 
   // Handle remove from circle
-  const handleRemoveFromCircle = async (connectedUserId: string) => {
-    if (!confirm('Verwijderen uit je buurtkring? Je kunt ze later altijd weer toevoegen.')) return
+  const handleRemoveFromCircle = (connectedUserId: string) => {
+    setUserToRemove(connectedUserId)
+    setShowRemoveConfirm(true)
+  }
+
+  const confirmRemoveFromCircle = async () => {
+    if (!userToRemove) return
     try {
-      await removeFromCircle.mutateAsync(connectedUserId)
+      await removeFromCircle.mutateAsync(userToRemove)
       toast.info('Verwijderd uit buurtkring')
       setSelectedCircleMember(null)
+      setShowRemoveConfirm(false)
+      setUserToRemove(null)
       refetchCircle()
     } catch {
       toast.error('Verwijderen uit buurtkring mislukt')
+      setShowRemoveConfirm(false)
+      setUserToRemove(null)
     }
   }
 
@@ -700,12 +712,12 @@ export function MessagesView({
                   <div className="space-y-3">
                     <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                       <UserCirclePlus size={14} className="text-amber-400" />
-                      Incoming Requests ({connectionRequests?.incoming.length || 0})
+                      Inkomende aanvragen ({connectionRequests?.incoming.length || 0})
                     </h2>
                     {connectionRequests?.incoming.length === 0 ? (
                       <Card className="p-6 text-center bg-muted/20 border-dashed">
                         <p className="text-sm text-muted-foreground">
-                          No pending requests
+                          Geen openstaande aanvragen
                         </p>
                       </Card>
                     ) : (
@@ -737,12 +749,12 @@ export function MessagesView({
                                 </span>
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                wants to add you to their circle
+                                wil je toevoegen aan hun kring
                               </p>
                               {request.flareName && (
                                 <div className="flex items-center gap-2 text-xs bg-muted/30 px-2 py-1 rounded-md w-fit">
                                   <Fire size={14} className="text-amber-400" />
-                                  <span className="text-foreground">Met via: {request.flareName}</span>
+                                  <span className="text-foreground">Ontmoet via: {request.flareName}</span>
                                 </div>
                               )}
                               {request.message && (
@@ -866,13 +878,13 @@ export function MessagesView({
                                 </span>
                                 {isUnread && (
                                   <Badge className="bg-primary/20 text-primary border-primary/30 text-xs">
-                                    New
+                                    Nieuw
                                   </Badge>
                                 )}
                                 {hasGift && (
                                   <Badge className={`text-xs ${giftClaimed ? 'bg-muted text-muted-foreground border-muted' : 'bg-amber-500/20 text-amber-400 border-amber-500/30'}`}>
                                     <Gift size={10} className="mr-1" />
-                                    {giftClaimed ? 'Claimed' : `${announcement.gift_amount} 🏮`}
+                                    {giftClaimed ? 'Opgehaald' : `${announcement.gift_amount} 🏮`}
                                   </Badge>
                                 )}
                               </div>
@@ -898,13 +910,13 @@ export function MessagesView({
                                   disabled={claimingGift === announcement.id}
                                 >
                                   <Gift size={14} />
-                                  {claimingGift === announcement.id ? 'Claiming...' : 'Claim Gift 🎁'}
+                                  {claimingGift === announcement.id ? 'Bezig met claimen...' : 'Cadeau claimen 🎁'}
                                 </Button>
                               )}
                               {hasGift && giftClaimed && (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1 ml-auto">
                                   <CheckFat size={12} className="text-green-500" />
-                                  Gift Claimed ✓
+                                  Cadeau opgehaald ✓
                                 </span>
                               )}
                             </div>
@@ -924,7 +936,7 @@ export function MessagesView({
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary"></span>
                     </span>
-                    Neighbors Want to Help ({pendingRequestsForMe.length})
+                    Buren willen helpen ({pendingRequestsForMe.length})
                   </h2>
                   {pendingRequestsForMe.map((hr, index) => {
                     const flare = getFlareForRequest(hr)
@@ -1102,7 +1114,7 @@ export function MessagesView({
               <div className="space-y-3">
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                   <ChatCircle size={14} />
-                  Active Conversations ({activeConversations.length})
+                  Actieve gesprekken ({activeConversations.length})
                 </h2>
                 {activeConversations.length === 0 && pendingRequestsForMe.length === 0 && myPendingOffers.length === 0 && myDeniedOffers.length === 0 ? (
                   <div className="text-center py-16">
@@ -1119,7 +1131,7 @@ export function MessagesView({
                 ) : activeConversations.length === 0 ? (
                   <Card className="p-6 text-center bg-muted/20 border-dashed">
                     <p className="text-sm text-muted-foreground">
-                      No active conversations yet — accept a help request to start chatting!
+                      Nog geen actieve gesprekken
                     </p>
                   </Card>
                 ) : (
@@ -1158,17 +1170,17 @@ export function MessagesView({
                               {isFlareOwner ? (
                                 <Badge variant="outline" className="text-xs border-primary/30 text-primary rounded-md">
                                   <Sparkle size={10} className="mr-1" />
-                                  Your Flare
+                                  Jouw lichtje
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="text-xs border-success/30 text-success rounded-md">
                                   <HandHeart size={10} className="mr-1" />
-                                  Helping
+                                  Aan het helpen
                                 </Badge>
                               )}
                               {flare?.status === 'completed' && (
                                 <Badge variant="outline" className="text-xs border-muted text-muted-foreground rounded-md">
-                                  ✅ Done
+                                  ✅ Voltooid
                                 </Badge>
                               )}
                             </div>
@@ -1216,9 +1228,9 @@ export function MessagesView({
                     {getFlareForRequest(selectedConversation)?.category || 'Flare'}
                   </Badge>
                   {selectedConversation.flareOwnerId === user.id ? (
-                    <span className="text-xs text-blue-500">Your Flare</span>
+                    <span className="text-xs text-blue-500">Jouw lichtje</span>
                   ) : (
-                    <span className="text-xs text-green-500">You're Helping</span>
+                    <span className="text-xs text-green-500">Je helpt mee</span>
                   )}
                 </div>
               </div>
@@ -1346,6 +1358,37 @@ export function MessagesView({
           </div>
         </div>
       )}
+
+      {/* Remove from Circle Confirmation Dialog */}
+      <Dialog open={showRemoveConfirm} onOpenChange={setShowRemoveConfirm}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Verwijderen uit buurtkring?</DialogTitle>
+            <DialogDescription className="text-base">
+              Je kunt ze later altijd weer toevoegen.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl"
+              onClick={() => {
+                setShowRemoveConfirm(false)
+                setUserToRemove(null)
+              }}
+            >
+              Annuleren
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1 rounded-xl"
+              onClick={confirmRemoveFromCircle}
+            >
+              Verwijderen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

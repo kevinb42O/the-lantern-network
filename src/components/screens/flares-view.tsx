@@ -499,12 +499,12 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                       {isOffer ? (
                         <>
                           <Gift size={12} weight="duotone" className="mr-1" />
-                          OFFER
+                          AANBOD
                         </>
                       ) : (
                         <>
                           <Fire size={12} weight="duotone" className="mr-1" />
-                          REQUEST
+                          VRAAG
                         </>
                       )}
                     </Badge>
@@ -622,21 +622,21 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                             return (
                               <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-500/30 gap-1.5 py-1.5 px-3">
                                 <Hourglass size={14} />
-                                Pending
+                                In afwachting
                               </Badge>
                             )
                           } else if (helpStatus?.status === 'accepted') {
                             return (
                               <Badge variant="outline" className="text-xs text-green-500 border-green-500/30 gap-1.5 py-1.5 px-3">
                                 <CheckCircle size={14} weight="fill" />
-                                Accepted
+                                Geaccepteerd
                               </Badge>
                             )
                           } else if (helpStatus?.status === 'denied') {
                             return (
                               <Badge variant="outline" className="text-xs text-muted-foreground gap-1.5 py-1.5 px-3">
                                 <XCircle size={14} />
-                                Declined
+                                Geweigerd
                               </Badge>
                             )
                           }
@@ -653,12 +653,12 @@ export function FlaresView({ user, flares, helpRequests, stories = [], circleMem
                               {isOffer ? (
                                 <>
                                   <Gift size={16} weight="duotone" />
-                                  {isFreefree ? '🎁 Claim Gift' : '🙋 Claim This'}
+                                  {isFreefree ? '🎁 Cadeau claimen' : '🙋 Dit claimen'}
                                 </>
                               ) : (
                                 <>
                                   <HandWaving size={16} weight="duotone" />
-                                  🤝 I Can Help
+                                  🤝 Ik kan helpen
                                 </>
                               )}
                             </Button>
