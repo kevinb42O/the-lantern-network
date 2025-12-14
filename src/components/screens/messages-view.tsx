@@ -464,10 +464,11 @@ export function MessagesView({
       }
       refetchCircle()
       refetchRequests()
-    } catch (error: any) {
-      if (error.message === 'Already in your circle') {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      if (errorMessage === 'Already in your circle') {
         toast.info('Deze persoon is al in je buurtkring')
-      } else if (error.message === 'Request already sent') {
+      } else if (errorMessage === 'Request already sent') {
         toast.info('Je hebt al een verzoek gestuurd')
       } else {
         toast.error('Verzoek versturen mislukt')
