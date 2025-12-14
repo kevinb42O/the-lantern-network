@@ -175,10 +175,11 @@ BEGIN
   v_to_user_id := v_request.to_user_id;
   v_flare_id := v_request.flare_id;
   
-  -- Check if connections already exist
+  -- Check if connections already exist (check both directions for data consistency)
   IF EXISTS (
     SELECT 1 FROM connections 
-    WHERE user_id = v_from_user_id AND connected_user_id = v_to_user_id
+    WHERE (user_id = v_from_user_id AND connected_user_id = v_to_user_id)
+       OR (user_id = v_to_user_id AND connected_user_id = v_from_user_id)
   ) THEN
     -- Update request status anyway
     UPDATE connection_requests

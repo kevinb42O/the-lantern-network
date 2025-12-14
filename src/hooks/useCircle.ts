@@ -254,10 +254,19 @@ async function acceptConnectionRequestDirect(userId: string, requestId: string, 
       .single();
     
     if (request) {
+      // Update connection from_user -> to_user
       await supabase
         .from('connections')
         .update({ met_through_flare_id: flareId })
-        .or(`and(user_id.eq.${request.from_user_id},connected_user_id.eq.${request.to_user_id}),and(user_id.eq.${request.to_user_id},connected_user_id.eq.${request.from_user_id})`);
+        .eq('user_id', request.from_user_id)
+        .eq('connected_user_id', request.to_user_id);
+      
+      // Update connection to_user -> from_user
+      await supabase
+        .from('connections')
+        .update({ met_through_flare_id: flareId })
+        .eq('user_id', request.to_user_id)
+        .eq('connected_user_id', request.from_user_id);
     }
   }
 }
