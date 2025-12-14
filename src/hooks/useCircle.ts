@@ -236,42 +236,39 @@ export function useSendConnectionRequest() {
 
 // Accept a connection request (creates bidirectional connection)
 async function acceptConnectionRequestDirect(userId: string, requestId: string, flareId?: string | null) {
-  // Get the request
-  const { data: request, error: fetchError } = await supabase
-    .from('connection_requests')
-    .select('*')
-    .eq('id', requestId)
-    .single();
+  // Call the database function with SECURITY DEFINER to create bidirectional connections
+  // This bypasses RLS restrictions that would otherwise prevent inserting connections for other users
+  const { data, error } = await supabase.rpc('accept_connection_request', {
+    request_id: requestId
+  });
 
-  if (fetchError || !request) throw new Error('Request not found');
-
-  const fromUserId = request.from_user_id;
-  const toUserId = request.to_user_id;
-  const metThroughFlareId = flareId || request.flare_id;
-
-  // Create bidirectional connections
-  const { error: connectionError } = await supabase.from('connections').insert([
-    {
-      user_id: fromUserId,
-      connected_user_id: toUserId,
-      trust_level: 1,
-      met_through_flare_id: metThroughFlareId,
-    },
-    {
-      user_id: toUserId,
-      connected_user_id: fromUserId,
-      trust_level: 1,
-      met_through_flare_id: metThroughFlareId,
-    },
-  ]);
-
-  if (connectionError) throw connectionError;
-
-  // Update request status
-  await supabase
-    .from('connection_requests')
-    .update({ status: 'accepted' })
-    .eq('id', requestId);
+  if (error) throw error;
+  
+  // If a custom flare_id was provided (e.g., when auto-accepting), update the connections
+  if (flareId && data?.success) {
+    // Update both connections with the custom flare_id
+    const { data: request } = await supabase
+      .from('connection_requests')
+      .select('from_user_id, to_user_id')
+      .eq('id', requestId)
+      .single();
+    
+    if (request) {
+      // Update connection from_user -> to_user
+      await supabase
+        .from('connections')
+        .update({ met_through_flare_id: flareId })
+        .eq('user_id', request.from_user_id)
+        .eq('connected_user_id', request.to_user_id);
+      
+      // Update connection to_user -> from_user
+      await supabase
+        .from('connections')
+        .update({ met_through_flare_id: flareId })
+        .eq('user_id', request.to_user_id)
+        .eq('connected_user_id', request.from_user_id);
+    }
+  }
 }
 
 // Accept a connection request
