@@ -1180,13 +1180,18 @@ function App() {
     if (!authUser) return
 
     // First, fetch all messages with flare_id = null
-    const { data: messagesToCheck } = await supabase
+    const { data: messagesToCheck, error: fetchError } = await supabase
       .from('messages')
       .select('id, sender_id, receiver_id')
       .is('flare_id', null)
 
+    if (fetchError) {
+      console.error('Error fetching messages:', fetchError)
+      throw new Error('Failed to fetch messages')
+    }
+
     if (!messagesToCheck || messagesToCheck.length === 0) {
-      setMessages([])
+      // No messages to delete, nothing to do
       return
     }
 
@@ -1196,7 +1201,7 @@ function App() {
       .map(m => m.id)
 
     if (campfireMessageIds.length === 0) {
-      setMessages([])
+      // No campfire messages to delete, nothing to do
       return
     }
 
@@ -1211,6 +1216,7 @@ function App() {
       throw new Error('Failed to clear campfire')
     }
 
+    // Clear messages from UI state after successful delete
     setMessages([])
   }
 
