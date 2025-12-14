@@ -134,6 +134,75 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Function to accept a connection request and create bidirectional connections
+-- Uses SECURITY DEFINER to bypass RLS restrictions on inserting connections
+CREATE OR REPLACE FUNCTION accept_connection_request(request_id UUID)
+RETURNS JSON AS $$
+DECLARE
+  v_request connection_requests;
+  v_from_user_id UUID;
+  v_to_user_id UUID;
+  v_flare_id UUID;
+  v_current_user_id UUID;
+BEGIN
+  -- Get current user
+  v_current_user_id := auth.uid();
+  
+  IF v_current_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+  
+  -- Get the connection request
+  SELECT * INTO v_request
+  FROM connection_requests
+  WHERE id = request_id;
+  
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Connection request not found';
+  END IF;
+  
+  -- Verify that the current user is the recipient (to_user_id)
+  IF v_request.to_user_id != v_current_user_id THEN
+    RAISE EXCEPTION 'Not authorized to accept this request';
+  END IF;
+  
+  -- Check if request is already accepted
+  IF v_request.status = 'accepted' THEN
+    RAISE EXCEPTION 'Request already accepted';
+  END IF;
+  
+  v_from_user_id := v_request.from_user_id;
+  v_to_user_id := v_request.to_user_id;
+  v_flare_id := v_request.flare_id;
+  
+  -- Check if connections already exist
+  IF EXISTS (
+    SELECT 1 FROM connections 
+    WHERE user_id = v_from_user_id AND connected_user_id = v_to_user_id
+  ) THEN
+    -- Update request status anyway
+    UPDATE connection_requests
+    SET status = 'accepted'
+    WHERE id = request_id;
+    
+    RETURN json_build_object('success', true, 'message', 'Connection already exists');
+  END IF;
+  
+  -- Create bidirectional connections with SECURITY DEFINER privileges
+  INSERT INTO connections (user_id, connected_user_id, trust_level, met_through_flare_id)
+  VALUES 
+    (v_from_user_id, v_to_user_id, 1, v_flare_id),
+    (v_to_user_id, v_from_user_id, 1, v_flare_id);
+  
+  -- Update the request status to accepted
+  UPDATE connection_requests
+  SET status = 'accepted'
+  WHERE id = request_id;
+  
+  RETURN json_build_object('success', true, 'message', 'Connection created successfully');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Row Level Security (RLS) Policies
 
 -- Enable RLS on all tables

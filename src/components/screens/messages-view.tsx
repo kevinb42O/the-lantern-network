@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient, CircleConnection } from '@/lib/types'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
-import { useCircleConnections, useConnectionRequests, useAcceptConnectionRequest, useDeclineConnectionRequest, useCircleMessages, useSendCircleMessage, useRemoveFromCircle, MAX_TRUST_LEVEL } from '@/hooks/useCircle'
+import { useCircleConnections, useConnectionRequests, useAcceptConnectionRequest, useDeclineConnectionRequest, useCircleMessages, useSendCircleMessage, useRemoveFromCircle, useSendConnectionRequest, MAX_TRUST_LEVEL } from '@/hooks/useCircle'
 import { lanternCopy } from '@/copy/nl-BE'
 
 type MessagesTab = 'conversations' | 'circle' | 'requests'
@@ -60,6 +60,7 @@ export function MessagesView({
   const { data: circleMessages = [], refetch: refetchCircleMessages } = useCircleMessages(selectedCircleMember?.connectedUserId || null)
   const sendCircleMessage = useSendCircleMessage()
   const removeFromCircle = useRemoveFromCircle()
+  const sendConnectionRequest = useSendConnectionRequest()
   
   // Announcements state
   const [announcements, setAnnouncements] = useState<(Announcement & { recipient?: AnnouncementRecipient })[]>([])
@@ -441,6 +442,36 @@ export function MessagesView({
       toast.error('Verwijderen uit buurtkring mislukt')
       setShowRemoveConfirm(false)
       setUserToRemove(null)
+    }
+  }
+
+  // Check if a user is in the circle
+  const isUserInCircle = (userId: string): boolean => {
+    return circleConnections.some(c => c.connectedUserId === userId)
+  }
+
+  // Handle sending connection request from conversation
+  const handleSendConnectionRequestFromChat = async (otherUserId: string, flareId?: string) => {
+    try {
+      const result = await sendConnectionRequest.mutateAsync({
+        toUserId: otherUserId,
+        flareId: flareId,
+      })
+      if (result.autoAccepted) {
+        toast.success("Jullie zijn verbonden! 🔥")
+      } else {
+        toast.success('Verzoek verstuurd!')
+      }
+      refetchCircle()
+      refetchRequests()
+    } catch (error: any) {
+      if (error.message === 'Already in your circle') {
+        toast.info('Deze persoon is al in je buurtkring')
+      } else if (error.message === 'Request already sent') {
+        toast.info('Je hebt al een verzoek gestuurd')
+      } else {
+        toast.error('Verzoek versturen mislukt')
+      }
     }
   }
 
@@ -1234,6 +1265,21 @@ export function MessagesView({
                   )}
                 </div>
               </div>
+              {/* Add to Circle button - only show if user is not already in circle */}
+              {!isUserInCircle(getOtherParticipant(selectedConversation).id) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-xs border-amber-500/30 hover:bg-amber-500/10 text-amber-500"
+                  onClick={() => handleSendConnectionRequestFromChat(
+                    getOtherParticipant(selectedConversation).id,
+                    selectedConversation.flareId
+                  )}
+                >
+                  <UserCirclePlus size={16} weight="duotone" />
+                  Toevoegen aan Buurtkring
+                </Button>
+              )}
             </div>
             
             {/* Flare description */}
