@@ -944,8 +944,12 @@ function App() {
         return
       }
 
+      // Filter to only campfire messages (where sender_id === receiver_id)
+      // This excludes private circle/DM messages (sender_id !== receiver_id)
+      const campfireMessages = messagesData.filter(m => m.sender_id === m.receiver_id)
+
       // Get all unique sender IDs
-      const senderIds = [...new Set(messagesData.map(m => m.sender_id))]
+      const senderIds = [...new Set(campfireMessages.map(m => m.sender_id))]
       
       // Fetch all profiles for these senders, including is_admin and is_moderator flags
       const { data: profilesData } = await supabase
@@ -984,7 +988,7 @@ function App() {
       }
 
       // Format messages with usernames
-      const formattedMessages: Message[] = messagesData.map(m => ({
+      const formattedMessages: Message[] = campfireMessages.map(m => ({
         id: m.id,
         userId: m.sender_id,
         username: profileMap[m.sender_id] || 'Onbekende buur',
