@@ -944,8 +944,12 @@ function App() {
         return
       }
 
+      // Filter to only campfire messages (where sender_id === receiver_id)
+      // This excludes private circle/DM messages (sender_id !== receiver_id)
+      const campfireMessages = messagesData.filter(m => m.sender_id === m.receiver_id)
+
       // Get all unique sender IDs
-      const senderIds = [...new Set(messagesData.map(m => m.sender_id))]
+      const senderIds = [...new Set(campfireMessages.map(m => m.sender_id))]
       
       // Fetch all profiles for these senders, including is_admin and is_moderator flags
       const { data: profilesData } = await supabase
@@ -984,7 +988,7 @@ function App() {
       }
 
       // Format messages with usernames
-      const formattedMessages: Message[] = messagesData.map(m => ({
+      const formattedMessages: Message[] = campfireMessages.map(m => ({
         id: m.id,
         userId: m.sender_id,
         username: profileMap[m.sender_id] || 'Onbekende buur',
@@ -1175,17 +1179,44 @@ function App() {
   const handleClearCampfire = async () => {
     if (!authUser) return
 
-    // Delete all campfire messages (those without flare_id)
+    // First, fetch all messages with flare_id = null
+    const { data: messagesToCheck, error: fetchError } = await supabase
+      .from('messages')
+      .select('id, sender_id, receiver_id')
+      .is('flare_id', null)
+
+    if (fetchError) {
+      console.error('Error fetching messages:', fetchError)
+      throw new Error('Failed to fetch messages')
+    }
+
+    if (!messagesToCheck || messagesToCheck.length === 0) {
+      // No messages to delete, nothing to do
+      return
+    }
+
+    // Filter to only campfire messages (sender_id === receiver_id)
+    const campfireMessageIds = messagesToCheck
+      .filter(m => m.sender_id === m.receiver_id)
+      .map(m => m.id)
+
+    if (campfireMessageIds.length === 0) {
+      // No campfire messages to delete, nothing to do
+      return
+    }
+
+    // Delete only campfire messages
     const { error } = await supabase
       .from('messages')
       .delete()
-      .is('flare_id', null)
+      .in('id', campfireMessageIds)
 
     if (error) {
       console.error('Error clearing campfire:', error)
       throw new Error('Failed to clear campfire')
     }
 
+    // Clear messages from UI state after successful delete
     setMessages([])
   }
 
