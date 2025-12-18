@@ -1,12 +1,8 @@
-import { Phone, Buildings, Recycle, Fire, FirstAid, CheckCircle, Storefront, ChatCircle, ShieldPlus } from '@phosphor-icons/react'
+import { Phone, CheckCircle } from '@phosphor-icons/react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
-interface UsefulNumbersViewProps {
-  // Geen props nodig voor nu
-}
-
-export function UsefulNumbersView({}: UsefulNumbersViewProps) {
+export function UsefulNumbersView() {
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header with gradient */}
