@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Flame, Fire, Wallet, UserCircle, ChatCircleDots, ShieldCheck } from '@phosphor-icons/react'
+import { Flame, Fire, Wallet, UserCircle, ChatCircleDots, ShieldCheck, Phone } from '@phosphor-icons/react'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { SplashScreen } from '@/components/screens/splash-screen'
@@ -10,6 +10,7 @@ import { CampfireView } from '@/components/screens/campfire-view'
 import { WalletView } from '@/components/screens/wallet-view'
 import { ProfileView } from '@/components/screens/profile-view'
 import { MessagesView } from '@/components/screens/messages-view'
+import { UsefulNumbersView } from '@/components/screens/useful-numbers-view'
 import { AdminView } from '@/components/screens/admin-view'
 import { ModeratorView } from '@/components/screens/moderator-view'
 import { StatisticsView } from '@/components/screens/statistics-view'
@@ -41,7 +42,7 @@ function isValidStoryReaction(reaction: string | null): reaction is StoryReactio
   return reaction !== null && VALID_STORY_REACTIONS.includes(reaction as StoryReactionType)
 }
 
-type MainView = 'flares' | 'campfire' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
+type MainView = 'flares' | 'campfire' | 'useful-numbers' | 'wallet' | 'messages' | 'profile' | 'admin' | 'moderator'
 
 // Flare data from Supabase
 interface FlareData {
@@ -1343,6 +1344,9 @@ function App() {
             onUserClick={handleUserClick}
           />
         )}
+        {currentView === 'useful-numbers' && (
+          <UsefulNumbersView />
+        )}
         {currentView === 'wallet' && (
           <WalletView user={userData} transactions={transactions} />
         )}
@@ -1428,6 +1432,12 @@ function App() {
             active={currentView === 'messages'}
             onClick={() => setCurrentView('messages')}
             badge={unreadCount}
+          />
+          <NavButton
+            icon={Phone}
+            label="Nummers"
+            active={currentView === 'useful-numbers'}
+            onClick={() => setCurrentView('useful-numbers')}
           />
           <NavButton
             icon={UserCircle}
