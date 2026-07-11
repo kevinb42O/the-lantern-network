@@ -1,0 +1,422 @@
+import { useState, useEffect, useRef } from 'react'
+import { Fire, PaperPlaneRight, Sparkle, ShieldCheck, Flag } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { AmbientBackground } from '@/components/ui/ambient-background'
+import { CampfireEffects } from '@/components/ui/campfire-effects'
+import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
+import { useAuth } from '@/contexts/AuthContext'
+import { useCampfireMessages, useSendCampfireMessage } from '@/hooks/useCampfire'
+import { isAdminEmail } from '@/lib/admin'
+import { ELDER_TRUST_THRESHOLD } from '@/lib/economy'
+import { useOutletContext } from 'react-router-dom'
+import type { Message, ReportCategory } from '@/lib/types'
+
+const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
+  { value: 'harassment', label: 'Intimidatie' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'inappropriate_content', label: 'Ongepaste inhoud' },
+  { value: 'safety_concern', label: 'Veiligheidsprobleem' },
+  { value: 'other', label: 'Overig' }
+]
+
+export function CampfireView() {
+  const { user: authUser, profile } = useAuth()
+  const { data: campfireData } = useCampfireMessages()
+  const sendMessage = useSendCampfireMessage()
+  const outletContext = useOutletContext<{ onUserClick?: (userId: string) => void }>()
+  const onUserClick = outletContext?.onUserClick
+
+  if (!authUser || !profile) return null
+
+  const messages = campfireData?.messages || []
+  const adminUserIds = campfireData?.adminIds || []
+  const moderatorUserIds = campfireData?.moderatorIds || []
+
+  // Build user data from auth context
+  const user = {
+    id: authUser.id,
+    username: profile.display_name,
+    isAdmin: isAdminEmail(authUser.email),
+  }
+
+  const onSendMessage = (content: string) => {
+    sendMessage.mutate(content)
+  }
+
+  const [inputValue, setInputValue] = useState('')
+  const scrollRef = useRef<HTMLDivElement>(null)
+  
+  // Report modal state
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportingMessage, setReportingMessage] = useState<Message | null>(null)
+  const [reportCategory, setReportCategory] = useState<ReportCategory>('harassment')
+  const [reportDescription, setReportDescription] = useState('')
+  const [submittingReport, setSubmittingReport] = useState(false)
+
+  const campfireMessages = messages
+    .filter(m => m.type === 'campfire')
+    .sort((a, b) => a.timestamp - b.timestamp)
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [campfireMessages.length])
+
+  const handleSend = () => {
+    if (!inputValue.trim()) return
+
+    onSendMessage(inputValue.trim())
+    setInputValue('')
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  const handleReportMessage = (message: Message) => {
+    setReportingMessage(message)
+    setReportCategory('harassment')
+    setReportDescription('')
+    setShowReportModal(true)
+  }
+
+  const handleSubmitReport = async () => {
+    if (!reportingMessage || !reportDescription.trim()) {
+      toast.error('Geef een beschrijving')
+      return
+    }
+
+    setSubmittingReport(true)
+    try {
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) {
+        toast.error('Je moet aangemeld zijn om te melden')
+        return
+      }
+
+      const { error } = await supabase.from('reports').insert({
+        reporter_id: userData.user.id,
+        reported_user_id: reportingMessage.userId,
+        report_type: 'message',
+        target_id: reportingMessage.id,
+        category: reportCategory,
+        description: reportDescription.trim(),
+        status: 'pending'
+      })
+
+      if (error) {
+        console.error('Error submitting report:', error)
+        toast.error('Melding indienen mislukt')
+        return
+      }
+
+      toast.success('Melding ingediend. Bedankt voor het helpen onze gemeenschap veilig te houden.')
+      setShowReportModal(false)
+      setReportingMessage(null)
+    } catch (err) {
+      console.error('Report error:', err)
+      toast.error('Melding indienen mislukt')
+    } finally {
+      setSubmittingReport(false)
+    }
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-background">
+      <div className="p-5 border-b border-border bg-gradient-to-b from-orange-950/30 via-card/80 to-transparent">
+        <div className="flex items-center gap-4 max-w-2xl mx-auto">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-xl animate-pulse" />
+            <div className="relative p-3 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/20">
+              <Fire size={28} weight="duotone" className="text-orange-400 lantern-glow" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              't Kampvuur
+              <span className="text-orange-400">🔥</span>
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Kom samen met je buren • Berichten verdwijnen na 24u
+            </p>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20">
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <span className="text-xs font-medium text-success">Live</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages area */}
+      <div className="flex-1 overflow-y-auto p-4 relative" ref={scrollRef}>
+        <CampfireEffects />
+        <AmbientBackground variant="campfire" />
+        <div className="space-y-4 max-w-2xl mx-auto pb-4 relative z-10">
+          {campfireMessages.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/10 mb-6">
+                <Fire size={48} weight="duotone" className="text-orange-400 bounce-subtle" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                't Kampvuur is rustig
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                Wees de eerste om iets te delen met de buurt!
+              </p>
+            </div>
+          ) : (
+            campfireMessages.map((message, index) => (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isCurrentUser={message.userId === user.id}
+                isAdmin={adminUserIds.includes(message.userId)}
+                isModerator={moderatorUserIds.includes(message.userId)}
+                animationDelay={index * 0.02}
+                onUserClick={onUserClick}
+                onReport={handleReportMessage}
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Input area */}
+      <div className="p-4 border-t border-border bg-card/80 backdrop-blur-sm relative z-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Deel iets met de buurt..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                maxLength={500}
+                className="w-full h-12 px-5 rounded-2xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                autoComplete="off"
+              />
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={!inputValue.trim()}
+              size="icon"
+              className="shrink-0 h-12 w-12 rounded-2xl btn-glow"
+            >
+              <PaperPlaneRight size={20} weight="fill" />
+            </Button>
+          </div>
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 px-1">
+            <span className="flex items-center gap-1">
+              Druk Enter om te versturen
+            </span>
+            <span>{campfireMessages.length} berichten rond het vuur</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Report Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Flag size={24} weight="duotone" className="text-red-400" />
+              Bericht melden
+            </DialogTitle>
+            <DialogDescription>
+              Help ons de gemeenschap veilig te houden door ongepaste inhoud te melden
+            </DialogDescription>
+          </DialogHeader>
+
+          {reportingMessage && (
+            <div className="space-y-4 py-2">
+              {/* Message preview */}
+              <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                <p className="text-xs text-muted-foreground mb-1">Bericht van {reportingMessage.username}:</p>
+                <p className="text-sm text-foreground line-clamp-3">{reportingMessage.content}</p>
+              </div>
+
+              {/* Category selection */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Categorie</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {REPORT_CATEGORIES.map((cat) => (
+                    <Button
+                      key={cat.value}
+                      variant={reportCategory === cat.value ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setReportCategory(cat.value)}
+                      className="rounded-xl text-xs"
+                    >
+                      {cat.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Beschrijving <span className="text-red-400">*</span>
+                </Label>
+                <textarea
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                  placeholder="Beschrijf wat er mis is met dit bericht..."
+                  className="w-full h-24 px-3 py-2 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  onClick={() => setShowReportModal(false)}
+                >
+                  Annuleren
+                </Button>
+                <Button
+                  className="flex-1 rounded-xl bg-red-500 hover:bg-red-600"
+                  onClick={handleSubmitReport}
+                  disabled={submittingReport || !reportDescription.trim()}
+                >
+                  {submittingReport ? 'Versturen...' : 'Melding versturen'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+interface MessageBubbleProps {
+  message: Message
+  isCurrentUser: boolean
+  isAdmin?: boolean
+  isModerator?: boolean
+  animationDelay?: number
+  onUserClick?: (userId: string) => void
+  onReport?: (message: Message) => void
+}
+
+function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick, onReport }: MessageBubbleProps) {
+  const messageAge = Date.now() - message.timestamp
+  const hoursOld = messageAge / (1000 * 60 * 60)
+  // Messages fade more gracefully
+  const opacity = Math.max(0.4, 1 - (hoursOld / 24) * 0.6)
+
+  const timeAgo = () => {
+    const seconds = Math.floor(messageAge / 1000)
+    if (seconds < 60) return 'zojuist'
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m geleden`
+    return `${Math.floor(seconds / 3600)}u geleden`
+  }
+
+  // Display name
+  const displayName = isCurrentUser ? 'Jij' : message.username
+
+  // Get ring/avatar styles based on role
+  const getRingStyle = () => {
+    if (isAdmin) return 'ring-2 ring-amber-400 ring-offset-2 ring-offset-background'
+    if (isModerator) return 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-background'
+    return ''
+  }
+
+  const getAvatarBgStyle = () => {
+    if (isAdmin) return 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
+    if (isModerator) return 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white'
+    return 'bg-gradient-to-br from-primary/30 to-accent/20 text-foreground'
+  }
+
+  const getNameStyle = () => {
+    if (isAdmin) return 'text-amber-400'
+    if (isModerator) return 'text-cyan-400'
+    return 'text-foreground'
+  }
+
+  return (
+    <div
+      className={`flex gap-3 fade-in-up group ${isCurrentUser ? 'flex-row-reverse' : ''}`}
+      style={{ opacity, animationDelay: `${animationDelay}s` }}
+    >
+      <button
+        onClick={() => onUserClick?.(message.userId)}
+        className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
+        aria-label={`Bekijk ${message.username}'s profiel`}
+      >
+        <Avatar className={`flex-shrink-0 h-10 w-10 cursor-pointer ${getRingStyle()}`}>
+          <AvatarFallback className={`text-sm font-semibold ${getAvatarBgStyle()}`}>
+            {message.username.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </button>
+      
+      <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''}`}>
+        <div className={`flex items-center gap-2 mb-1.5 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
+          <button
+            onClick={() => onUserClick?.(message.userId)}
+            className={`text-sm font-semibold hover:underline cursor-pointer ${getNameStyle()}`}
+            aria-label={`Bekijk ${message.username}'s profiel`}
+          >
+            {displayName}
+          </button>
+          {isAdmin && (
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium border border-amber-500/30">
+              <Sparkle size={10} weight="fill" />
+              Admin
+            </span>
+          )}
+          {isModerator && !isAdmin && (
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-medium border border-cyan-500/30">
+              <ShieldCheck size={10} weight="fill" />
+              Mod
+            </span>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {timeAgo()}
+          </span>
+          {/* Report button - only show for other users' messages */}
+          {!isCurrentUser && onReport && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onReport(message)
+              }}
+              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
+              title="Bericht melden"
+            >
+              <Flag size={14} />
+            </button>
+          )}
+        </div>
+        <div
+          className={`
+            inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed
+            ${isCurrentUser 
+              ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-lg shadow-primary/20' 
+              : 'bg-card text-card-foreground border border-border/50 rounded-bl-md'
+            }
+            ${isAdmin && !isCurrentUser ? 'border-amber-400/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5' : ''}
+            ${isModerator && !isAdmin && !isCurrentUser ? 'border-cyan-400/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5' : ''}
+          `}
+        >
+          <p className="whitespace-pre-wrap break-words">
+            {message.content}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
