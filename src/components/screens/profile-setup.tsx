@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -71,7 +71,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
     try {
       console.log('Creating profile for user:', user.id);
       
-      let finalBannerUrl = null;
+      let finalBannerUrl: string | null = null;
       if (pendingBannerFile) {
         finalBannerUrl = await uploadProfileBanner(pendingBannerFile);
       }

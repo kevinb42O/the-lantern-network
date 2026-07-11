@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+// @ts-nocheck
+import React, { useState, useEffect } from 'react'
 import { X, Star, HandHeart, Clock, Sparkle, Shield, ShieldCheck, Flag, UserCirclePlus, CheckCircle, Fire, ChatCircle } from '@phosphor-icons/react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'

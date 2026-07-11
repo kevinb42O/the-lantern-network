@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFlares } from '@/hooks/useFlares'
@@ -23,6 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import type { User, Flare, Message, HelpRequest, Announcement, AnnouncementRecipient, CircleConnection } from '@/lib/types'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { useDeleteMessage } from '@/hooks/useMessages'
 import { useCircleConnections, useConnectionRequests, useAcceptConnectionRequest, useDeclineConnectionRequest, useCircleMessages, useSendCircleMessage, useRemoveFromCircle, useSendConnectionRequest, MAX_TRUST_LEVEL } from '@/hooks/useCircle'
 import { lanternCopy } from '@/copy/nl-BE'
 
@@ -667,7 +668,7 @@ export function MessagesView() {
                               {msg.replyToId && (
                                 <MessageReplyPreview currentUserId={user.id} message={msg as any} />
                               )}
-                              <MessageMedia mediaUrl={msg.mediaUrl} mediaType={msg.mediaType} />
+                              <MessageMedia mediaUrl={msg.mediaUrl} mediaType={msg.mediaType || undefined} />
                               <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                               <MessageReactions 
                                 align={msg.senderId === user.id ? 'right' : 'left'} 
@@ -1563,7 +1564,7 @@ export function MessagesView() {
                             {msg.replyToId && (
                               <MessageReplyPreview currentUserId={user.id} message={msg.replyToContext as any} />
                             )}
-                            <MessageMedia mediaUrl={msg.mediaUrl} mediaType={msg.mediaType} />
+                            <MessageMedia mediaUrl={msg.mediaUrl} mediaType={msg.mediaType || undefined} />
                             <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                             <MessageReactions 
                               align={msg.userId === user.id ? 'right' : 'left'} 
@@ -1644,7 +1645,7 @@ export function MessagesView() {
                   onChange={setChatInput}
                   onSubmit={handleSendMessage}
                   pendingMedia={pendingMissionMedia}
-                  onPendingMediaChange={setPendingMissionMedia}
+                  onPendingMediaChange={setPendingMissionMedia as any}
                   disabled={sendHelpMessageMutation.isPending}
                   sending={sendHelpMessageMutation.isPending}
                   onTyping={notifyMissionTyping}

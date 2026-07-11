@@ -34,10 +34,14 @@ export function CreateFlare({ userLocation, onSubmit, onCancel }: CreateFlarePro
 
     setIsSubmitting(true)
 
+    const location = useGPS ? userLocation : { lat: 0, lng: 0 }
+
     onSubmit({
-      category,
+      category: category as Flare['category'],
       description: description.trim(),
-      location: useGPS ? userLocation : { lat: 0, lng: 0 },
+      location,
+      flare_type: 'request',
+      is_free: false,
       acceptedBy: undefined
     })
 

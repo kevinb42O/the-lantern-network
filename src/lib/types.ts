@@ -9,6 +9,7 @@ export interface User {
   isElder: boolean
   isAdmin?: boolean
   isModerator?: boolean
+  bio?: string
   invitedBy?: string
   location?: {
     lat: number
@@ -52,9 +53,9 @@ export interface Message {
   username: string
   vibePhoto?: string
   content: string
-  mediaUrl?: string
-  mediaType?: string
-  replyToId?: string
+  mediaUrl?: string | null
+  mediaType?: string | null
+  replyToId?: string | null
   replyToContext?: {
     id: string
     content: string
@@ -256,9 +257,14 @@ export interface CircleMessage {
   senderAvatar?: string | null
   receiverId: string
   content: string
-  mediaUrl?: string
-  mediaType?: string
-  replyToId?: string
+  mediaUrl?: string | null
+  mediaType?: string | null
+  replyToId?: string | null
+  replyToContext?: {
+    id: string
+    content: string
+    username: string
+  }
   createdAt: string
   read: boolean
   isEdited?: boolean

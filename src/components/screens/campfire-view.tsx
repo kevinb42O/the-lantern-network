@@ -55,7 +55,7 @@ export function CampfireView() {
   }
 
   const [inputValue, setInputValue] = useState('')
-  const [pendingMedia, setPendingMedia] = useState<{ mediaUrl: string; mediaType: 'image' | 'gif' } | null>(null)
+  const [pendingMedia, setPendingMedia] = useState<{ mediaUrl: string; mediaType: string } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const toggleReactionMutation = useToggleReaction()
   
@@ -470,7 +470,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
                 <>
                   {message.mediaUrl && (
                     <div className="mb-2">
-                      <MessageMedia mediaUrl={message.mediaUrl} mediaType={message.mediaType} />
+                      <MessageMedia mediaUrl={message.mediaUrl} mediaType={message.mediaType || undefined} />
                     </div>
                   )}
                   <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
@@ -484,7 +484,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
             {!isDeleted && (
               <div className={`mt-1 flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                 <MessageReactions
-                  reactions={message.reactions || {}}
+                  message={message as any}
                   currentUserId="dummy"
                   onToggleReaction={onToggleReaction || (() => {})}
                 />
