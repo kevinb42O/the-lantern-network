@@ -653,7 +653,7 @@ export function MessagesView() {
                           </div>
                         )}
                         <div
-                          className={`relative inline-block px-3 py-2 rounded-2xl text-sm text-left ${
+                          className={`relative inline-block px-3 py-2 rounded-2xl text-sm text-left group/message ${
                             msg.senderId === user.id
                               ? 'bg-amber-500 text-white rounded-br-md shadow-sm shadow-amber-500/20'
                               : 'bg-muted text-foreground border border-border/50 rounded-bl-md'
@@ -1550,7 +1550,7 @@ export function MessagesView() {
                         </div>
                       )}
                       <div
-                        className={`relative inline-block px-3 py-2 rounded-2xl text-sm text-left ${
+                        className={`relative inline-block px-3 py-2 rounded-2xl text-sm text-left group/message ${
                           msg.userId === user.id
                             ? 'bg-primary text-primary-foreground rounded-br-md shadow-sm shadow-primary/20'
                             : 'bg-muted text-foreground border border-border/50 rounded-bl-md'

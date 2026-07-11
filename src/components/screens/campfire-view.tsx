@@ -451,7 +451,7 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
             {/* Message Content */}
             <div
               className={`
-                inline-block p-3 rounded-2xl text-left relative
+                inline-block p-3 rounded-2xl text-left relative group/message
                 ${isCurrentUser 
                   ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-br-md shadow-md shadow-orange-500/20' 
                   : 'bg-card text-card-foreground border border-border rounded-bl-md'
@@ -474,18 +474,17 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
                   </p>
                 </>
               )}
-            </div>
-            
-            {/* Reactions */}
-            {!isDeleted && (
-              <div className={`mt-1 flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+              
+              {/* Reactions */}
+              {!isDeleted && (
                 <MessageReactions
                   message={message as any}
                   currentUserId="dummy"
+                  align={isCurrentUser ? 'right' : 'left'}
                   onToggleReaction={onToggleReaction || (() => {})}
                 />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </ContextMenuTrigger>

@@ -89,7 +89,7 @@ export function MessageReactions({ align = 'left', currentUserId, disabled = fal
           disabled={disabled}
           title={badgeOption.title}
           aria-label={`Reactie: ${badgeOption.title}`}
-          className="absolute -bottom-3 right-2 z-10 inline-flex h-7 min-w-7 items-center justify-center gap-0.5 rounded-full border border-border bg-card px-1.5 text-sm shadow-sm ring-1 ring-black/5 transition hover:bg-muted disabled:opacity-60"
+          className={`absolute -bottom-3 ${align === 'right' ? 'left-2' : 'right-2'} z-10 inline-flex h-7 min-w-7 items-center justify-center gap-0.5 rounded-full border border-border bg-card px-1.5 text-sm shadow-sm ring-1 ring-black/5 transition hover:bg-muted disabled:opacity-60`}
         >
           <span>{badgeOption.label}</span>
           {badgeCount > 1 ? <span className="text-[0.65rem] font-bold text-muted-foreground ml-0.5">{badgeCount}</span> : null}
@@ -103,15 +103,15 @@ export function MessageReactions({ align = 'left', currentUserId, disabled = fal
         aria-expanded={open}
         aria-label="Voeg reactie toe"
         title="Voeg reactie toe"
-        className="absolute -bottom-3 left-2 z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground disabled:opacity-60"
+        className={`absolute -bottom-3 ${align === 'right' ? (badgeCount > 0 ? 'left-10' : 'left-2') : (badgeCount > 0 ? 'right-10' : 'right-2')} z-10 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition hover:bg-muted hover:text-foreground disabled:opacity-60 opacity-0 group-hover/message:opacity-100 focus:opacity-100 ${open ? 'opacity-100' : ''}`}
       >
         {open ? <X className="h-3.5 w-3.5" aria-hidden="true" /> : <Plus className="h-3.5 w-3.5" aria-hidden="true" />}
       </button>
 
       {open ? (
         <div
-          className={`absolute bottom-8 z-20 flex items-center gap-1 rounded-full border border-border bg-card/95 p-1.5 shadow-xl backdrop-blur ${
-            align === 'right' ? 'right-0' : 'left-0'
+          className={`absolute bottom-6 z-20 flex items-center gap-1 rounded-full border border-border bg-card/95 p-1.5 shadow-xl backdrop-blur ${
+            align === 'right' ? 'left-0' : 'right-0'
           }`}
         >
           {messageReactionOptions.map((option) => {
