@@ -106,6 +106,7 @@ export function CampfireView() {
         <MessageBubble
           key={msg.id}
           message={msg}
+          currentUserId={user.id}
           isCurrentUser={msg.userId === user.id}
           isAdmin={adminUserIds.includes(msg.userId)}
           isModerator={moderatorUserIds.includes(msg.userId)}
@@ -335,6 +336,7 @@ export function CampfireView() {
 
 interface MessageBubbleProps {
   message: Message
+  currentUserId: string
   isCurrentUser: boolean
   isAdmin?: boolean
   isModerator?: boolean
@@ -347,7 +349,7 @@ interface MessageBubbleProps {
   isGrouped?: boolean
 }
 
-function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick, onReport, onToggleReaction, onDelete, onReply, isGrouped = false }: MessageBubbleProps) {
+function MessageBubble({ message, currentUserId, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick, onReport, onToggleReaction, onDelete, onReply, isGrouped = false }: MessageBubbleProps) {
   const messageAge = Date.now() - message.timestamp
   const hoursOld = messageAge / (1000 * 60 * 60)
   // Messages fade more gracefully
@@ -479,9 +481,9 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
               {!isDeleted && (
                 <MessageReactions
                   message={message as any}
-                  currentUserId="dummy"
+                  currentUserId={currentUserId}
                   align={isCurrentUser ? 'right' : 'left'}
-                  onToggleReaction={onToggleReaction || (() => {})}
+                  onReact={(messageId, reaction) => onToggleReaction?.(reaction)}
                 />
               )}
             </div>

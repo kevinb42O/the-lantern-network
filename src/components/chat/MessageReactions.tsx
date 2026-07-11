@@ -31,7 +31,8 @@ export function MessageReactions({ align = 'left', currentUserId, disabled = fal
   // Find which reaction the current user has, if any
   let myReaction = ''
   for (const [reaction, users] of Object.entries(reactionsMap)) {
-    if (users.includes(currentUserId)) {
+    const hasReacted = users.some(u => typeof u === 'string' ? u === currentUserId : u.userId === currentUserId)
+    if (hasReacted) {
       myReaction = reaction
       break
     }
@@ -44,7 +45,12 @@ export function MessageReactions({ align = 'left', currentUserId, disabled = fal
   }
 
   const badgeOption = messageReactionOptions.find((option) => option.key === badgeReaction)
-  const badgeCount = badgeReaction ? (reactionsMap[badgeReaction]?.length ?? 0) : 0
+  const badgeUsers = badgeReaction ? (reactionsMap[badgeReaction] ?? []) : []
+  const badgeCount = badgeUsers.length
+  
+  // Format user names for tooltip
+  const userNames = badgeUsers.map(u => typeof u === 'string' ? 'Iemand' : u.username).join(', ')
+  const tooltipTitle = userNames ? `${badgeOption?.title} van: ${userNames}` : badgeOption?.title
 
   useEffect(() => {
     if (!open) {
@@ -87,8 +93,8 @@ export function MessageReactions({ align = 'left', currentUserId, disabled = fal
           type="button"
           onClick={() => setOpen(true)}
           disabled={disabled}
-          title={badgeOption.title}
-          aria-label={`Reactie: ${badgeOption.title}`}
+          title={tooltipTitle}
+          aria-label={tooltipTitle}
           className={`absolute -bottom-3 ${align === 'right' ? 'left-2' : 'right-2'} z-10 inline-flex h-7 min-w-7 items-center justify-center gap-0.5 rounded-full border border-border bg-card px-1.5 text-sm shadow-sm ring-1 ring-black/5 transition hover:bg-muted disabled:opacity-60`}
         >
           <span>{badgeOption.label}</span>

@@ -17,7 +17,7 @@ export function useCampfireMessages() {
       // Fetch messages with no flare_id
       const { data: messagesData, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, message_reactions(*)')
         .is('flare_id', null)
         .order('created_at', { ascending: true });
 
@@ -27,8 +27,15 @@ export function useCampfireMessages() {
       // Filter to campfire messages (sender_id === receiver_id)
       const campfireMessages = messagesData.filter(m => m.sender_id === m.receiver_id);
 
-      // Get all unique sender IDs
-      const senderIds = [...new Set(campfireMessages.map(m => m.sender_id))];
+      // Get all unique sender IDs and reaction user IDs
+      const userIds = new Set<string>();
+      campfireMessages.forEach(m => {
+        userIds.add(m.sender_id);
+        if (m.message_reactions) {
+          m.message_reactions.forEach((r: any) => userIds.add(r.user_id));
+        }
+      });
+      const senderIds = Array.from(userIds);
 
       if (senderIds.length === 0) {
         return { messages: [] as Message[], adminIds: [] as string[], moderatorIds: [] as string[] };
@@ -51,22 +58,35 @@ export function useCampfireMessages() {
       });
 
       // Format messages
-      const messages: Message[] = campfireMessages.map(m => ({
-        id: m.id,
-        userId: m.sender_id,
-        username: profileMap[m.sender_id] || 'Onbekende buur',
-        content: m.content,
-        mediaUrl: m.media_url,
-        mediaType: m.media_type as 'image' | 'gif' | null,
-        timestamp: new Date(m.created_at).getTime(),
-        type: 'campfire' as const,
-        chatId: 'campfire',
-        reactions: {},
-        replyToId: m.reply_to_id,
-        read: m.read,
-        isEdited: m.is_edited,
-        deletedAt: m.deleted_at ? new Date(m.deleted_at).getTime() : null,
-      }));
+      const messages: Message[] = campfireMessages.map(m => {
+        const reactionsMap: Record<string, { userId: string, username: string }[]> = {};
+        if (m.message_reactions) {
+          m.message_reactions.forEach((r: any) => {
+            if (!reactionsMap[r.reaction]) reactionsMap[r.reaction] = [];
+            reactionsMap[r.reaction].push({
+              userId: r.user_id,
+              username: profileMap[r.user_id] || 'Onbekende buur'
+            });
+          });
+        }
+        
+        return {
+          id: m.id,
+          userId: m.sender_id,
+          username: profileMap[m.sender_id] || 'Onbekende buur',
+          content: m.content,
+          mediaUrl: m.media_url,
+          mediaType: m.media_type as 'image' | 'gif' | null,
+          timestamp: new Date(m.created_at).getTime(),
+          type: 'campfire' as const,
+          chatId: 'campfire',
+          reactions: reactionsMap as any,
+          replyToId: m.reply_to_id,
+          read: m.read,
+          isEdited: m.is_edited,
+          deletedAt: m.deleted_at ? new Date(m.deleted_at).getTime() : null,
+        };
+      });
 
       return { messages, adminIds, moderatorIds };
     },

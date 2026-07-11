@@ -88,7 +88,48 @@ export function useMessages(partnerId: string) {
         .eq('receiver_id', user.id)
         .eq('read', false);
 
-      return data;
+      // Get all user IDs from reactions
+      const userIds = new Set<string>();
+      data?.forEach(m => {
+        if (m.message_reactions) {
+          m.message_reactions.forEach((r: any) => userIds.add(r.user_id));
+        }
+      });
+      const reactionUserIds = Array.from(userIds);
+      
+      let profileMap: Record<string, string> = {};
+      if (reactionUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, display_name')
+          .in('user_id', reactionUserIds);
+          
+        if (profiles) {
+          profiles.forEach(p => {
+            profileMap[p.user_id] = p.display_name;
+          });
+        }
+      }
+
+      // Map reactions to the new format
+      const mappedData = data?.map(m => {
+        const reactionsMap: Record<string, { userId: string, username: string }[]> = {};
+        if (m.message_reactions) {
+          m.message_reactions.forEach((r: any) => {
+            if (!reactionsMap[r.reaction]) reactionsMap[r.reaction] = [];
+            reactionsMap[r.reaction].push({
+              userId: r.user_id,
+              username: profileMap[r.user_id] || 'Onbekende buur'
+            });
+          });
+        }
+        return {
+          ...m,
+          reactions: reactionsMap
+        };
+      });
+
+      return mappedData;
     },
     enabled: !!user && !!partnerId,
   });
