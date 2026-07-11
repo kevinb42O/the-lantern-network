@@ -5,6 +5,9 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { SupporterBadge } from '@/components/ui/supporter-badge'
 import { VibeCard } from '@/components/vibe-card'
 import { PhilosophyView } from './philosophy-view'
 import { SupportPage } from './support-page'
@@ -113,35 +116,97 @@ export function ProfileView() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-primary/15">
-              <Star size={24} weight="duotone" className="text-primary" />
+    <div className="flex flex-col h-full bg-background relative overflow-y-auto overflow-x-hidden pb-20">
+      <div className="max-w-2xl mx-auto w-full">
+        {/* Full Width Banner */}
+        <div className="h-48 md:h-64 relative bg-muted w-full shrink-0">
+          {user.bannerUrl ? (
+            <img src={user.bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/15 to-primary/20">
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/60" />
+              <div className="absolute -top-4 -right-4 w-32 h-32 rounded-full bg-primary/20 blur-3xl" />
+              <div className="absolute bottom-0 left-8 w-24 h-24 rounded-full bg-accent/20 blur-2xl" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Je profiel</h1>
-              <p className="text-sm text-muted-foreground">
-                Lid sinds {daysSinceJoined === 0 ? 'vandaag' : `${daysSinceJoined} dag${daysSinceJoined !== 1 ? 'en' : ''}`}
-              </p>
-            </div>
-          </div>
+          )}
+          
+          {/* Settings Button Floating */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setShowSettings(true)}
-            className="rounded-xl"
+            className="absolute top-4 right-4 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white border border-white/10 shadow-lg z-10"
           >
-            <Gear size={22} />
+            <Gear size={22} weight="fill" />
           </Button>
         </div>
-      </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-5 space-y-5 max-w-lg mx-auto">
-          {/* Vibe Card */}
-          <VibeCard user={user} helpCount={helpCount} isModerator={user.isModerator} />
+        <div className="px-5 relative max-w-2xl mx-auto">
+          {/* Overlapping Avatar */}
+          <div className="absolute -top-16 left-5 z-10">
+            <div className="relative">
+              <Avatar className="h-32 w-32 border-4 border-background ring-1 ring-border/50 shadow-2xl bg-card">
+                <AvatarImage src={user.vibePhoto} alt={user.username} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground text-4xl font-bold">
+                  {user.username.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {/* Trust badge icon */}
+              <div className={`absolute bottom-0 right-0 p-2 rounded-full ${currentBadge.bgColor} shadow-lg ring-4 ring-background`}>
+                <span className="text-xl">{currentBadge.emoji}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Spacer for avatar */}
+          <div className="h-20" />
+
+          {/* Profile Details */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
+              {user.username}
+              {user.supporterBadge && (
+                <SupporterBadge badgeType={user.supporterBadge} size="sm" />
+              )}
+              {user.isAdmin && (
+                <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
+                  <Sparkle size={10} weight="fill" />
+                  Admin
+                </Badge>
+              )}
+              {user.isModerator && !user.isAdmin && (
+                <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs gap-1">
+                  <ShieldWarning size={10} weight="fill" />
+                  Mod
+                </Badge>
+              )}
+            </h1>
+            
+            <p className={`text-sm font-medium ${currentBadge.color} flex items-center gap-1.5 mt-1`}>
+              <span>{currentBadge.emoji}</span>
+              {currentBadge.name}
+              <span className="text-muted-foreground ml-2 font-normal">
+                • Lid sinds {daysSinceJoined === 0 ? 'vandaag' : `${daysSinceJoined} dag${daysSinceJoined !== 1 ? 'en' : ''}`}
+              </span>
+            </p>
+
+            {user.bio && (
+              <p className="mt-4 text-[15px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                "{user.bio}"
+              </p>
+            )}
+
+            {/* Skills Tags */}
+            {user.skillTags && user.skillTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-5">
+                {user.skillTags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="bg-secondary/50 text-secondary-foreground px-3 py-1 text-sm font-normal capitalize">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Badge Progress Card */}
           <Card className={`p-5 ${currentBadge.bgColor} border ${currentBadge.borderColor}`}>
@@ -287,7 +352,7 @@ export function ProfileView() {
             </div>
           </Card>
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Invite Codes Dialog */}
       <Dialog open={showInvites} onOpenChange={setShowInvites}>

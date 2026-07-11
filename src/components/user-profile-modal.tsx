@@ -238,12 +238,12 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
           </div>
         ) : profile ? (
           <div className="flex flex-col">
-            {/* Decorative header gradient or Banner */}
-            <div className="h-32 bg-gradient-to-r from-primary/20 via-accent/15 to-primary/20 relative">
+            {/* Full Width Banner */}
+            <div className="h-48 bg-gradient-to-r from-primary/20 via-accent/15 to-primary/20 relative">
               {profile.banner_url ? (
                 <img src={profile.banner_url} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/60" />
               )}
               {/* Decorative circles if no banner */}
               {!profile.banner_url && (
@@ -276,45 +276,48 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
             </div>
 
             {/* Profile content */}
-            <div className="px-5 pb-5 -mt-14 relative">
-              <div className="flex items-end gap-4 mb-4">
+            <div className="px-5 pb-5 relative">
+              {/* Overlapping Avatar */}
+              <div className="absolute -top-16 left-5 z-10">
                 <div className="relative">
-                  <Avatar className="h-24 w-24 border-4 border-card ring-2 ring-primary/30 shadow-xl bg-card">
+                  <Avatar className="h-32 w-32 border-4 border-background ring-1 ring-border/50 shadow-2xl bg-card">
                     <AvatarImage src={profile.avatar_url || undefined} className="object-cover" alt={profile.display_name} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground text-2xl font-bold">
+                    <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground text-4xl font-bold">
                       {profile.display_name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   {/* Current badge icon */}
-                  <div className={`absolute -bottom-1 -right-1 p-1.5 rounded-full ${currentBadge.bgColor} shadow-lg ring-2 ring-card`}>
-                    <span className="text-sm">{currentBadge.emoji}</span>
+                  <div className={`absolute bottom-0 right-0 p-2 rounded-full ${currentBadge.bgColor} shadow-lg ring-4 ring-background`}>
+                    <span className="text-xl">{currentBadge.emoji}</span>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex-1 pb-1">
-                  <h2 className="text-xl font-bold text-foreground flex items-center gap-2 flex-wrap">
-                    {profile.display_name}
-                    {profile.supporter_badge && (
-                      <SupporterBadge badgeType={profile.supporter_badge} size="sm" />
-                    )}
-                    {profile.is_admin && (
-                      <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
-                        <Sparkle size={10} weight="fill" />
-                        Admin
-                      </Badge>
-                    )}
-                    {profile.is_moderator && !profile.is_admin && (
-                      <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs gap-1">
-                        <ShieldCheck size={10} weight="fill" />
-                        Moderator
-                      </Badge>
-                    )}
-                  </h2>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Clock size={14} />
-                    {daysSinceJoined === 0 ? 'Joined today' : `Member for ${daysSinceJoined} day${daysSinceJoined !== 1 ? 's' : ''}`}
-                  </p>
-                </div>
+              {/* Spacer for avatar */}
+              <div className="h-20" />
+
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-foreground flex items-center gap-2 flex-wrap">
+                  {profile.display_name}
+                  {profile.supporter_badge && (
+                    <SupporterBadge badgeType={profile.supporter_badge} size="sm" />
+                  )}
+                  {profile.is_admin && (
+                    <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-xs gap-1">
+                      <Sparkle size={10} weight="fill" />
+                      Admin
+                    </Badge>
+                  )}
+                  {profile.is_moderator && !profile.is_admin && (
+                    <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs gap-1">
+                      <ShieldCheck size={10} weight="fill" />
+                      Moderator
+                    </Badge>
+                  )}
+                </h2>
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                  Lid sinds {daysSinceJoined === 0 ? 'vandaag' : `${daysSinceJoined} dag${daysSinceJoined !== 1 ? 'en' : ''}`}
+                </p>
               </div>
 
               {/* Current Trust Badge */}
