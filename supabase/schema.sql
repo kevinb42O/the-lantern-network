@@ -822,8 +822,32 @@ VALUES (
 ON CONFLICT (id) DO UPDATE SET 
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
-INSERT INTO storage.buckets (id, name, public) VALUES ('profile-banners', 'profile-banners', true) ON CONFLICT (id) DO NOTHING;
-INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO NOTHING;
+
+-- profile-banners
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) 
+VALUES (
+  'profile-banners', 
+  'profile-banners', 
+  true,
+  5242880, -- 5MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+) 
+ON CONFLICT (id) DO UPDATE SET 
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- avatars
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) 
+VALUES (
+  'avatars', 
+  'avatars', 
+  true,
+  5242880, -- 5MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+) 
+ON CONFLICT (id) DO UPDATE SET 
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 -- Storage bucket policies (if they do not already exist, it will error in postgres without a DO block, but for simplicity we rely on the editor handling errors or ignoring duplicates)
 -- Actually, it's better to avoid duplicate policy errors if running repeatedly, but for schema setup we'll just output them.
