@@ -253,12 +253,6 @@ export function CampfireView() {
             onError={(err) => toast.error(err)}
             placeholder="Deel iets met de buurt..."
           />
-          <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 px-1">
-            <span className="flex items-center gap-1">
-              Druk Enter om te versturen
-            </span>
-            <span>{campfireMessages.length} berichten rond het vuur</span>
-          </div>
         </div>
       </div>
 

@@ -111,11 +111,12 @@ export function AppLayout() {
       />
 
       {/* Bottom Navigation */}
-      <nav className={cn(
-        "border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)] transition-transform duration-300",
-        navHidden && "translate-y-full opacity-0 pointer-events-none"
+      <div className={cn(
+        "grid transition-all duration-300",
+        navHidden ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
       )}>
-        <div className="flex items-center justify-around p-1.5 max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto w-full">
+        <nav className="min-h-0 overflow-hidden border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
+          <div className="flex items-center justify-around p-1.5 max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto w-full">
           <NavButton
             icon={Flame}
             label="Lichtjes"
@@ -172,7 +173,8 @@ export function AppLayout() {
             />
           )}
         </div>
-      </nav>
+        </nav>
+      </div>
 
       <Toaster
         position="top-center"
