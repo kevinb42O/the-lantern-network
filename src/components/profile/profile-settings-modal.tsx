@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { X, UploadSimple, Image as ImageIcon, CircleNotch } from '@phosphor-icons/react'
-import { uploadProfileBanner } from '@/lib/media'
+import { uploadProfileBanner, uploadAvatar } from '@/lib/media'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
@@ -33,9 +33,13 @@ export function ProfileSettingsModal({ open, onClose, onUpdated }: ProfileSettin
   const [bannerUrl, setBannerUrl] = useState('')
   const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null)
   
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null)
+  
   const [saving, setSaving] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (open && profile) {
@@ -43,7 +47,9 @@ export function ProfileSettingsModal({ open, onClose, onUpdated }: ProfileSettin
       setBio(profile.bio || '')
       setVibeTags(profile.vibe_tags || [])
       setBannerUrl(profile.banner_url || '')
+      setAvatarUrl(profile.avatar_url || '')
       setPendingBannerFile(null)
+      setPendingAvatarFile(null)
     }
   }, [open, profile])
 
@@ -87,10 +93,14 @@ export function ProfileSettingsModal({ open, onClose, onUpdated }: ProfileSettin
 
     try {
       let finalBannerUrl = profile.banner_url
-
       if (pendingBannerFile) {
         setUploadingBanner(true)
         finalBannerUrl = await uploadProfileBanner(pendingBannerFile)
+      }
+
+      let finalAvatarUrl = profile.avatar_url
+      if (pendingAvatarFile) {
+        finalAvatarUrl = await uploadAvatar(pendingAvatarFile)
       }
 
       const { error } = await supabase
@@ -100,6 +110,7 @@ export function ProfileSettingsModal({ open, onClose, onUpdated }: ProfileSettin
           bio: bio.trim() || null,
           vibe_tags: vibeTags,
           banner_url: finalBannerUrl,
+          avatar_url: finalAvatarUrl,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
@@ -128,6 +139,40 @@ export function ProfileSettingsModal({ open, onClose, onUpdated }: ProfileSettin
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+          
+          {/* Avatar Upload */}
+          <div className="flex flex-col items-center justify-center space-y-4 mb-6">
+            <div 
+              className="relative w-24 h-24 rounded-full border-4 border-card ring-2 ring-border overflow-hidden bg-muted group cursor-pointer shadow-sm"
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-2xl font-serif bg-primary/10 text-primary">
+                  {displayName.slice(0, 2).toUpperCase() || user.email?.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                <UploadSimple className="text-white w-6 h-6" />
+              </div>
+            </div>
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={avatarInputRef} 
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) {
+                  setPendingAvatarFile(file)
+                  setAvatarUrl(URL.createObjectURL(file))
+                }
+              }}
+            />
+            <Label className="text-sm text-muted-foreground">Profielfoto wijzigen</Label>
+          </div>
+
           {/* Banner Upload */}
           <div className="space-y-2">
             <Label>Profiel Banner</Label>

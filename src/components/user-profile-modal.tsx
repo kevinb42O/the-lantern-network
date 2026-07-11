@@ -238,12 +238,20 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
           </div>
         ) : profile ? (
           <div className="flex flex-col">
-            {/* Decorative header gradient */}
-            <div className="h-24 bg-gradient-to-r from-primary/20 via-accent/15 to-primary/20 relative">
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
-              {/* Decorative circles */}
-              <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
-              <div className="absolute -top-2 left-8 w-16 h-16 rounded-full bg-accent/10 blur-xl" />
+            {/* Decorative header gradient or Banner */}
+            <div className="h-32 bg-gradient-to-r from-primary/20 via-accent/15 to-primary/20 relative">
+              {profile.banner_url ? (
+                <img src={profile.banner_url} alt="Banner" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
+              )}
+              {/* Decorative circles if no banner */}
+              {!profile.banner_url && (
+                <>
+                  <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
+                  <div className="absolute -top-2 left-8 w-16 h-16 rounded-full bg-accent/10 blur-xl" />
+                </>
+              )}
               {/* Close button */}
               <Button
                 variant="ghost"
@@ -271,8 +279,8 @@ export function UserProfileModal({ userId, isOpen, onClose, onStartCircleChat }:
             <div className="px-5 pb-5 -mt-14 relative">
               <div className="flex items-end gap-4 mb-4">
                 <div className="relative">
-                  <Avatar className="h-24 w-24 border-4 border-card ring-2 ring-primary/30 shadow-xl">
-                    <AvatarImage src={profile.avatar_url || undefined} alt={profile.display_name} />
+                  <Avatar className="h-24 w-24 border-4 border-card ring-2 ring-primary/30 shadow-xl bg-card">
+                    <AvatarImage src={profile.avatar_url || undefined} className="object-cover" alt={profile.display_name} />
                     <AvatarFallback className="bg-gradient-to-br from-primary/30 to-accent/20 text-foreground text-2xl font-bold">
                       {profile.display_name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>

@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { X, UploadSimple, Image as ImageIcon } from '@phosphor-icons/react';
 import { INITIAL_LANTERNS } from '@/lib/economy';
-import { uploadProfileBanner } from '@/lib/media';
+import { uploadProfileBanner, uploadAvatar } from '@/lib/media';
 import { LanternBackground } from '@/components/ui/lantern-background';
 
 const SUGGESTED_TAGS = [
@@ -32,9 +32,12 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
   const [customTag, setCustomTag] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
   const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
 
   const addTag = (tag: string) => {
     const normalizedTag = tag.trim().toLowerCase();
@@ -76,6 +79,11 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
         finalBannerUrl = await uploadProfileBanner(pendingBannerFile);
       }
 
+      let finalAvatarUrl: string | null = null;
+      if (pendingAvatarFile) {
+        finalAvatarUrl = await uploadAvatar(pendingAvatarFile);
+      }
+
       // Try to create the profile using upsert (insert or update)
       // Don't use .select() - just fire and forget, then reload
       const { error: upsertError } = await supabase
@@ -89,6 +97,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
           lantern_balance: INITIAL_LANTERNS,
           location: null,
           banner_url: finalBannerUrl,
+          avatar_url: finalAvatarUrl,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
@@ -125,6 +134,39 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Avatar Upload */}
+            <div className="flex flex-col items-center justify-center space-y-4 mb-6">
+              <div 
+                className="relative w-24 h-24 rounded-full border-4 border-card ring-2 ring-border overflow-hidden bg-muted group cursor-pointer shadow-sm"
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-2xl font-serif bg-primary/10 text-primary">
+                    {displayName.slice(0, 2).toUpperCase() || user?.email?.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                  <UploadSimple className="text-white w-6 h-6" />
+                </div>
+              </div>
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                ref={avatarInputRef} 
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    setPendingAvatarFile(file)
+                    setAvatarUrl(URL.createObjectURL(file))
+                  }
+                }}
+              />
+              <Label className="text-sm text-muted-foreground">Profielfoto uploaden</Label>
+            </div>
+
             {/* Banner Upload */}
             <div className="space-y-2">
               <Label>Profiel Banner</Label>
