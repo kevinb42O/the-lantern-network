@@ -741,6 +741,7 @@ export function MessagesView() {
               onSubmit={handleSendCircleMessage}
               pendingMedia={pendingCircleMedia}
               onPendingMediaChange={setPendingCircleMedia}
+              onError={(err) => toast.error(err)}
               disabled={sendCircleMessage.isPending}
               sending={sendCircleMessage.isPending}
               onTyping={notifyCircleTyping}
@@ -1646,6 +1647,7 @@ export function MessagesView() {
                   onSubmit={handleSendMessage}
                   pendingMedia={pendingMissionMedia}
                   onPendingMediaChange={setPendingMissionMedia as any}
+                  onError={(err) => toast.error(err)}
                   disabled={sendHelpMessageMutation.isPending}
                   sending={sendHelpMessageMutation.isPending}
                   onTyping={notifyMissionTyping}

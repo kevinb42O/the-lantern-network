@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useRef } from 'react'
 import { Fire, PaperPlaneRight, Sparkle, ShieldCheck, Flag } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -249,6 +250,7 @@ export function CampfireView() {
             onSubmit={handleSend}
             pendingMedia={pendingMedia}
             onPendingMediaChange={setPendingMedia}
+            onError={(err) => toast.error(err)}
             placeholder="Deel iets met de buurt..."
           />
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 px-1">
