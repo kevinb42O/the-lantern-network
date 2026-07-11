@@ -195,26 +195,26 @@ export function CampfireView() {
 
   return (
     <div className="flex flex-col h-full bg-background">
-      <div className="p-5 border-b border-border bg-gradient-to-b from-orange-950/30 via-card/80 to-transparent">
-        <div className="flex items-center gap-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
-          <div className="relative">
+      <div className="p-2 md:p-5 border-b border-border bg-gradient-to-b from-orange-950/30 via-card/80 to-transparent">
+        <div className="flex items-center gap-2 md:gap-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
+          <div className="relative hidden md:block">
             <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-xl animate-pulse" />
             <div className="relative p-3 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/20">
               <Fire size={28} weight="duotone" className="text-orange-400 lantern-glow" />
             </div>
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <h1 className="text-lg md:text-2xl font-bold text-foreground flex items-center gap-1.5 md:gap-2">
               't Kampvuur
               <span className="text-orange-400">🔥</span>
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="hidden md:block text-sm text-muted-foreground">
               Kom samen met je buren • Berichten verdwijnen na 24u
             </p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 border border-success/20">
-            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span className="text-xs font-medium text-success">Live</span>
+          <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-success/10 border border-success/20">
+            <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-success animate-pulse" />
+            <span className="text-[10px] md:text-xs font-medium text-success">Live</span>
           </div>
         </div>
       </div>
