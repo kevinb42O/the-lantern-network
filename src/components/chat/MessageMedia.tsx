@@ -88,7 +88,7 @@ export function MessageMedia({ mediaUrl, mediaType, onDelete, deleting = false }
           className="group block w-full overflow-hidden rounded-xl border border-border bg-muted/30 text-left"
           aria-label={isGif ? 'Open GIF' : 'Open afbeelding'}
         >
-          <span className="block w-full max-w-xs relative pb-[75%]">
+          <span className="block w-[240px] sm:w-[280px] max-w-full relative pb-[75%]">
             <img
               src={mediaUrl}
               alt={isGif ? 'Gedeelde GIF' : 'Gedeelde afbeelding'}
