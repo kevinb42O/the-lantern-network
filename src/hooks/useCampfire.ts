@@ -17,7 +17,7 @@ export function useCampfireMessages() {
       // Fetch messages with no flare_id
       const { data: messagesData, error } = await supabase
         .from('messages')
-        .select('*, message_reactions(*)')
+        .select('*')
         .is('flare_id', null)
         .order('created_at', { ascending: true });
 
@@ -27,12 +27,34 @@ export function useCampfireMessages() {
       // Filter to campfire messages (sender_id === receiver_id)
       const campfireMessages = messagesData.filter(m => m.sender_id === m.receiver_id);
 
+      // Fetch message reactions safely (in case table doesn't exist yet)
+      let reactionsByMessage: Record<string, any[]> = {};
+      try {
+        const messageIds = campfireMessages.map(m => m.id);
+        if (messageIds.length > 0) {
+          const { data: reactionsData } = await supabase
+            .from('message_reactions')
+            .select('*')
+            .in('message_id', messageIds);
+            
+          if (reactionsData) {
+            reactionsData.forEach(r => {
+              if (!reactionsByMessage[r.message_id]) reactionsByMessage[r.message_id] = [];
+              reactionsByMessage[r.message_id].push(r);
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch reactions. Schema might need updating.', e);
+      }
+
       // Get all unique sender IDs and reaction user IDs
       const userIds = new Set<string>();
       campfireMessages.forEach(m => {
         userIds.add(m.sender_id);
-        if (m.message_reactions) {
-          m.message_reactions.forEach((r: any) => userIds.add(r.user_id));
+        const mReactions = reactionsByMessage[m.id];
+        if (mReactions) {
+          mReactions.forEach((r: any) => userIds.add(r.user_id));
         }
       });
       const senderIds = Array.from(userIds);
@@ -60,8 +82,9 @@ export function useCampfireMessages() {
       // Format messages
       const messages: Message[] = campfireMessages.map(m => {
         const reactionsMap: Record<string, { userId: string, username: string }[]> = {};
-        if (m.message_reactions) {
-          m.message_reactions.forEach((r: any) => {
+        const mReactions = reactionsByMessage[m.id];
+        if (mReactions) {
+          mReactions.forEach((r: any) => {
             if (!reactionsMap[r.reaction]) reactionsMap[r.reaction] = [];
             reactionsMap[r.reaction].push({
               userId: r.user_id,

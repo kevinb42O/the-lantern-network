@@ -72,7 +72,7 @@ export function useMessages(partnerId: string) {
 
       const { data, error } = await supabase
         .from('messages')
-        .select('*, message_reactions(*), reply_to:reply_to_id(id, content, sender:sender_id(display_name))')
+        .select('*, reply_to:reply_to_id(id, content, sender:sender_id(display_name))')
         .or(
           `and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`
         )
@@ -88,11 +88,33 @@ export function useMessages(partnerId: string) {
         .eq('receiver_id', user.id)
         .eq('read', false);
 
+      // Fetch message reactions safely
+      let reactionsByMessage: Record<string, any[]> = {};
+      try {
+        const messageIds = data?.map(m => m.id) || [];
+        if (messageIds.length > 0) {
+          const { data: reactionsData } = await supabase
+            .from('message_reactions')
+            .select('*')
+            .in('message_id', messageIds);
+            
+          if (reactionsData) {
+            reactionsData.forEach(r => {
+              if (!reactionsByMessage[r.message_id]) reactionsByMessage[r.message_id] = [];
+              reactionsByMessage[r.message_id].push(r);
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to fetch reactions. Schema might need updating.', e);
+      }
+
       // Get all user IDs from reactions
       const userIds = new Set<string>();
       data?.forEach(m => {
-        if (m.message_reactions) {
-          m.message_reactions.forEach((r: any) => userIds.add(r.user_id));
+        const mReactions = reactionsByMessage[m.id];
+        if (mReactions) {
+          mReactions.forEach((r: any) => userIds.add(r.user_id));
         }
       });
       const reactionUserIds = Array.from(userIds);
@@ -114,8 +136,9 @@ export function useMessages(partnerId: string) {
       // Map reactions to the new format
       const mappedData = data?.map(m => {
         const reactionsMap: Record<string, { userId: string, username: string }[]> = {};
-        if (m.message_reactions) {
-          m.message_reactions.forEach((r: any) => {
+        const mReactions = reactionsByMessage[m.id];
+        if (mReactions) {
+          mReactions.forEach((r: any) => {
             if (!reactionsMap[r.reaction]) reactionsMap[r.reaction] = [];
             reactionsMap[r.reaction].push({
               userId: r.user_id,
