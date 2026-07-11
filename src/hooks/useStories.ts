@@ -156,18 +156,37 @@ export function useCreateStory() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async (data: { content: string; photoUrl?: string }) => {
+    mutationFn: async (data: { content?: string; blob?: Blob }) => {
       if (!user) throw new Error('Must be logged in to create a story');
 
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 48);
+      
+      let photo_url: string | null = null;
+      if (data.blob) {
+        const fileExt = 'webp';
+        const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('stories-media')
+          .upload(filePath, data.blob);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from('stories-media')
+          .getPublicUrl(filePath);
+
+        photo_url = publicUrlData.publicUrl;
+      }
 
       const { data: story, error } = await supabase
         .from('stories')
         .insert({
           creator_id: user.id,
-          content: data.content,
-          photo_url: data.photoUrl || null,
+          content: data.content || '',
+          photo_url: photo_url,
           expires_at: expiresAt.toISOString(),
         })
         .select()

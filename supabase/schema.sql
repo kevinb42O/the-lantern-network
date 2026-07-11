@@ -849,6 +849,19 @@ ON CONFLICT (id) DO UPDATE SET
   file_size_limit = EXCLUDED.file_size_limit,
   allowed_mime_types = EXCLUDED.allowed_mime_types;
 
+-- stories-media
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types) 
+VALUES (
+  'stories-media', 
+  'stories-media', 
+  true,
+  5242880, -- 5MB limit
+  ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+) 
+ON CONFLICT (id) DO UPDATE SET 
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
 -- Storage bucket policies (if they do not already exist, it will error in postgres without a DO block, but for simplicity we rely on the editor handling errors or ignoring duplicates)
 -- Actually, it's better to avoid duplicate policy errors if running repeatedly, but for schema setup we'll just output them.
 -- chat-media
@@ -888,6 +901,19 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 DO $$ BEGIN
   CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE USING (bucket_id = 'avatars' AND auth.uid() = owner);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- stories-media
+DO $$ BEGIN
+  CREATE POLICY "Public Access for stories-media" ON storage.objects FOR SELECT USING (bucket_id = 'stories-media');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can upload stories-media" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'stories-media' AND auth.role() = 'authenticated');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Users can delete their own stories-media" ON storage.objects FOR DELETE USING (bucket_id = 'stories-media' AND auth.uid() = owner);
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- -------------------------------------------------------------------------------------------------

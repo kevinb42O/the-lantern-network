@@ -20,6 +20,9 @@ import { ELDER_TRUST_THRESHOLD, DEFAULT_LOCATION } from '@/lib/economy'
 import { useOutletContext } from 'react-router-dom'
 import type { HelpRequest, Story, StoryReactionType } from '@/lib/types'
 import { StoryCard } from '@/components/story-card'
+import { StoriesTray } from '@/components/story/StoriesTray'
+import { StoryCreator } from '@/components/story/StoryCreator'
+import { StoryViewer } from '@/components/story/StoryViewer'
 
 // Flare from Supabase
 interface FlareData {
@@ -44,7 +47,7 @@ interface FlareData {
   circle_only?: boolean
 }
 
-type FilterTab = 'all' | 'requests' | 'offers' | 'stories'
+type FilterTab = 'all' | 'requests' | 'offers'
 
 export function FlaresView() {
   const { user: authUser, profile } = useAuth()
@@ -58,6 +61,9 @@ export function FlaresView() {
   const toggleReaction = useToggleReaction()
   const outletContext = useOutletContext<{ onUserClick?: (userId: string) => void }>()
   const onUserClick = outletContext?.onUserClick
+
+  const [showStoryCreator, setShowStoryCreator] = useState(false)
+  const [storyViewerUserId, setStoryViewerUserId] = useState<string | null>(null)
 
   if (!authUser || !profile) return null
 
@@ -441,60 +447,24 @@ export function FlaresView() {
               </span>
             )}
           </button>
-          <button
-            onClick={() => setActiveFilter('stories')}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
-              activeFilter === 'stories'
-                ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 shadow-md border border-amber-500/20'
-                : 'text-muted-foreground hover:text-amber-400 hover:bg-amber-500/10'
-            }`}
-          >
-            <Camera size={14} weight={activeFilter === 'stories' ? 'duotone' : 'regular'} />
-            Verhalen
-            {storyCount > 0 && (
-              <span className="text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">
-                {storyCount}
-              </span>
-            )}
-          </button>
         </div>
       </div>
+      
+      {/* Stories Tray */}
+      <StoriesTray 
+        stories={stories}
+        currentUserId={user.id}
+        currentUserAvatar={profile.avatar_url}
+        currentUserName={user.username}
+        onOpenCreator={() => setShowStoryCreator(true)}
+        onOpenViewer={(userId) => setStoryViewerUserId(userId)}
+      />
 
       {/* Flares List */}
       <div className="flex-1 overflow-y-auto p-4 pb-8 relative">
         <AmbientBackground variant="flares" />
         <div className="space-y-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full relative z-10">
-          {/* Stories Tab - show only stories */}
-          {activeFilter === 'stories' ? (
-            stories.length === 0 ? (
-              <div className="text-center py-16 px-4">
-                <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/10 mb-6">
-                  <Camera size={48} weight="duotone" className="text-amber-400 bounce-subtle" />
-                </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3">
-                  Nog geen verhalen
-                </h3>
-                <p className="text-muted-foreground max-w-sm mx-auto mb-6 leading-relaxed">
-                  Deel een moment uit de buurt! Verhalen verdwijnen na 48 uur.
-                </p>
-                <Button onClick={handleOpenCreate} size="lg" className="gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500">
-                  <Camera size={20} weight="duotone" />
-                  Deel een moment
-                </Button>
-              </div>
-            ) : (
-              stories.map((story, index) => (
-                <div key={story.id} className="fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
-                  <StoryCard
-                    story={story}
-                    isOwner={story.creatorId === user.id}
-                    onReaction={onStoryReaction}
-                    onUserClick={onUserClick}
-                  />
-                </div>
-              ))
-            )
-          ) : filteredFlares.length === 0 && (activeFilter !== 'all' || stories.length === 0) ? (
+          {filteredFlares.length === 0 ? (
             <div className="text-center py-16 px-4">
               <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-primary/20 to-accent/10 mb-6">
                 <Sparkle size={48} weight="duotone" className="text-primary bounce-subtle" />
@@ -521,24 +491,7 @@ export function FlaresView() {
               </Button>
             </div>
           ) : (
-            <>
-              {/* When "All" is selected, intermix stories with flares */}
-              {activeFilter === 'all' && stories.length > 0 && (
-                <>
-                  {/* Show first story at the top if there are any */}
-                  {stories.slice(0, 1).map((story) => (
-                    <div key={story.id} className="fade-in-up">
-                      <StoryCard
-                        story={story}
-                        isOwner={story.creatorId === user.id}
-                        onReaction={onStoryReaction}
-                        onUserClick={onUserClick}
-                      />
-                    </div>
-                  ))}
-                </>
-              )}
-              {filteredFlares.map((flare, index) => {
+              filteredFlares.map((flare, index) => {
               const config = categoryConfig[flare.category] || categoryConfig.Other
               const CategoryIcon = config.icon
               const isOwner = flare.creator_id === user.id
@@ -758,19 +711,7 @@ export function FlaresView() {
                   </CardContent>
                 </Card>
               )
-            })}
-              {/* Show remaining stories after flares when "All" is selected */}
-              {activeFilter === 'all' && stories.slice(1).map((story, index) => (
-                <div key={story.id} className="fade-in-up" style={{ animationDelay: `${(filteredFlares.length + index + 1) * 0.05}s` }}>
-                  <StoryCard
-                    story={story}
-                    isOwner={story.creatorId === user.id}
-                    onReaction={onStoryReaction}
-                    onUserClick={onUserClick}
-                  />
-                </div>
-              ))}
-            </>
+            })
           )}
         </div>
       </div>
@@ -1292,6 +1233,51 @@ export function FlaresView() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <StoryCreator
+        open={showStoryCreator}
+        onOpenChange={setShowStoryCreator}
+        onSave={async (blob, caption) => {
+          await createStoryMutation.mutateAsync({ blob, content: caption })
+        }}
+      />
+
+      {storyViewerUserId && (
+        <StoryViewer
+          open={!!storyViewerUserId}
+          onOpenChange={(open) => {
+            if (!open) setStoryViewerUserId(null)
+          }}
+          stories={stories.filter((s: Story) => s.creatorId === storyViewerUserId)}
+          onReaction={onStoryReaction}
+          onNextUser={() => {
+            const groups = new Set(stories.map((s: Story) => s.creatorId))
+            const users = Array.from(groups).sort((a, b) => {
+              const aLatest = Math.max(...stories.filter((s: Story) => s.creatorId === a).map((s: Story) => s.createdAt))
+              const bLatest = Math.max(...stories.filter((s: Story) => s.creatorId === b).map((s: Story) => s.createdAt))
+              return bLatest - aLatest
+            })
+            const currentIndex = users.indexOf(storyViewerUserId)
+            if (currentIndex >= 0 && currentIndex < users.length - 1) {
+              setStoryViewerUserId(users[currentIndex + 1])
+            } else {
+              setStoryViewerUserId(null)
+            }
+          }}
+          onPrevUser={() => {
+            const groups = new Set(stories.map((s: Story) => s.creatorId))
+            const users = Array.from(groups).sort((a, b) => {
+              const aLatest = Math.max(...stories.filter((s: Story) => s.creatorId === a).map((s: Story) => s.createdAt))
+              const bLatest = Math.max(...stories.filter((s: Story) => s.creatorId === b).map((s: Story) => s.createdAt))
+              return bLatest - aLatest
+            })
+            const currentIndex = users.indexOf(storyViewerUserId)
+            if (currentIndex > 0) {
+              setStoryViewerUserId(users[currentIndex - 1])
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
