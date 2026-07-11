@@ -171,7 +171,7 @@ export function MediaComposer({
             e.preventDefault()
             if (canSend) onSubmit(e)
           }}
-          className="flex min-h-[3.5rem] items-end gap-2 px-2 py-2 sm:px-4 sm:py-3"
+          className="flex min-h-[2.5rem] items-end gap-1.5 px-2 py-1.5"
         >
           <div className="flex items-center gap-1 pb-1">
             <input
@@ -186,7 +186,7 @@ export function MediaComposer({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={disabled || uploading || sending}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
               title="Voeg afbeelding toe"
             >
               <ImageIcon className="h-5 w-5" />
@@ -195,14 +195,14 @@ export function MediaComposer({
               type="button"
               onClick={() => setGifPickerOpen(true)}
               disabled={disabled || uploading || sending}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-50"
               title="Zoek GIF"
             >
               <Sticker className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="relative flex min-h-[2.5rem] flex-1 items-end rounded-2xl border border-border bg-muted/50 px-4 py-2 transition-colors focus-within:border-primary/50 focus-within:bg-card">
+          <div className="relative flex min-h-[2rem] flex-1 items-end rounded-2xl border border-border bg-muted/50 px-3 py-1.5 transition-colors focus-within:border-primary/50 focus-within:bg-card">
             <textarea
               ref={textAreaRef}
               value={value}
@@ -224,7 +224,7 @@ export function MediaComposer({
             <button
               type="submit"
               disabled={!canSend}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50"
             >
               {sending ? (
                 <CircleNotch className="h-5 w-5 animate-spin" />

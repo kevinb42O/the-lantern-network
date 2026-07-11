@@ -8,6 +8,7 @@ import { ProfileSetup } from '@/components/screens/profile-setup'
 import { UserProfileModal } from '@/components/user-profile-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { useUnreadCount } from '@/hooks/useMessages'
+import { useNavAutoVisibility } from '@/hooks/useNavAutoVisibility'
 import { isAdminEmail } from '@/lib/admin'
 import { cn } from '@/lib/utils'
 
@@ -21,6 +22,7 @@ export function AppLayout() {
   const [showSplash, setShowSplash] = useState(true)
   const location = useLocation()
   const navigate = useNavigate()
+  const { navHidden } = useNavAutoVisibility()
 
   // Unread message count for the nav badge
   const { data: unreadCount = 0 } = useUnreadCount()
@@ -109,7 +111,10 @@ export function AppLayout() {
       />
 
       {/* Bottom Navigation */}
-      <nav className="border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
+      <nav className={cn(
+        "border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)] transition-transform duration-300",
+        navHidden && "translate-y-full opacity-0 pointer-events-none"
+      )}>
         <div className="flex items-center justify-around p-1.5 max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto w-full">
           <NavButton
             icon={Flame}

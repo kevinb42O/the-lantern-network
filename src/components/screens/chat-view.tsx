@@ -167,7 +167,7 @@ export function ChatView({ user, chat, messages, onSendMessage, onBack }: ChatVi
       </ScrollArea>
 
       {/* Input */}
-      <div className="p-4 border-t border-border bg-card/50">
+      <div className="p-2 border-t border-border bg-card/50">
         <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <div className="flex gap-2">
             <Input

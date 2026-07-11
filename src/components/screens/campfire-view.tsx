@@ -242,7 +242,7 @@ export function CampfireView() {
       </div>
 
       {/* Input area */}
-      <div className="p-4 border-t border-border bg-card/80 backdrop-blur-sm relative z-10">
+      <div className="p-2 border-t border-border bg-card/80 backdrop-blur-sm relative z-10">
         <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <MediaComposer
             value={inputValue}
