@@ -890,3 +890,71 @@ DO $$ BEGIN
   CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE USING (bucket_id = 'avatars' AND auth.uid() = owner);
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+-- -------------------------------------------------------------------------------------------------
+-- FINAL MIGRATION STEP:
+-- Fix foreign keys to allow PostgREST to join profiles automatically.
+-- This ensures that querying `.select('*, profiles:creator_id(...)')` works correctly.
+-- -------------------------------------------------------------------------------------------------
+DO $$
+BEGIN
+  -- flares.creator_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'flares_creator_id_profiles_fk') THEN
+    ALTER TABLE flares ADD CONSTRAINT flares_creator_id_profiles_fk FOREIGN KEY (creator_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+
+  -- stories.creator_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stories_creator_id_profiles_fk') THEN
+    ALTER TABLE stories ADD CONSTRAINT stories_creator_id_profiles_fk FOREIGN KEY (creator_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+
+  -- messages.sender_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'messages_sender_id_profiles_fk') THEN
+    ALTER TABLE messages ADD CONSTRAINT messages_sender_id_profiles_fk FOREIGN KEY (sender_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+
+  -- messages.receiver_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'messages_receiver_id_profiles_fk') THEN
+    ALTER TABLE messages ADD CONSTRAINT messages_receiver_id_profiles_fk FOREIGN KEY (receiver_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- flare_participants.user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'flare_participants_user_id_profiles_fk') THEN
+    ALTER TABLE flare_participants ADD CONSTRAINT flare_participants_user_id_profiles_fk FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- story_reactions.user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'story_reactions_user_id_profiles_fk') THEN
+    ALTER TABLE story_reactions ADD CONSTRAINT story_reactions_user_id_profiles_fk FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- message_reactions.user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'message_reactions_user_id_profiles_fk') THEN
+    ALTER TABLE message_reactions ADD CONSTRAINT message_reactions_user_id_profiles_fk FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- connections.user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'connections_user_id_profiles_fk') THEN
+    ALTER TABLE connections ADD CONSTRAINT connections_user_id_profiles_fk FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- connections.connected_user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'connections_connected_user_id_profiles_fk') THEN
+    ALTER TABLE connections ADD CONSTRAINT connections_connected_user_id_profiles_fk FOREIGN KEY (connected_user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- connection_requests.from_user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'connection_requests_from_user_id_profiles_fk') THEN
+    ALTER TABLE connection_requests ADD CONSTRAINT connection_requests_from_user_id_profiles_fk FOREIGN KEY (from_user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- connection_requests.to_user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'connection_requests_to_user_id_profiles_fk') THEN
+    ALTER TABLE connection_requests ADD CONSTRAINT connection_requests_to_user_id_profiles_fk FOREIGN KEY (to_user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+  
+  -- transactions.user_id
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transactions_user_id_profiles_fk') THEN
+    ALTER TABLE transactions ADD CONSTRAINT transactions_user_id_profiles_fk FOREIGN KEY (user_id) REFERENCES profiles(user_id) ON DELETE CASCADE;
+  END IF;
+END $$;
+
