@@ -39,6 +39,9 @@ export function ProfileView() {
   const user = {
     id: authUser.id,
     username: profile.display_name,
+    vibePhoto: profile.avatar_url || profile.vibe_photo,
+    bannerUrl: profile.banner_url,
+    bio: profile.bio,
     skillTags: profile.vibe_tags || [],
     lanternBalance: profile.lantern_balance,
     reputation: profile.trust_score,
