@@ -225,7 +225,7 @@ export function BadgeManagement({ onBack }: BadgeManagementProps) {
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-amber-950/20 via-card/80 to-transparent">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <div className="flex items-center gap-3 mb-4">
             <Button
               variant="ghost"
@@ -272,7 +272,7 @@ export function BadgeManagement({ onBack }: BadgeManagementProps) {
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="p-4 max-w-2xl mx-auto">
+        <div className="p-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           {activeTab === 'grant' && (
             <div className="space-y-4">
               {/* Search */}

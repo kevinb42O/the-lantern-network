@@ -34,7 +34,7 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
       
       {/* Header */}
       <div className="p-5 border-b border-border/50 bg-gradient-to-b from-orange-950/20 to-transparent relative z-10">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
+        <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
@@ -51,7 +51,7 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
       </div>
 
       <ScrollArea className="flex-1 relative z-10">
-        <div className="p-5 max-w-2xl mx-auto space-y-8 pb-12">
+        <div className="p-5 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full space-y-8 pb-12">
           
           {/* Hero Section */}
           <motion.div 
@@ -339,7 +339,7 @@ export function PhilosophyView({ onBack }: PhilosophyViewProps) {
             <h3 className="text-xl font-semibold text-foreground mb-3">
               Klaar Om De Weg Te Verlichten?
             </h3>
-            <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
+            <p className="text-muted-foreground max-w-md md:max-w-2xl lg:max-w-4xl mx-auto w-full leading-relaxed">
               Elke buurtgemeenschap begint klein. Elk vertrouwen wordt opgebouwd, één hulp tegelijk. 
               Welkom in de buurt.
             </p>

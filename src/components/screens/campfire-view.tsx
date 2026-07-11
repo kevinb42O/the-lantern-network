@@ -195,7 +195,7 @@ export function CampfireView() {
   return (
     <div className="flex flex-col h-full bg-background">
       <div className="p-5 border-b border-border bg-gradient-to-b from-orange-950/30 via-card/80 to-transparent">
-        <div className="flex items-center gap-4 max-w-2xl mx-auto">
+        <div className="flex items-center gap-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-xl animate-pulse" />
             <div className="relative p-3 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/20">
@@ -222,7 +222,7 @@ export function CampfireView() {
       <div className="flex-1 overflow-y-auto p-4 relative" ref={scrollRef}>
         <CampfireEffects />
         <AmbientBackground variant="campfire" />
-        <div className="space-y-4 max-w-2xl mx-auto pb-4 relative z-10">
+        <div className="space-y-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full pb-4 relative z-10">
           {campfireMessages.length === 0 ? (
             <div className="text-center py-16">
               <div className="inline-flex p-6 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/10 mb-6">
@@ -243,7 +243,7 @@ export function CampfireView() {
 
       {/* Input area */}
       <div className="p-4 border-t border-border bg-card/80 backdrop-blur-sm relative z-10">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <MediaComposer
             value={inputValue}
             onChange={setInputValue}

@@ -410,7 +410,7 @@ export function AdminView() {
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-amber-950/20 via-card/80 to-transparent">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <div className="flex items-center gap-4 mb-4">
             <div className="relative">
               <div className="absolute inset-0 rounded-full bg-amber-500/30 blur-xl animate-pulse" />
@@ -512,7 +512,7 @@ export function AdminView() {
         <BadgeManagement onBack={() => setActiveTab('users')} />
       ) : (
       <ScrollArea className="flex-1">
-        <div className="p-4 max-w-2xl mx-auto">
+        <div className="p-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           {activeTab === 'users' && (
             <div className="space-y-4">
               {/* Search */}

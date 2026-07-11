@@ -57,7 +57,7 @@ export function WalletView() {
   return (
     <div className="flex flex-col h-full bg-background">
       <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent relative z-10">
-        <div className="max-w-lg mx-auto space-y-5">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto w-full space-y-5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-primary/15">
               <Lamp size={24} weight="duotone" className="text-primary lantern-glow" />
@@ -91,7 +91,7 @@ export function WalletView() {
 
       {/* Transactions */}
       <ScrollArea className="flex-1">
-        <div className="p-5 max-w-lg mx-auto relative z-10">
+        <div className="p-5 max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto w-full relative z-10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">
               Bedankjes

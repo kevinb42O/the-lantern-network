@@ -448,7 +448,7 @@ export function StatisticsView({ isAdmin = false }: StatisticsViewProps) {
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="p-4 sm:p-5 border-b border-border bg-gradient-to-b from-violet-950/20 via-card/80 to-transparent">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl md:max-w-6xl lg:max-w-[1400px] mx-auto w-full">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3 sm:gap-4">
               <div className="relative">
@@ -511,7 +511,7 @@ export function StatisticsView({ isAdmin = false }: StatisticsViewProps) {
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="p-3 sm:p-4 max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-20">
+        <div className="p-3 sm:p-4 max-w-4xl md:max-w-6xl lg:max-w-[1400px] mx-auto w-full space-y-4 sm:space-y-6 pb-20">
           
           {/* Overview Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">

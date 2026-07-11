@@ -110,7 +110,7 @@ export function AppLayout() {
 
       {/* Bottom Navigation */}
       <nav className="border-t border-border/50 bg-card/95 backdrop-blur-md safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.2)]">
-        <div className="flex items-center justify-around p-1.5 max-w-lg mx-auto">
+        <div className="flex items-center justify-around p-1.5 max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto w-full">
           <NavButton
             icon={Flame}
             label="Lichtjes"

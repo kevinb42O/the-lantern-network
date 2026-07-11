@@ -757,7 +757,7 @@ export function MessagesView() {
           
           {/* Header */}
           <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent relative z-10">
-            <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-primary/15">
                 <ChatCircle size={24} weight="duotone" className="text-primary" />
               </div>
@@ -778,7 +778,7 @@ export function MessagesView() {
           </div>
 
           {/* Tabs */}
-          <div className="px-4 pt-4 max-w-2xl mx-auto w-full relative z-10">
+          <div className="px-4 pt-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto relative z-10 w-full">
             <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/50">
               <button
                 onClick={() => setActiveTab('conversations')}
@@ -832,7 +832,7 @@ export function MessagesView() {
           </div>
 
           <ScrollArea className="flex-1">
-            <div className="p-5 space-y-6 max-w-2xl mx-auto relative z-10">
+            <div className="p-5 space-y-6 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full relative z-10">
               {/* Tab Content */}
               {activeTab === 'circle' ? (
                 /* Circle Tab */

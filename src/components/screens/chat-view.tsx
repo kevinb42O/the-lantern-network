@@ -109,7 +109,7 @@ export function ChatView({ user, chat, messages, onSendMessage, onBack }: ChatVi
 
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-        <div className="space-y-4 max-w-2xl mx-auto pb-4">
+        <div className="space-y-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full pb-4">
           {chatMessages.length === 0 ? (
             <div className="text-center py-12">
               <div className="inline-flex p-4 rounded-full bg-primary/10 mb-3">
@@ -168,7 +168,7 @@ export function ChatView({ user, chat, messages, onSendMessage, onBack }: ChatVi
 
       {/* Input */}
       <div className="p-4 border-t border-border bg-card/50">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <div className="flex gap-2">
             <Input
               placeholder="Type a message..."

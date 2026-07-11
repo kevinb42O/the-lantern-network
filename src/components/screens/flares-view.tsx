@@ -366,7 +366,7 @@ export function FlaresView() {
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-card/80 to-transparent">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
+        <div className="flex items-center justify-between max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-primary/15">
               <Fire size={24} weight="duotone" className="text-primary lantern-glow" />
@@ -390,7 +390,7 @@ export function FlaresView() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="px-4 pt-4 max-w-2xl mx-auto w-full">
+      <div className="px-4 pt-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
         <div className="flex gap-1 p-1 rounded-xl bg-muted/30 border border-border/50 overflow-x-auto">
           <button
             onClick={() => setActiveFilter('all')}
@@ -463,7 +463,7 @@ export function FlaresView() {
       {/* Flares List */}
       <div className="flex-1 overflow-y-auto p-4 pb-8 relative">
         <AmbientBackground variant="flares" />
-        <div className="space-y-4 max-w-2xl mx-auto relative z-10">
+        <div className="space-y-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full relative z-10">
           {/* Stories Tab - show only stories */}
           {activeFilter === 'stories' ? (
             stories.length === 0 ? (

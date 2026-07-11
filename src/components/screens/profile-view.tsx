@@ -120,7 +120,7 @@ export function ProfileView() {
 
   return (
     <div className="flex flex-col h-full bg-background relative overflow-y-auto overflow-x-hidden pb-20">
-      <div className="max-w-2xl mx-auto w-full">
+      <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
         {/* Full Width Banner */}
         <div className="h-48 md:h-64 relative bg-muted w-full shrink-0">
           {user.bannerUrl ? (
@@ -144,7 +144,7 @@ export function ProfileView() {
           </Button>
         </div>
 
-        <div className="px-5 relative max-w-2xl mx-auto">
+        <div className="px-5 relative max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           {/* Overlapping Avatar */}
           <div className="absolute -top-16 left-5 z-10">
             <div className="relative">

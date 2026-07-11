@@ -157,7 +157,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
       <div className="p-5 border-b border-border bg-gradient-to-b from-emerald-950/20 via-card/80 to-transparent">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto w-full">
           <div className="flex items-center gap-3 mb-4">
             <Button
               variant="ghost"
@@ -181,7 +181,7 @@ export function SupportPage({ onBack }: SupportPageProps) {
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-5 max-w-lg mx-auto space-y-6">
+        <div className="p-5 max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto w-full space-y-6">
           {/* Hero Section */}
           <Card className="p-6 bg-gradient-to-br from-emerald-500/10 via-card to-amber-500/5 border-emerald-500/20 overflow-hidden relative">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl" />

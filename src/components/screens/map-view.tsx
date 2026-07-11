@@ -118,7 +118,7 @@ export function MapView({ user, flares, helpRequests, allUsers, onCreateFlare, o
   return (
     <div className="flex flex-col h-full bg-background">
       <div className="p-4 border-b border-border">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-semibold text-foreground">Flares</h1>
           <Button
@@ -298,7 +298,7 @@ export function MapView({ user, flares, helpRequests, allUsers, onCreateFlare, o
           </div>
         ) : (
           <ScrollArea className="h-full">
-            <div className="p-4 space-y-4 max-w-2xl mx-auto">
+            <div className="p-4 space-y-4 max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full">
               {/* My Flares Section */}
               {myFlares.length > 0 && (
                 <div className="space-y-3">
@@ -355,7 +355,7 @@ export function MapView({ user, flares, helpRequests, allUsers, onCreateFlare, o
       </div>
 
       <div className="p-4 border-t border-border bg-card/50">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md md:max-w-2xl lg:max-w-4xl mx-auto w-full">
           <Button
             className="w-full gap-2 h-11"
             onClick={() => setShowCreateDialog(true)}

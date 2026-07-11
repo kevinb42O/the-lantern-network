@@ -52,7 +52,7 @@ export function ProfileCreation({ onComplete }: ProfileCreationProps) {
       {/* Lantern mascot background */}
       <LanternBackground opacity={0.35} />
       
-      <div className="max-w-2xl mx-auto space-y-8 relative z-10">
+      <div className="max-w-2xl md:max-w-5xl lg:max-w-7xl mx-auto w-full space-y-8 relative z-10">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-semibold text-foreground">
             Stel jezelf voor
