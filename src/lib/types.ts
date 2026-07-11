@@ -17,6 +17,7 @@ export interface User {
   lastSeenMessagesAt?: number
   badges?: string[]
   supporterBadge?: SupporterBadgeTier
+  bannerUrl?: string
 }
 
 export interface LanternTransaction {
@@ -51,9 +52,21 @@ export interface Message {
   username: string
   vibePhoto?: string
   content: string
+  mediaUrl?: string
+  mediaType?: string
+  replyToId?: string
+  replyToContext?: {
+    id: string
+    content: string
+    username: string
+  }
+  reactions?: Record<string, string[]>
   timestamp: number
   type: 'campfire' | 'dm'
   chatId?: string
+  read?: boolean
+  isEdited?: boolean
+  deletedAt?: number | null
 }
 
 export interface InviteCode {
@@ -243,6 +256,12 @@ export interface CircleMessage {
   senderAvatar?: string | null
   receiverId: string
   content: string
+  mediaUrl?: string
+  mediaType?: string
+  replyToId?: string
   createdAt: string
   read: boolean
+  isEdited?: boolean
+  deletedAt?: number | null
+  reactions?: Record<string, string[]>
 }

@@ -7,6 +7,13 @@ import { useMarkMessagesAsRead } from '@/hooks/useMarkMessagesAsRead'
 import { isAdminEmail } from '@/lib/admin'
 import { ChatCircle, Check, X, PaperPlaneRight, Fire, Lamp, ArrowLeft, CheckCircle, Hourglass, XCircle, HandHeart, Sparkle, Coins, Megaphone, Gift, CheckFat, UserCirclePlus } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSeparator } from '@/components/ui/context-menu'
+import { MediaComposer } from '@/components/chat/MediaComposer'
+import { MessageMedia } from '@/components/chat/MessageMedia'
+import { MessageReactions } from '@/components/chat/MessageReactions'
+import { MessageReplyPreview } from '@/components/chat/MessageReplyPreview'
+import { useToggleReaction } from '@/hooks/useMessageReactions'
+import { useRealtimeTyping } from '@/hooks/useRealtimeTyping'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -67,11 +74,28 @@ export function MessagesView() {
   const [chatInput, setChatInput] = useState('')
   const [activeTab, setActiveTab] = useState<MessagesTab>('conversations')
   
-  // Circle chat state
+  // Chat feature states
+  const [pendingCircleMedia, setPendingCircleMedia] = useState<{ mediaUrl: string; mediaType: 'image' | 'gif' } | null>(null)
+  const [pendingMissionMedia, setPendingMissionMedia] = useState<{ mediaUrl: string; mediaType: 'image' | 'gif' } | null>(null)
+  const [replyToCircleMsg, setReplyToCircleMsg] = useState<{ id: string; content: string; username: string } | null>(null)
+  const [replyToMissionMsg, setReplyToMissionMsg] = useState<{ id: string; content: string; username: string } | null>(null)
+  const toggleReactionMutation = useToggleReaction()
+
+  // Circle Chat state
   const [selectedCircleMember, setSelectedCircleMember] = useState<CircleConnection | null>(null)
   const [circleChatInput, setCircleChatInput] = useState('')
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false)
   const [userToRemove, setUserToRemove] = useState<string | null>(null)
+
+  // Realtime typing
+  const { typingUsers: circleTypingUsers, notifyTyping: notifyCircleTyping } = useRealtimeTyping(
+    selectedCircleMember ? selectedCircleMember.connectedUserId : '',
+    user.id
+  )
+  const { typingUsers: missionTypingUsers, notifyTyping: notifyMissionTyping } = useRealtimeTyping(
+    selectedConversation ? selectedConversation.flareId : '',
+    user.id
+  )
   
   // Circle hooks
   const { data: circleConnections = [], refetch: refetchCircle } = useCircleConnections()
@@ -80,6 +104,7 @@ export function MessagesView() {
   const declineRequest = useDeclineConnectionRequest()
   const { data: circleMessages = [], refetch: refetchCircleMessages } = useCircleMessages(selectedCircleMember?.connectedUserId || null)
   const sendCircleMessage = useSendCircleMessage()
+  const deleteMessage = useDeleteMessage()
   const removeFromCircle = useRemoveFromCircle()
   const sendConnectionRequest = useSendConnectionRequest()
   
@@ -349,9 +374,19 @@ export function MessagesView() {
   }
 
   const handleSendMessage = () => {
-    if (!chatInput.trim() || !selectedConversation) return
-    onSendMessage(selectedConversation.id, chatInput.trim())
+    if (!selectedConversation || (!chatInput.trim() && !pendingMissionMedia)) return
+    
+    sendHelpMessageMutation.mutate({
+      helpRequestId: selectedConversation.id,
+      content: chatInput.trim(),
+      helpRequests,
+      mediaUrl: pendingMissionMedia?.mediaUrl,
+      mediaType: pendingMissionMedia?.mediaType,
+      replyToId: replyToMissionMsg?.id
+    })
     setChatInput('')
+    setPendingMissionMedia(null)
+    setReplyToMissionMsg(null)
   }
 
   const handleChatKeyDown = (e: React.KeyboardEvent) => {
@@ -402,13 +437,18 @@ export function MessagesView() {
 
   // Handle Circle message send
   const handleSendCircleMessage = async () => {
-    if (!circleChatInput.trim() || !selectedCircleMember) return
+    if (!selectedCircleMember || (!circleChatInput.trim() && !pendingCircleMedia)) return
     try {
       await sendCircleMessage.mutateAsync({
         receiverId: selectedCircleMember.connectedUserId,
-        content: circleChatInput.trim()
+        content: circleChatInput.trim(),
+        mediaUrl: pendingCircleMedia?.mediaUrl,
+        mediaType: pendingCircleMedia?.mediaType,
+        replyToId: replyToCircleMsg?.id
       })
       setCircleChatInput('')
+      setPendingCircleMedia(null)
+      setReplyToCircleMsg(null)
       refetchCircleMessages()
     } catch {
       toast.error('Bericht versturen mislukt')
@@ -559,58 +599,153 @@ export function MessagesView() {
                 <p className="text-sm">Start een gesprek met {selectedCircleMember.connectedUserName}!</p>
               </div>
             ) : (
-              circleMessages.map(msg => (
-                <div
-                  key={msg.id}
-                  className={`flex gap-2 ${msg.senderId === user.id ? 'flex-row-reverse' : ''}`}
-                >
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarImage src={msg.senderAvatar || undefined} />
-                    <AvatarFallback className="text-xs bg-amber-500/20 text-amber-400">
-                      {msg.senderName.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={`max-w-[75%] ${msg.senderId === user.id ? 'text-right' : ''}`}>
-                    <div className="flex items-baseline gap-2 mb-0.5">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {msg.senderId === user.id ? 'Jij' : msg.senderName}
-                      </span>
+              circleMessages.map((msg, index, arr) => {
+                const prevMsg = index > 0 ? arr[index - 1] : null;
+                const isSameUser = prevMsg && prevMsg.senderId === msg.senderId;
+                const isCloseTime = prevMsg && (new Date(msg.createdAt).getTime() - new Date(prevMsg.createdAt).getTime()) < 2 * 60 * 1000;
+                
+                const date = new Date(msg.createdAt);
+                const prevDate = prevMsg ? new Date(prevMsg.createdAt) : null;
+                const isNewDay = !prevDate || date.toDateString() !== prevDate.toDateString();
+                
+                const dateStr = date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
+                const isToday = dateStr === new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
+                const isYesterday = dateStr === new Date(Date.now() - 86400000).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
+                const displayDate = isToday ? 'Vandaag' : isYesterday ? 'Gisteren' : dateStr;
+
+                const isGrouped = isSameUser && isCloseTime && !isNewDay;
+
+                const isDeleted = Boolean(msg.deletedAt);
+
+                return (
+                  <React.Fragment key={msg.id}>
+                    {isNewDay && (
+                      <div className="flex justify-center my-6">
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground bg-muted/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                          {displayDate}
+                        </span>
+                      </div>
+                    )}
+                    <ContextMenu>
+                      <ContextMenuTrigger asChild>
+                        <div className={`flex gap-2 ${msg.senderId === user.id ? 'flex-row-reverse' : ''} ${isGrouped ? 'mt-1' : 'mt-4'} ${isDeleted ? 'opacity-70' : ''}`}>
+                      <div className="w-8 flex-shrink-0 flex justify-center">
+                        {!isGrouped && (
+                          <Avatar className="h-8 w-8 cursor-pointer hover:scale-105 transition-transform">
+                            <AvatarImage src={msg.senderAvatar || undefined} />
+                            <AvatarFallback className="text-xs bg-amber-500/20 text-amber-400">
+                              {msg.senderName.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                      </div>
+                      
+                      <div className={`max-w-[75%] ${msg.senderId === user.id ? 'text-right' : ''}`}>
+                        {!isGrouped && (
+                          <div className={`flex items-baseline gap-2 mb-0.5 ${msg.senderId === user.id ? 'flex-row-reverse' : ''}`}>
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {msg.senderId === user.id ? 'Jij' : msg.senderName}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground/60">
+                              {new Date(msg.createdAt).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        )}
+                        <div
+                          className={`relative inline-block px-3 py-2 rounded-2xl text-sm text-left ${
+                            msg.senderId === user.id
+                              ? 'bg-amber-500 text-white rounded-br-md shadow-sm shadow-amber-500/20'
+                              : 'bg-muted text-foreground border border-border/50 rounded-bl-md'
+                          }`}
+                        >
+                          {isDeleted ? (
+                            <p className="italic text-muted-foreground/80 flex items-center gap-2 text-sm">
+                              Dit bericht is verwijderd
+                            </p>
+                          ) : (
+                            <>
+                              {msg.replyToId && (
+                                <MessageReplyPreview currentUserId={user.id} message={msg as any} />
+                              )}
+                              <MessageMedia mediaUrl={msg.mediaUrl} mediaType={msg.mediaType} />
+                              <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                              <MessageReactions 
+                                align={msg.senderId === user.id ? 'right' : 'left'} 
+                                currentUserId={user.id} 
+                                message={msg as any} 
+                                onReact={(messageId, reaction) => toggleReactionMutation.mutate({ messageId, reaction })} 
+                              />
+                            </>
+                          )}
+                        </div>
+                        {msg.senderId === user.id && !isGrouped && !isDeleted && (
+                          <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-end gap-1">
+                            {msg.read ? (
+                              <span className="text-blue-400 font-bold tracking-tighter">✓✓</span>
+                            ) : (
+                              <span className="tracking-tighter">✓</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div
-                      className={`inline-block px-3 py-2 rounded-2xl text-sm ${
-                        msg.senderId === user.id
-                          ? 'bg-amber-500 text-white rounded-br-md'
-                          : 'bg-muted text-foreground rounded-bl-md'
-                      }`}
-                    >
-                      {msg.content}
-                    </div>
-                  </div>
-                </div>
-              ))
+                  </ContextMenuTrigger>
+                  {!isDeleted && (
+                    <ContextMenuContent className="w-48 bg-card/95 backdrop-blur-md border-border/50 shadow-xl">
+                      <ContextMenuItem 
+                        className="cursor-pointer flex items-center gap-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(msg.content)
+                          toast.success('Gekopieerd naar klembord')
+                        }}
+                      >
+                        <span>Kopiëren</span>
+                      </ContextMenuItem>
+                      <ContextMenuItem 
+                        className="cursor-pointer flex items-center gap-2"
+                        onClick={() => setReplyToCircleMsg(msg as any)}
+                      >
+                        <span>Beantwoorden</span>
+                      </ContextMenuItem>
+                      {msg.senderId === user.id && (
+                        <>
+                          <ContextMenuSeparator />
+                          <ContextMenuItem 
+                            className="cursor-pointer flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                            onClick={() => deleteMessage.mutate({ messageId: msg.id })}
+                          >
+                            <span>Verwijderen</span>
+                          </ContextMenuItem>
+                        </>
+                      )}
+                    </ContextMenuContent>
+                  )}
+                </ContextMenu>
+              </React.Fragment>
+                );
+              })
             )}
           </div>
           
           {/* Circle Chat Input */}
-          <div className="p-4 border-t border-border bg-card">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Typ een bericht..."
-                value={circleChatInput}
-                onChange={(e) => setCircleChatInput(e.target.value)}
-                onKeyDown={handleCircleChatKeyDown}
-                className="flex-1 h-10 px-4 rounded-full border border-amber-500/30 bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              />
-              <Button
-                size="icon"
-                className="rounded-full h-10 w-10 bg-amber-500 hover:bg-amber-600"
-                onClick={handleSendCircleMessage}
-                disabled={!circleChatInput.trim() || sendCircleMessage.isPending}
-              >
-                <PaperPlaneRight size={18} weight="fill" />
-              </Button>
-            </div>
+          <div className="w-full">
+            {circleTypingUsers.length > 0 && (
+              <div className="text-xs text-muted-foreground italic px-4 pb-2 bg-card">
+                {selectedCircleMember.connectedUserName} is aan het typen...
+              </div>
+            )}
+            <MediaComposer
+              value={circleChatInput}
+              onChange={setCircleChatInput}
+              onSubmit={handleSendCircleMessage}
+              pendingMedia={pendingCircleMedia}
+              onPendingMediaChange={setPendingCircleMedia}
+              disabled={sendCircleMessage.isPending}
+              sending={sendCircleMessage.isPending}
+              onTyping={notifyCircleTyping}
+              replyToContext={replyToCircleMsg}
+              onCancelReply={() => setReplyToCircleMsg(null)}
+            />
           </div>
         </div>
       ) : !selectedConversation ? (
@@ -1361,66 +1496,161 @@ export function MessagesView() {
               </div>
             </div>
 
-            {getChatMessages(selectedConversation.id).map(msg => (
-              <div
-                key={msg.id}
-                className={`flex gap-2 ${msg.userId === user.id ? 'flex-row-reverse' : ''}`}
-              >
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarFallback className="text-xs bg-primary/20 text-primary">
-                    {msg.username.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className={`max-w-[75%] ${msg.userId === user.id ? 'text-right' : ''}`}>
-                  <div className="flex items-baseline gap-2 mb-0.5">
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {msg.userId === user.id ? 'Jij' : msg.username}
-                    </span>
+            {getChatMessages(selectedConversation.id).map((msg, index, arr) => {
+              const prevMsg = index > 0 ? arr[index - 1] : null;
+              const isSameUser = prevMsg && prevMsg.userId === msg.userId;
+              const isCloseTime = prevMsg && (msg.timestamp - prevMsg.timestamp) < 2 * 60 * 1000;
+              
+              const date = new Date(msg.timestamp);
+              const prevDate = prevMsg ? new Date(prevMsg.timestamp) : null;
+              const isNewDay = !prevDate || date.toDateString() !== prevDate.toDateString();
+              
+              const dateStr = date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
+              const isToday = dateStr === new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
+              const isYesterday = dateStr === new Date(Date.now() - 86400000).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
+              const displayDate = isToday ? 'Vandaag' : isYesterday ? 'Gisteren' : dateStr;
+
+              const isGrouped = isSameUser && isCloseTime && !isNewDay;
+
+              const isDeleted = Boolean(msg.deletedAt);
+
+              return (
+                <React.Fragment key={msg.id}>
+                  {isNewDay && (
+                    <div className="flex justify-center my-6">
+                      <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground bg-muted/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                        {displayDate}
+                      </span>
+                    </div>
+                  )}
+                  <ContextMenu>
+                    <ContextMenuTrigger asChild>
+                      <div className={`flex gap-2 ${msg.userId === user.id ? 'flex-row-reverse' : ''} ${isGrouped ? 'mt-1' : 'mt-4'} ${isDeleted ? 'opacity-70' : ''}`}>
+                    <div className="w-8 flex-shrink-0 flex justify-center">
+                      {!isGrouped && (
+                        <Avatar className="h-8 w-8 cursor-pointer hover:scale-105 transition-transform">
+                          <AvatarFallback className="text-xs bg-primary/20 text-primary">
+                            {msg.username.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                    </div>
+                    
+                    <div className={`max-w-[75%] ${msg.userId === user.id ? 'text-right' : ''}`}>
+                      {!isGrouped && (
+                        <div className={`flex items-baseline gap-2 mb-0.5 ${msg.userId === user.id ? 'flex-row-reverse' : ''}`}>
+                          <span className="text-xs font-medium text-muted-foreground">
+                            {msg.userId === user.id ? 'Jij' : msg.username}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground/60">
+                            {new Date(msg.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      )}
+                      <div
+                        className={`relative inline-block px-3 py-2 rounded-2xl text-sm text-left ${
+                          msg.userId === user.id
+                            ? 'bg-primary text-primary-foreground rounded-br-md shadow-sm shadow-primary/20'
+                            : 'bg-muted text-foreground border border-border/50 rounded-bl-md'
+                        }`}
+                      >
+                        {isDeleted ? (
+                          <p className="italic text-muted-foreground/80 flex items-center gap-2 text-sm">
+                            Dit bericht is verwijderd
+                          </p>
+                        ) : (
+                          <>
+                            {msg.replyToId && (
+                              <MessageReplyPreview currentUserId={user.id} message={msg.replyToContext as any} />
+                            )}
+                            <MessageMedia mediaUrl={msg.mediaUrl} mediaType={msg.mediaType} />
+                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                            <MessageReactions 
+                              align={msg.userId === user.id ? 'right' : 'left'} 
+                              currentUserId={user.id} 
+                              message={msg as any} 
+                              onReact={(messageId, reaction) => toggleReactionMutation.mutate({ messageId, reaction })} 
+                            />
+                          </>
+                        )}
+                      </div>
+                      {msg.userId === user.id && !isGrouped && !isDeleted && (
+                        <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center justify-end gap-1">
+                          {msg.read ? (
+                            <span className="text-blue-400 font-bold tracking-tighter">✓✓</span>
+                          ) : (
+                            <span className="tracking-tighter">✓</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div
-                    className={`inline-block px-3 py-2 rounded-2xl text-sm ${
-                      msg.userId === user.id
-                        ? 'bg-primary text-primary-foreground rounded-br-md'
-                        : 'bg-muted text-foreground rounded-bl-md'
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
-                </div>
-              </div>
-            ))}
+                </ContextMenuTrigger>
+                {!isDeleted && (
+                  <ContextMenuContent className="w-48 bg-card/95 backdrop-blur-md border-border/50 shadow-xl">
+                    <ContextMenuItem 
+                      className="cursor-pointer flex items-center gap-2"
+                      onClick={() => {
+                        navigator.clipboard.writeText(msg.content)
+                        toast.success('Gekopieerd naar klembord')
+                      }}
+                    >
+                      <span>Kopiëren</span>
+                    </ContextMenuItem>
+                    <ContextMenuItem 
+                      className="cursor-pointer flex items-center gap-2"
+                      onClick={() => setReplyToMissionMsg(msg as any)}
+                    >
+                      <span>Beantwoorden</span>
+                    </ContextMenuItem>
+                    {msg.userId === user.id && (
+                      <>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem 
+                          className="cursor-pointer flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                          onClick={() => deleteMessage.mutate({ messageId: msg.id })}
+                        >
+                          <span>Verwijderen</span>
+                        </ContextMenuItem>
+                      </>
+                    )}
+                  </ContextMenuContent>
+                )}
+              </ContextMenu>
+            </React.Fragment>
+              );
+            })}
           </div>
           
           {/* Chat Input */}
-          <div className="p-4 border-t border-border bg-card">
+          <div className="w-full">
+            {missionTypingUsers.length > 0 && (
+              <div className="text-xs text-muted-foreground italic px-4 pb-2 bg-card">
+                Iemand is aan het typen...
+              </div>
+            )}
             {(() => {
               const flare = getFlareForRequest(selectedConversation)
               if (flare?.status === 'completed') {
                 return (
-                  <div className="text-center py-2 text-muted-foreground text-sm">
+                  <div className="text-center py-4 bg-card border-t border-border text-muted-foreground text-sm">
                     ✅ Deze taak is voltooid
                   </div>
                 )
               }
               return (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Typ een bericht..."
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={handleChatKeyDown}
-                    className="flex-1 h-10 px-4 rounded-full border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                  <Button
-                    size="icon"
-                    className="rounded-full h-10 w-10"
-                    onClick={handleSendMessage}
-                    disabled={!chatInput.trim()}
-                  >
-                    <PaperPlaneRight size={18} weight="fill" />
-                  </Button>
-                </div>
+                <MediaComposer
+                  value={chatInput}
+                  onChange={setChatInput}
+                  onSubmit={handleSendMessage}
+                  pendingMedia={pendingMissionMedia}
+                  onPendingMediaChange={setPendingMissionMedia}
+                  disabled={sendHelpMessageMutation.isPending}
+                  sending={sendHelpMessageMutation.isPending}
+                  onTyping={notifyMissionTyping}
+                  replyToContext={replyToMissionMsg}
+                  onCancelReply={() => setReplyToMissionMsg(null)}
+                />
               )
             })()}
           </div>

@@ -2,17 +2,22 @@ import { useState, useEffect, useRef } from 'react'
 import { Fire, PaperPlaneRight, Sparkle, ShieldCheck, Flag } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { AmbientBackground } from '@/components/ui/ambient-background'
 import { CampfireEffects } from '@/components/ui/campfire-effects'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCampfireMessages, useSendCampfireMessage } from '@/hooks/useCampfire'
+import { useDeleteMessage } from '@/hooks/useMessages'
 import { isAdminEmail } from '@/lib/admin'
 import { ELDER_TRUST_THRESHOLD } from '@/lib/economy'
 import { useOutletContext } from 'react-router-dom'
+import { MediaComposer } from '@/components/chat/MediaComposer'
+import { MessageMedia } from '@/components/chat/MessageMedia'
+import { MessageReactions } from '@/components/chat/MessageReactions'
+import { useToggleReaction } from '@/hooks/useMessageReactions'
 import type { Message, ReportCategory } from '@/lib/types'
 
 const REPORT_CATEGORIES: { value: ReportCategory; label: string }[] = [
@@ -27,6 +32,7 @@ export function CampfireView() {
   const { user: authUser, profile } = useAuth()
   const { data: campfireData } = useCampfireMessages()
   const sendMessage = useSendCampfireMessage()
+  const deleteMessage = useDeleteMessage()
   const outletContext = useOutletContext<{ onUserClick?: (userId: string) => void }>()
   const onUserClick = outletContext?.onUserClick
 
@@ -43,12 +49,14 @@ export function CampfireView() {
     isAdmin: isAdminEmail(authUser.email),
   }
 
-  const onSendMessage = (content: string) => {
-    sendMessage.mutate(content)
+  const onSendMessage = (content: string, mediaUrl?: string | null, mediaType?: 'image' | 'gif' | null) => {
+    sendMessage.mutate({ content, mediaUrl, mediaType })
   }
 
   const [inputValue, setInputValue] = useState('')
+  const [pendingMedia, setPendingMedia] = useState<{ mediaUrl: string; mediaType: 'image' | 'gif' } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const toggleReactionMutation = useToggleReaction()
   
   // Report modal state
   const [showReportModal, setShowReportModal] = useState(false)
@@ -61,6 +69,57 @@ export function CampfireView() {
     .filter(m => m.type === 'campfire')
     .sort((a, b) => a.timestamp - b.timestamp)
 
+  // Group messages
+  const renderMessageList = () => {
+    const list: React.ReactNode[] = []
+    let lastDateStr = ''
+    
+    for (let i = 0; i < campfireMessages.length; i++) {
+      const msg = campfireMessages[i]
+      const prevMsg = i > 0 ? campfireMessages[i - 1] : null
+      
+      const date = new Date(msg.timestamp)
+      const dateStr = date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+      const isToday = dateStr === new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+      const isYesterday = dateStr === new Date(Date.now() - 86400000).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' })
+      
+      const displayDate = isToday ? 'Vandaag' : isYesterday ? 'Gisteren' : dateStr
+      
+      if (displayDate !== lastDateStr) {
+        list.push(
+          <div key={`date-${displayDate}`} className="flex justify-center my-6">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground bg-muted/50 px-3 py-1 rounded-full backdrop-blur-sm">
+              {displayDate}
+            </span>
+          </div>
+        )
+        lastDateStr = displayDate
+      }
+      
+      const isSameUser = prevMsg && prevMsg.userId === msg.userId
+      const isCloseTime = prevMsg && (msg.timestamp - prevMsg.timestamp) < 2 * 60 * 1000 // 2 mins
+      const isGrouped = isSameUser && isCloseTime && lastDateStr === displayDate
+
+      list.push(
+        <MessageBubble
+          key={msg.id}
+          message={msg}
+          isCurrentUser={msg.userId === user.id}
+          isAdmin={adminUserIds.includes(msg.userId)}
+          isModerator={moderatorUserIds.includes(msg.userId)}
+          animationDelay={0.02}
+          onUserClick={onUserClick}
+          onReport={handleReportMessage}
+          onToggleReaction={(reaction) => toggleReactionMutation.mutate({ messageId: msg.id, reaction })}
+          onDelete={(id) => deleteMessage.mutate({ messageId: id })}
+          isGrouped={Boolean(isGrouped)}
+        />
+      )
+    }
+    
+    return list
+  }
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
@@ -69,10 +128,11 @@ export function CampfireView() {
   }, [campfireMessages.length])
 
   const handleSend = () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim() && !pendingMedia) return
 
-    onSendMessage(inputValue.trim())
+    onSendMessage(inputValue.trim(), pendingMedia?.mediaUrl, pendingMedia?.mediaType)
     setInputValue('')
+    setPendingMedia(null)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -174,18 +234,7 @@ export function CampfireView() {
               </p>
             </div>
           ) : (
-            campfireMessages.map((message, index) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isCurrentUser={message.userId === user.id}
-                isAdmin={adminUserIds.includes(message.userId)}
-                isModerator={moderatorUserIds.includes(message.userId)}
-                animationDelay={index * 0.02}
-                onUserClick={onUserClick}
-                onReport={handleReportMessage}
-              />
-            ))
+            renderMessageList()
           )}
         </div>
       </div>
@@ -193,28 +242,14 @@ export function CampfireView() {
       {/* Input area */}
       <div className="p-4 border-t border-border bg-card/80 backdrop-blur-sm relative z-10">
         <div className="max-w-2xl mx-auto">
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Deel iets met de buurt..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                maxLength={500}
-                className="w-full h-12 px-5 rounded-2xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                autoComplete="off"
-              />
-            </div>
-            <Button
-              onClick={handleSend}
-              disabled={!inputValue.trim()}
-              size="icon"
-              className="shrink-0 h-12 w-12 rounded-2xl btn-glow"
-            >
-              <PaperPlaneRight size={20} weight="fill" />
-            </Button>
-          </div>
+          <MediaComposer
+            value={inputValue}
+            onChange={setInputValue}
+            onSubmit={handleSend}
+            pendingMedia={pendingMedia}
+            onPendingMediaChange={setPendingMedia}
+            placeholder="Deel iets met de buurt..."
+          />
           <div className="flex items-center justify-between text-xs text-muted-foreground mt-2 px-1">
             <span className="flex items-center gap-1">
               Druk Enter om te versturen
@@ -309,9 +344,13 @@ interface MessageBubbleProps {
   animationDelay?: number
   onUserClick?: (userId: string) => void
   onReport?: (message: Message) => void
+  onToggleReaction?: (reaction: string) => void
+  onDelete?: (messageId: string) => void
+  onReply?: (message: Message) => void
+  isGrouped?: boolean
 }
 
-function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick, onReport }: MessageBubbleProps) {
+function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = false, animationDelay = 0, onUserClick, onReport, onToggleReaction, onDelete, onReply, isGrouped = false }: MessageBubbleProps) {
   const messageAge = Date.now() - message.timestamp
   const hoursOld = messageAge / (1000 * 60 * 60)
   // Messages fade more gracefully
@@ -346,77 +385,146 @@ function MessageBubble({ message, isCurrentUser, isAdmin = false, isModerator = 
     return 'text-foreground'
   }
 
+  const isDeleted = Boolean(message.deletedAt)
+
   return (
-    <div
-      className={`flex gap-3 fade-in-up group ${isCurrentUser ? 'flex-row-reverse' : ''}`}
-      style={{ opacity, animationDelay: `${animationDelay}s` }}
-    >
-      <button
-        onClick={() => onUserClick?.(message.userId)}
-        className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
-        aria-label={`Bekijk ${message.username}'s profiel`}
-      >
-        <Avatar className={`flex-shrink-0 h-10 w-10 cursor-pointer ${getRingStyle()}`}>
-          <AvatarFallback className={`text-sm font-semibold ${getAvatarBgStyle()}`}>
-            {message.username.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-      </button>
-      
-      <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''}`}>
-        <div className={`flex items-center gap-2 mb-1.5 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
-          <button
-            onClick={() => onUserClick?.(message.userId)}
-            className={`text-sm font-semibold hover:underline cursor-pointer ${getNameStyle()}`}
-            aria-label={`Bekijk ${message.username}'s profiel`}
-          >
-            {displayName}
-          </button>
-          {isAdmin && (
-            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium border border-amber-500/30">
-              <Sparkle size={10} weight="fill" />
-              Admin
-            </span>
-          )}
-          {isModerator && !isAdmin && (
-            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-medium border border-cyan-500/30">
-              <ShieldCheck size={10} weight="fill" />
-              Mod
-            </span>
-          )}
-          <span className="text-xs text-muted-foreground">
-            {timeAgo()}
-          </span>
-          {/* Report button - only show for other users' messages */}
-          {!isCurrentUser && onReport && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onReport(message)
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
-              title="Bericht melden"
-            >
-              <Flag size={14} />
-            </button>
-          )}
-        </div>
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
         <div
-          className={`
-            inline-block px-4 py-3 rounded-2xl text-sm leading-relaxed
-            ${isCurrentUser 
-              ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-br-md shadow-lg shadow-primary/20' 
-              : 'bg-card text-card-foreground border border-border/50 rounded-bl-md'
-            }
-            ${isAdmin && !isCurrentUser ? 'border-amber-400/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5' : ''}
-            ${isModerator && !isAdmin && !isCurrentUser ? 'border-cyan-400/30 bg-gradient-to-br from-cyan-500/5 to-blue-500/5' : ''}
-          `}
+          className={`flex gap-3 fade-in-up group ${isCurrentUser ? 'flex-row-reverse' : ''} ${isGrouped ? 'mt-1' : 'mt-4'} ${isDeleted ? 'opacity-70' : ''}`}
+          style={{ opacity, animationDelay: `${animationDelay}s` }}
         >
-          <p className="whitespace-pre-wrap break-words">
-            {message.content}
-          </p>
+          <div className="w-10 flex-shrink-0 flex justify-center">
+            {!isGrouped && (
+              <button
+                onClick={() => onUserClick?.(message.userId)}
+                className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-full transition-transform hover:scale-105"
+                aria-label={`Bekijk ${message.username}'s profiel`}
+              >
+                <Avatar className={`h-10 w-10 cursor-pointer ${getRingStyle()}`}>
+                  <AvatarFallback className={`text-sm font-semibold ${getAvatarBgStyle()}`}>
+                    {message.username.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            )}
+          </div>
+          
+          <div className={`flex-1 max-w-[75%] ${isCurrentUser ? 'text-right' : ''}`}>
+            {!isGrouped && (
+              <div className={`flex items-center gap-2 mb-1.5 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
+                <button
+                  onClick={() => onUserClick?.(message.userId)}
+                  className={`text-sm font-semibold hover:underline cursor-pointer ${getNameStyle()}`}
+                  aria-label={`Bekijk ${message.username}'s profiel`}
+                >
+                  {displayName}
+                </button>
+                {isAdmin && (
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium border border-amber-500/30">
+                    <Sparkle size={10} weight="fill" />
+                    Admin
+                  </span>
+                )}
+                {isModerator && !isAdmin && (
+                  <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 font-medium border border-cyan-500/30">
+                    <ShieldCheck size={10} weight="fill" />
+                    Mod
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {timeAgo()}
+                </span>
+                {/* Report button - only show for other users' messages */}
+                {!isCurrentUser && onReport && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onReport(message)
+                    }}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-500/10 text-muted-foreground hover:text-red-400"
+                    title="Bericht melden"
+                  >
+                    <Flag size={14} />
+                  </button>
+                )}
+              </div>
+            )}
+            
+            {/* Message Content */}
+            <div
+              className={`
+                inline-block p-3 rounded-2xl text-left relative
+                ${isCurrentUser 
+                  ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-white rounded-br-md shadow-md shadow-orange-500/20' 
+                  : 'bg-card text-card-foreground border border-border rounded-bl-md'
+                }
+              `}
+            >
+              {isDeleted ? (
+                <p className="italic text-muted-foreground/80 flex items-center gap-2 text-sm">
+                  Dit bericht is verwijderd
+                </p>
+              ) : (
+                <>
+                  {message.mediaUrl && (
+                    <div className="mb-2">
+                      <MessageMedia mediaUrl={message.mediaUrl} mediaType={message.mediaType} />
+                    </div>
+                  )}
+                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                    {message.content}
+                  </p>
+                </>
+              )}
+            </div>
+            
+            {/* Reactions */}
+            {!isDeleted && (
+              <div className={`mt-1 flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                <MessageReactions
+                  reactions={message.reactions || {}}
+                  currentUserId="dummy"
+                  onToggleReaction={onToggleReaction || (() => {})}
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </ContextMenuTrigger>
+      
+      {!isDeleted && (
+        <ContextMenuContent className="w-48 bg-card/95 backdrop-blur-md border-border/50 shadow-xl">
+          <ContextMenuItem 
+            className="cursor-pointer flex items-center gap-2"
+            onClick={() => {
+              navigator.clipboard.writeText(message.content)
+              toast.success('Gekopieerd naar klembord')
+            }}
+          >
+            <span>Kopiëren</span>
+          </ContextMenuItem>
+          {onReply && (
+            <ContextMenuItem 
+              className="cursor-pointer flex items-center gap-2"
+              onClick={() => onReply(message)}
+            >
+              <span>Beantwoorden</span>
+            </ContextMenuItem>
+          )}
+          {isCurrentUser && onDelete && (
+            <>
+              <ContextMenuSeparator />
+              <ContextMenuItem 
+                className="cursor-pointer flex items-center gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                onClick={() => onDelete(message.id)}
+              >
+                <span>Verwijderen</span>
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
+      )}
+    </ContextMenu>
   )
 }

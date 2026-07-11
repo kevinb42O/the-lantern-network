@@ -161,10 +161,13 @@ export function useSendHelpChatMessage() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ helpRequestId, content, helpRequests }: {
+    mutationFn: async ({ helpRequestId, content, helpRequests, mediaUrl, mediaType, replyToId }: {
       helpRequestId: string;
       content: string;
       helpRequests: HelpRequest[];
+      mediaUrl?: string;
+      mediaType?: string;
+      replyToId?: string;
     }) => {
       if (!user) throw new Error('Must be logged in');
 
@@ -186,6 +189,9 @@ export function useSendHelpChatMessage() {
         receiver_id: receiverId,
         content,
         flare_id: helpRequest.flareId,
+        media_url: mediaUrl,
+        media_type: mediaType,
+        reply_to_id: replyToId,
         read: false,
       });
 
@@ -391,7 +397,7 @@ export function useMissionMessages() {
 
       const { data: messagesData, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, message_reactions(*), reply_to:reply_to_id(id, content, sender:sender_id(display_name))')
         .not('flare_id', 'is', null)
         .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
         .order('created_at', { ascending: true });
@@ -441,9 +447,25 @@ export function useMissionMessages() {
           userId: m.sender_id,
           username: profileMap[m.sender_id] || 'Onbekende buur',
           content: m.content,
+          mediaUrl: m.media_url,
+          mediaType: m.media_type,
+          replyToId: m.reply_to_id,
+          replyToContext: m.reply_to ? {
+            id: m.reply_to.id,
+            content: m.reply_to.content,
+            username: m.reply_to.sender?.display_name || 'Onbekende buur'
+          } : undefined,
+          reactions: (m.message_reactions || []).reduce((acc: Record<string, string[]>, r: any) => {
+            if (!acc[r.reaction]) acc[r.reaction] = [];
+            acc[r.reaction].push(r.user_id);
+            return acc;
+          }, {}),
           timestamp: new Date(m.created_at).getTime(),
           type: 'dm' as const,
           chatId,
+          read: m.read,
+          isEdited: m.is_edited,
+          deletedAt: m.deleted_at ? new Date(m.deleted_at).getTime() : null,
         };
       });
 

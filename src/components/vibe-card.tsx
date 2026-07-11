@@ -22,12 +22,19 @@ export function VibeCard({ user, helpCount = 0, isModerator = false }: VibeCardP
 
   return (
     <Card className="overflow-hidden bg-gradient-to-br from-card via-card to-card/80 border-border/50">
-      {/* Decorative header gradient */}
-      <div className="h-20 bg-gradient-to-r from-primary/20 via-accent/15 to-primary/20 relative">
+      {/* Decorative header gradient or Banner */}
+      <div 
+        className="h-32 relative bg-cover bg-center"
+        style={user.bannerUrl ? { backgroundImage: `url(${user.bannerUrl})` } : {}}
+      >
+        {!user.bannerUrl && (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-accent/15 to-primary/20">
+            {/* Decorative circles */}
+            <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
+            <div className="absolute -top-2 left-8 w-16 h-16 rounded-full bg-accent/10 blur-xl" />
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-card" />
-        {/* Decorative circles */}
-        <div className="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-primary/10 blur-2xl" />
-        <div className="absolute -top-2 left-8 w-16 h-16 rounded-full bg-accent/10 blur-xl" />
       </div>
       
       {/* Profile content */}
@@ -70,7 +77,12 @@ export function VibeCard({ user, helpCount = 0, isModerator = false }: VibeCardP
               <span>{trustBadge.emoji}</span>
               {trustBadge.name}
             </p>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+            {user.bio && (
+              <p className="text-sm text-foreground/80 mt-1 italic leading-snug line-clamp-2">
+                "{user.bio}"
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
               <Clock size={12} />
               {daysSinceJoined === 0 ? 'Vandaag lid geworden' : `Lid sinds ${daysSinceJoined} dag${daysSinceJoined !== 1 ? 'en' : ''}`}
             </p>

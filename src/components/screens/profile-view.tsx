@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { VibeCard } from '@/components/vibe-card'
 import { PhilosophyView } from './philosophy-view'
 import { SupportPage } from './support-page'
+import { ProfileSettingsModal } from '@/components/profile/profile-settings-modal'
 import { useAuth } from '@/contexts/AuthContext'
 import { useHelpCount } from '@/hooks/useHelpCount'
 import { useMyInvites, useCreateInvite } from '@/hooks/useInvites'
@@ -67,6 +68,7 @@ export function ProfileView() {
   const [showBadges, setShowBadges] = useState(false)
   const [showPhilosophy, setShowPhilosophy] = useState(false)
   const [showSupport, setShowSupport] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const availableInvites = inviteCodes.filter(code => !code.usedBy)
 
@@ -501,6 +503,15 @@ export function ProfileView() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ProfileSettingsModal 
+        open={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        onUpdated={() => {
+          // If needed we can refresh the user profile here.
+          // useAuth automatically syncs changes eventually but we can trigger a manual fetch or just let realtime sync happen.
+        }}
+      />
     </div>
   )
 }

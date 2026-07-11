@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { X } from '@phosphor-icons/react';
+import { X, UploadSimple, Image as ImageIcon } from '@phosphor-icons/react';
 import { INITIAL_LANTERNS } from '@/lib/economy';
+import { uploadProfileBanner } from '@/lib/media';
 import { LanternBackground } from '@/components/ui/lantern-background';
 
 const SUGGESTED_TAGS = [
@@ -29,8 +30,11 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
   const [bio, setBio] = useState('');
   const [vibeTags, setVibeTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState('');
+  const [bannerUrl, setBannerUrl] = useState('');
+  const [pendingBannerFile, setPendingBannerFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const addTag = (tag: string) => {
     const normalizedTag = tag.trim().toLowerCase();
@@ -49,6 +53,14 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
     setCustomTag('');
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPendingBannerFile(file);
+      setBannerUrl(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !displayName.trim() || vibeTags.length === 0) return;
@@ -59,6 +71,11 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
     try {
       console.log('Creating profile for user:', user.id);
       
+      let finalBannerUrl = null;
+      if (pendingBannerFile) {
+        finalBannerUrl = await uploadProfileBanner(pendingBannerFile);
+      }
+
       // Try to create the profile using upsert (insert or update)
       // Don't use .select() - just fire and forget, then reload
       const { error: upsertError } = await supabase
@@ -71,6 +88,7 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
           trust_score: 0,
           lantern_balance: INITIAL_LANTERNS,
           location: null,
+          banner_url: finalBannerUrl,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id'
@@ -107,6 +125,36 @@ export function ProfileSetup({ onComplete }: ProfileSetupProps = {}) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Banner Upload */}
+            <div className="space-y-2">
+              <Label>Profiel Banner</Label>
+              <div 
+                className="relative h-32 rounded-xl border-2 border-dashed border-border overflow-hidden bg-muted group cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {bannerUrl ? (
+                  <>
+                    <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                      <span className="text-white flex items-center gap-2"><ImageIcon /> Wijzig banner</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground group-hover:text-foreground transition">
+                    <UploadSimple size={24} className="mb-2" />
+                    <span className="text-sm font-medium">Klik om een banner te uploaden</span>
+                  </div>
+                )}
+              </div>
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleFileChange}
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="displayName">Je naam *</Label>
               <Input

@@ -15,6 +15,7 @@ export type Database = {
           user_id: string;
           display_name: string;
           avatar_url: string | null;
+          banner_url: string | null;
           bio: string | null;
           vibe_tags: string[];
           trust_score: number;
@@ -184,7 +185,12 @@ export type Database = {
           receiver_id: string;
           flare_id: string | null;
           content: string;
+          media_url: string | null;
+          media_type: string | null;
+          reply_to_id: string | null;
           read: boolean;
+          is_edited: boolean;
+          deleted_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -193,7 +199,12 @@ export type Database = {
           receiver_id: string;
           flare_id?: string | null;
           content: string;
+          media_url?: string | null;
+          media_type?: string | null;
+          reply_to_id?: string | null;
           read?: boolean;
+          is_edited?: boolean;
+          deleted_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -202,10 +213,53 @@ export type Database = {
           receiver_id?: string;
           flare_id?: string | null;
           content?: string;
+          media_url?: string | null;
+          media_type?: string | null;
+          reply_to_id?: string | null;
           read?: boolean;
+          is_edited?: boolean;
+          deleted_at?: string | null;
           created_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          }
+        ];
+      };
+      message_reactions: {
+        Row: {
+          id: string;
+          message_id: string;
+          user_id: string;
+          reaction: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          message_id: string;
+          user_id: string;
+          reaction: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          message_id?: string;
+          user_id?: string;
+          reaction?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          }
+        ];
       };
       transactions: {
         Row: {

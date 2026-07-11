@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   is_moderator BOOLEAN DEFAULT FALSE,
   badges TEXT[] DEFAULT '{}',
   completed_flares_count INTEGER DEFAULT 0,
+  banner_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -75,7 +76,12 @@ CREATE TABLE IF NOT EXISTS messages (
   receiver_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   flare_id UUID REFERENCES flares(id) ON DELETE SET NULL,
   content TEXT NOT NULL,
+  media_url TEXT,
+  media_type VARCHAR(50),
+  reply_to_id UUID REFERENCES messages(id) ON DELETE SET NULL,
   read BOOLEAN DEFAULT FALSE,
+  is_edited BOOLEAN DEFAULT FALSE,
+  deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -780,3 +786,73 @@ BEGIN
     ALTER TABLE flares ADD COLUMN circle_only BOOLEAN DEFAULT FALSE;
   END IF;
 END $$;
+
+-- Message reactions
+CREATE TABLE IF NOT EXISTS message_reactions (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  message_id UUID REFERENCES messages(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  reaction VARCHAR(50) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(message_id, user_id, reaction)
+);
+
+ALTER TABLE message_reactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Message reactions are viewable by everyone" ON message_reactions
+  FOR SELECT USING (true);
+
+CREATE POLICY "Users can add their own message reactions" ON message_reactions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own message reactions" ON message_reactions
+  FOR DELETE USING (auth.uid() = user_id);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE message_reactions;
+
+-- Storage buckets for chat media and profile banners
+INSERT INTO storage.buckets (id, name, public) VALUES ('chat-media', 'chat-media', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('profile-banners', 'profile-banners', true) ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true) ON CONFLICT (id) DO NOTHING;
+
+-- Storage bucket policies (if they do not already exist, it will error in postgres without a DO block, but for simplicity we rely on the editor handling errors or ignoring duplicates)
+-- Actually, it's better to avoid duplicate policy errors if running repeatedly, but for schema setup we'll just output them.
+-- chat-media
+DO $$ BEGIN
+  CREATE POLICY "Public Access for chat-media" ON storage.objects FOR SELECT USING (bucket_id = 'chat-media');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can upload chat-media" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'chat-media' AND auth.role() = 'authenticated');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Users can delete their own chat-media" ON storage.objects FOR DELETE USING (bucket_id = 'chat-media' AND auth.uid() = owner);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- profile-banners
+DO $$ BEGIN
+  CREATE POLICY "Public Access for profile-banners" ON storage.objects FOR SELECT USING (bucket_id = 'profile-banners');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can upload profile-banners" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'profile-banners' AND auth.role() = 'authenticated');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Users can delete their own profile-banners" ON storage.objects FOR DELETE USING (bucket_id = 'profile-banners' AND auth.uid() = owner);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- avatars
+DO $$ BEGIN
+  CREATE POLICY "Public Access for avatars" ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Authenticated users can upload avatars" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'avatars' AND auth.role() = 'authenticated');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Users can delete their own avatars" ON storage.objects FOR DELETE USING (bucket_id = 'avatars' AND auth.uid() = owner);
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+

@@ -56,8 +56,16 @@ export function useCampfireMessages() {
         userId: m.sender_id,
         username: profileMap[m.sender_id] || 'Onbekende buur',
         content: m.content,
+        mediaUrl: m.media_url,
+        mediaType: m.media_type as 'image' | 'gif' | null,
         timestamp: new Date(m.created_at).getTime(),
         type: 'campfire' as const,
+        chatId: 'campfire',
+        reactions: {},
+        replyToId: m.reply_to_id,
+        read: m.read,
+        isEdited: m.is_edited,
+        deletedAt: m.deleted_at ? new Date(m.deleted_at).getTime() : null,
       }));
 
       return { messages, adminIds, moderatorIds };
@@ -76,7 +84,7 @@ export function useSendCampfireMessage() {
   const { user, profile } = useAuth();
 
   return useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, mediaUrl, mediaType }: { content: string; mediaUrl?: string | null; mediaType?: 'image' | 'gif' | null }) => {
       if (!user || !profile) throw new Error('Must be logged in');
 
       const { error } = await supabase.from('messages').insert({
@@ -84,12 +92,14 @@ export function useSendCampfireMessage() {
         receiver_id: user.id, // campfire convention
         content,
         flare_id: null,
+        media_url: mediaUrl,
+        media_type: mediaType,
       });
 
       if (error) throw error;
       return { success: true };
     },
-    onMutate: async (content) => {
+    onMutate: async (payload) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['campfire-messages'] });
 
@@ -104,9 +114,14 @@ export function useSendCampfireMessage() {
             id: `temp-${Date.now()}`,
             userId: user.id,
             username: profile.display_name,
-            content,
+            content: payload.content,
+            mediaUrl: payload.mediaUrl,
+            mediaType: payload.mediaType,
             timestamp: Date.now(),
             type: 'campfire',
+            chatId: 'campfire',
+            reactions: {},
+            replyToId: null,
           };
           return { ...old, messages: [...old.messages, tempMessage] };
         });

@@ -53,10 +53,10 @@ export function useCircleConnections() {
       // Get last messages for all connections in parallel
       const lastMessages: Record<string, { content: string; created_at: string }> = {};
       if (connectedUserIds.length > 0) {
-        // Fetch all recent messages for circle members in one query
-        const { data: allMessages } = await supabase
+        // Get all messages between the two users (with no flare_id)
+        const { data: allMessages, error: msgsError } = await supabase
           .from('messages')
-          .select('sender_id, receiver_id, content, created_at')
+          .select('*, message_reactions(*), reply_to:reply_to_id(id, content, sender:sender_id(display_name))')
           .is('flare_id', null)
           .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
           .in('sender_id', [user.id, ...connectedUserIds])
@@ -420,14 +420,14 @@ export function useCircleMessages(partnerId: string | null) {
       const [sentResult, receivedResult] = await Promise.all([
         supabase
           .from('messages')
-          .select('*')
+          .select('*, message_reactions(*), reply_to:reply_to_id(id, content, sender:sender_id(display_name))')
           .is('flare_id', null)
           .eq('sender_id', user.id)
           .eq('receiver_id', partnerId)
           .order('created_at', { ascending: true }),
         supabase
           .from('messages')
-          .select('*')
+          .select('*, message_reactions(*), reply_to:reply_to_id(id, content, sender:sender_id(display_name))')
           .is('flare_id', null)
           .eq('sender_id', partnerId)
           .eq('receiver_id', user.id)
@@ -471,8 +471,18 @@ export function useCircleMessages(partnerId: string | null) {
         senderAvatar: profileMap[m.sender_id]?.avatar || null,
         receiverId: m.receiver_id,
         content: m.content,
+        mediaUrl: m.media_url,
+        mediaType: m.media_type,
+        replyToId: m.reply_to_id,
+        reactions: (m.message_reactions || []).reduce((acc: Record<string, string[]>, r: any) => {
+          if (!acc[r.reaction]) acc[r.reaction] = [];
+          acc[r.reaction].push(r.user_id);
+          return acc;
+        }, {}),
         createdAt: m.created_at,
         read: m.read,
+        isEdited: m.is_edited,
+        deletedAt: m.deleted_at ? new Date(m.deleted_at).getTime() : null,
       }));
     },
     enabled: !!user && !!partnerId,
@@ -523,9 +533,15 @@ export function useSendCircleMessage() {
     mutationFn: async ({
       receiverId,
       content,
+      mediaUrl,
+      mediaType,
+      replyToId,
     }: {
       receiverId: string;
       content: string;
+      mediaUrl?: string;
+      mediaType?: string;
+      replyToId?: string;
     }) => {
       if (!user) throw new Error('Must be logged in to send a message');
 
@@ -548,6 +564,9 @@ export function useSendCircleMessage() {
           receiver_id: receiverId,
           content,
           flare_id: null,
+          media_url: mediaUrl,
+          media_type: mediaType,
+          reply_to_id: replyToId,
         })
         .select()
         .single();

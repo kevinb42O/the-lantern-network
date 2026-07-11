@@ -72,7 +72,7 @@ export function useMessages(partnerId: string) {
 
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select('*, message_reactions(*), reply_to:reply_to_id(id, content, sender:sender_id(display_name))')
         .or(
           `and(sender_id.eq.${user.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user.id})`
         )
@@ -132,10 +132,16 @@ export function useSendMessage() {
       receiverId,
       content,
       flareId,
+      mediaUrl,
+      mediaType,
+      replyToId,
     }: {
       receiverId: string;
       content: string;
       flareId?: string;
+      mediaUrl?: string;
+      mediaType?: string;
+      replyToId?: string;
     }) => {
       if (!user) throw new Error('Must be logged in to send a message');
 
@@ -146,6 +152,9 @@ export function useSendMessage() {
           receiver_id: receiverId,
           content,
           flare_id: flareId,
+          media_url: mediaUrl,
+          media_type: mediaType,
+          reply_to_id: replyToId,
         })
         .select()
         .single();
@@ -156,6 +165,68 @@ export function useSendMessage() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['messages', variables.receiverId] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+// Edit a message
+export function useEditMessage() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ messageId, newContent }: { messageId: string; newContent: string }) => {
+      if (!user) throw new Error('Must be logged in to edit a message');
+
+      const { data, error } = await supabase
+        .from('messages')
+        .update({
+          content: newContent,
+          is_edited: true,
+        })
+        .eq('id', messageId)
+        .eq('sender_id', user.id) // Only allow sender to edit
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      // We invalidate all messages to catch updates in either DM or Campfire
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['campfire-messages'] });
+    },
+  });
+}
+
+// Delete a message (soft delete)
+export function useDeleteMessage() {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ messageId }: { messageId: string }) => {
+      if (!user) throw new Error('Must be logged in to delete a message');
+
+      const { data, error } = await supabase
+        .from('messages')
+        .update({
+          deleted_at: new Date().toISOString(),
+          content: 'Dit bericht is verwijderd',
+          media_url: null, // Clear media
+        })
+        .eq('id', messageId)
+        .eq('sender_id', user.id) // Only allow sender to delete
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      queryClient.invalidateQueries({ queryKey: ['campfire-messages'] });
     },
   });
 }
